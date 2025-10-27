@@ -174,7 +174,7 @@ pip install -r requirements.txt
 
 ### 4. 配置环境变量（可选）
 ```bash
-cp .env.example .env
+cp examples/config/.env.example .env
 # 编辑 .env 文件根据需要调整配置
 ```
 
@@ -214,7 +214,7 @@ ziwei_mcp/
 ├── mingli_mcp.py              # MCP服务器主入口
 ├── config.py                  # 配置管理
 ├── requirements.txt           # Python依赖
-├── .env.example              # 环境变量示例
+├── pyproject.toml            # 项目配置
 ├── .gitignore                # Git忽略文件
 ├── README.md                 # 项目文档
 │
@@ -228,7 +228,6 @@ ziwei_mcp/
 │   ├── __init__.py
 │   ├── base_transport.py     # 传输层抽象基类
 │   └── stdio_transport.py    # stdio传输实现（默认）
-│   # 预留: http_transport.py, ws_transport.py
 │
 ├── systems/                   # 命理系统实现
 │   ├── __init__.py           # 系统注册中心
@@ -236,8 +235,10 @@ ziwei_mcp/
 │   │   ├── __init__.py
 │   │   ├── ziwei_system.py  # 系统实现
 │   │   └── formatter.py     # 结果格式化
-│   ├── bazi/                 # 八字（预留）
-│   │   └── __init__.py
+│   ├── bazi/                 # 八字（已实现）
+│   │   ├── __init__.py
+│   │   ├── bazi_system.py   # 系统实现
+│   │   └── formatter.py     # 结果格式化
 │   └── astrology/            # 占星（预留）
 │       └── __init__.py
 │
@@ -246,7 +247,24 @@ ziwei_mcp/
 │   ├── validators.py         # 参数验证
 │   └── formatters.py         # 响应格式化
 │
-└── tests/                     # 测试（待完善）
+├── docs/                      # 文档
+│   ├── README.md             # 文档索引
+│   ├── guides/               # 用户指南
+│   ├── deployment/           # 部署文档
+│   ├── architecture/         # 架构设计
+│   └── development/          # 开发文档
+│
+├── examples/                  # 示例配置
+│   └── config/               # 配置文件示例
+│       ├── .env.example
+│       ├── codex_config.toml.example
+│       └── cursor_mcp_config.example.json
+│
+├── scripts/                   # 脚本工具
+│   ├── tests/                # 测试脚本
+│   └── check_ready_to_publish.sh
+│
+└── tests/                     # 单元测试
     └── __init__.py
 ```
 
