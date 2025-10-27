@@ -21,13 +21,28 @@ _LEVELS = {
 }
 
 # 配置日志
-logging.basicConfig(
-    level=_LEVELS.get(LOG_LEVEL, logging.INFO),
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler()
-    ]
-)
+# 在stdio模式下，日志必须输出到stderr或文件，不能干扰stdout
+TRANSPORT_TYPE = os.getenv('TRANSPORT_TYPE', 'stdio')
+
+if TRANSPORT_TYPE == 'stdio':
+    # stdio模式：日志输出到stderr
+    import sys
+    logging.basicConfig(
+        level=_LEVELS.get(LOG_LEVEL, logging.INFO),
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.StreamHandler(sys.stderr)  # 明确输出到stderr
+        ]
+    )
+else:
+    # HTTP模式：可以输出到stdout
+    logging.basicConfig(
+        level=_LEVELS.get(LOG_LEVEL, logging.INFO),
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.StreamHandler()
+        ]
+    )
 
 
 class Config:
