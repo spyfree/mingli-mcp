@@ -43,7 +43,7 @@ class MingliMCPServer:
             self.transport = HttpTransport(
                 host=config.HTTP_HOST,
                 port=config.HTTP_PORT,
-                api_key=config.get('HTTP_API_KEY')
+                api_key=config.HTTP_API_KEY
             )
         # 预留WebSocket传输方式
         # elif transport_type == 'websocket':

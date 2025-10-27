@@ -130,6 +130,10 @@ class HttpTransport(BaseTransport):
             log_level="info"
         )
     
+    def stop(self):
+        """停止HTTP服务器"""
+        logger.info("HTTP server stopped")
+    
     def send_message(self, message: Dict[str, Any]):
         """
         HTTP模式不需要主动发送消息
