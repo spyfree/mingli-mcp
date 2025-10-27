@@ -5,12 +5,16 @@
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, TYPE_CHECKING
 from datetime import datetime
 from core.base_system import BaseFortuneSystem
 from .formatter import ZiweiFormatter
 
 logger = logging.getLogger(__name__)
+
+# 使用 TYPE_CHECKING 避免运行时导入错误
+if TYPE_CHECKING:
+    from py_iztro import Astro
 
 try:
     from py_iztro import Astro
@@ -19,7 +23,8 @@ try:
 except ImportError:
     logger.warning("py-iztro not installed, ZiweiSystem will not work")
     PYIZTRO_AVAILABLE = False
-    astro = None
+    astro = None  # type: ignore
+    Astro = None  # type: ignore
 
 
 class ZiweiSystem(BaseFortuneSystem):
