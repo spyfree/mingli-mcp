@@ -1,0 +1,8 @@
+include README.md
+include LICENSE
+include requirements.txt
+include .env.example
+recursive-include systems *.py
+recursive-include transports *.py
+recursive-include utils *.py
+recursive-include core *.py
