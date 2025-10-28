@@ -8,7 +8,9 @@
 # from .astrology_system import AstrologySystem
 # __all__ = ['AstrologySystem']
 
+
 # 预留占位
 class AstrologySystem:
     """占星系统占位类"""
+
     pass

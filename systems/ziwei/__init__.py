@@ -4,4 +4,4 @@
 
 from .ziwei_system import ZiweiSystem
 
-__all__ = ['ZiweiSystem']
+__all__ = ["ZiweiSystem"]

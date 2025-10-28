@@ -7,4 +7,4 @@
 
 from .bazi_system import BaziSystem
 
-__all__ = ['BaziSystem']
+__all__ = ["BaziSystem"]

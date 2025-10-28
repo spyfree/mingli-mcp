@@ -4,60 +4,62 @@
 用于将八字数据格式化为JSON和Markdown格式
 """
 
-from typing import Dict, Any
+from typing import Any, Dict
 
 
 class BaziFormatter:
     """八字格式化器"""
-    
-    def format_chart(self, chart_data: Dict[str, Any], format_type: str = 'json') -> str:
+
+    def format_chart(self, chart_data: Dict[str, Any], format_type: str = "json") -> str:
         """
         格式化八字排盘数据
-        
+
         Args:
             chart_data: 排盘数据
             format_type: 格式类型 ('json' 或 'markdown')
-            
+
         Returns:
             格式化后的字符串
         """
-        if format_type == 'markdown':
+        if format_type == "markdown":
             return self._format_chart_markdown(chart_data)
         else:
             return chart_data
-    
-    def format_fortune(self, fortune_data: Dict[str, Any], format_type: str = 'json') -> str:
+
+    def format_fortune(self, fortune_data: Dict[str, Any], format_type: str = "json") -> str:
         """
         格式化运势数据
-        
+
         Args:
             fortune_data: 运势数据
             format_type: 格式类型
-            
+
         Returns:
             格式化后的字符串
         """
-        if format_type == 'markdown':
+        if format_type == "markdown":
             return self._format_fortune_markdown(fortune_data)
         else:
             return fortune_data
-    
-    def format_element_analysis(self, analysis_data: Dict[str, Any], format_type: str = 'json') -> str:
+
+    def format_element_analysis(
+        self, analysis_data: Dict[str, Any], format_type: str = "json"
+    ) -> str:
         """
         格式化五行分析数据
-        
+
         Args:
             analysis_data: 分析数据
             format_type: 格式类型
-            
+
         Returns:
             格式化后的字符串
         """
-        if format_type == 'markdown':
+        if format_type == "markdown":
             return self._format_element_markdown(analysis_data)
         else:
             return analysis_data
-    
+
     def _format_chart_markdown(self, data: Dict[str, Any]) -> str:
         """格式化排盘为Markdown"""
         md = f"""# 八字排盘
@@ -100,7 +102,7 @@ class BaziFormatter:
 - **时支** {data['pillars']['hour']['zhi']}: {', '.join(data['zhi_cang_gan']['hour'])}
 """
         return md
-    
+
     def _format_fortune_markdown(self, data: Dict[str, Any]) -> str:
         """格式化运势为Markdown"""
         md = f"""# 八字运势
@@ -127,7 +129,7 @@ class BaziFormatter:
 ```
 """
         return md
-    
+
     def _format_element_markdown(self, data: Dict[str, Any]) -> str:
         """格式化五行分析为Markdown"""
         md = f"""# 五行分析
@@ -153,12 +155,12 @@ class BaziFormatter:
 
 ## 建议
 """
-        
+
         # 根据五行情况给出建议
-        if data['missing']:
+        if data["missing"]:
             md += f"\n命局缺{', '.join(data['missing'])}，建议在生活中补充这些元素。\n"
-        
-        if data['balance'] == '五行不平衡':
+
+        if data["balance"] == "五行不平衡":
             md += f"\n五行不够平衡，{data['strongest']['element']}过旺，{data['weakest']['element']}较弱，建议适当调和。\n"
-        
+
         return md
