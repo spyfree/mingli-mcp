@@ -1,4 +1,5 @@
 # 命理MCP服务 (Mingli MCP Server)
+[![smithery badge](https://smithery.ai/badge/@spyfree/mingli-mcp)](https://smithery.ai/server/@spyfree/mingli-mcp)
 
 一个支持多种命理系统（紫微斗数、八字、占星等）的 Model Context Protocol (MCP) 服务器，专为 AI 工具（如 Cursor IDE）设计。
 
@@ -161,7 +162,7 @@
 
 使用 `uvx` 是最简单的安装方式，无需手动管理依赖：
 
-在 `~/.cursor/mcp.json` 或对应IDE的MCP配置文件中添加：
+在 `~/.passport/mcp.json` 或对应IDE的MCP配置文件中添加：
 
 ```json
 {
@@ -267,6 +268,14 @@ python mingli_mcp.py
 
 ### 7. 重启 Cursor
 重启 Cursor IDE 以加载新的 MCP 配置。
+
+### Installing via Smithery
+
+To install Ziwei & Bazi Astrology automatically via [Smithery](https://smithery.ai/server/@spyfree/mingli-mcp):
+
+```bash
+npx -y @smithery/cli install @spyfree/mingli-mcp
+```
 
 ## 📁 项目结构
 
