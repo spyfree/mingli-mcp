@@ -149,6 +149,7 @@
 ## 🚀 快速开始
 
 ### 在线体验
+- **Smithery 部署**: [https://server.smithery.ai/@spyfree/mingli-mcp/mcp](https://server.smithery.ai/@spyfree/mingli-mcp/mcp)
 - 添加到 Cursor: [![Install MCP Server](https://img.shields.io/badge/Cursor-Add+MCP+Server-blue?logo=cursor)](https://cursor.com/install-mcp?name=mingli&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyJtaW5nbGktbWNwIl19)
 - 添加到 Claude Code: `claude mcp add mingli -- uvx mingli-mcp`
 - 添加到 OpenAI CodeX: `codex mcp add mingli -- uvx mingli-mcp`
