@@ -146,7 +146,68 @@
 - 平衡度评价
 - 补救建议
 
-## 🛠️ 安装和配置
+## 🚀 快速开始
+
+### 在线体验
+- 添加到 Cursor: [![Install MCP Server](https://img.shields.io/badge/Cursor-Add+MCP+Server-blue?logo=cursor)](https://cursor.com/install-mcp?name=mingli&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyJtaW5nbGktbWNwIl19)
+- 添加到 Claude Code: `claude mcp add mingli -- uvx mingli-mcp`
+- 添加到 OpenAI CodeX: `codex mcp add mingli -- uvx mingli-mcp`
+
+---
+
+## 📦 安装方式
+
+### 方式1: uvx (推荐)
+
+使用 `uvx` 是最简单的安装方式，无需手动管理依赖：
+
+在 `~/.cursor/mcp.json` 或对应IDE的MCP配置文件中添加：
+
+```json
+{
+  "mcpServers": {
+    "mingli": {
+      "command": "uvx",
+      "args": ["mingli-mcp"],
+      "env": {
+        "LOG_LEVEL": "INFO"
+      }
+    }
+  }
+}
+```
+
+### 方式2: Docker
+
+使用 Docker 部署，适合服务器环境或需要隔离的场景：
+
+```bash
+# 下载配置文件
+mkdir -p /opt/mingli-mcp
+cd /opt/mingli-mcp
+wget https://raw.githubusercontent.com/spyfree/mingli-mcp/main/docker-compose.yml
+
+# 启动服务
+docker-compose up -d
+```
+
+然后在MCP配置中使用HTTP连接：
+
+```json
+{
+  "mcpServers": {
+    "mingli": {
+      "url": "http://localhost:8080/mcp"
+    }
+  }
+}
+```
+
+### 方式3: 从源码安装
+
+适合开发者或需要自定义的场景：
+
+## 🛠️ 从源码安装
 
 ### 环境要求
 - Python 3.8+
@@ -325,9 +386,61 @@ class WebSocketTransport(BaseTransport):
         pass
 ```
 
+## 💡 最佳实践
+
+### 在 AI 助手中使用
+
+与AI助手（如Claude、Cursor等）对话时，可以直接使用自然语言查询：
+
+**紫微斗数示例**：
+- "帮我排一个紫微斗数盘：1990年5月20日，午时，男性"
+- "查询这个人今年的运势如何"
+- "分析他的财帛宫"
+- "看看他适合什么行业"
+
+**八字示例**：
+- "帮我算八字：1985年3月15日，卯时，女性"  
+- "分析一下她的五行缺什么"
+- "看看她今年的大运"
+- "什么五行的颜色适合她"
+
+**农历支持**：
+- "排盘：农历1995年7月初七，酉时，女性"
+- "注意指定是农历"
+
+### 提示词技巧
+
+**详细查询**：
+```
+请帮我详细分析：
+- 出生日期：2000年8月16日
+- 出生时辰：寅时（早上5点）
+- 性别：女
+- 使用紫微斗数系统
+- 重点看事业宫和财帛宫
+```
+
+**对比分析**：
+```
+请对比两个人的八字：
+人A：1990年5月20日，午时，男
+人B：1992年3月15日，辰时，女
+看看他们的五行是否相配
+```
+
+**运势追踪**：
+```
+请记住这个人的信息：1988年10月1日，未时，男性
+然后每个月帮我分析当月运势
+```
+
+---
+
 ## 📚 使用示例
 
 ### 在 Cursor 中使用
+
+直接在对话中提问：
 
 1. **获取紫微排盘**:
 ```
@@ -342,6 +455,11 @@ class WebSocketTransport(BaseTransport):
 3. **分析宫位**:
 ```
 分析上面这个人的命宫
+```
+
+4. **八字五行分析**:
+```
+帮我看看这个人的五行：1995年7月10日，申时，男性
 ```
 
 ### 编程调用

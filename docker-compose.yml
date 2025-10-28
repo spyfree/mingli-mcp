@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  mingli-mcp:
+    build: .
+    container_name: mingli-mcp
+    ports:
+      - "8080:8080"
+    environment:
+      - TRANSPORT_TYPE=http
+      - HTTP_HOST=0.0.0.0
+      - HTTP_PORT=8080
+      - HTTP_API_KEY=${HTTP_API_KEY:-}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - ENABLE_RATE_LIMIT=${ENABLE_RATE_LIMIT:-true}
+      - RATE_LIMIT_REQUESTS=${RATE_LIMIT_REQUESTS:-100}
+      - RATE_LIMIT_WINDOW=${RATE_LIMIT_WINDOW:-60}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

@@ -1,0 +1,60 @@
+name: mingli-mcp
+version: 1.0.3
+description: 命理MCP服务 - 支持紫微斗数、八字等多种命理系统
+author: spyfree
+repository: https://github.com/spyfree/mingli-mcp
+license: MIT
+
+# Python包信息
+package:
+  type: python
+  name: mingli-mcp
+  
+# 服务配置
+server:
+  command: uvx
+  args:
+    - mingli-mcp
+  
+# 环境变量配置（可选）
+env:
+  LOG_LEVEL:
+    description: 日志级别
+    default: INFO
+    required: false
+  TRANSPORT_TYPE:
+    description: 传输类型（stdio/http）
+    default: stdio
+    required: false
+  HTTP_PORT:
+    description: HTTP服务端口
+    default: "8080"
+    required: false
+  HTTP_API_KEY:
+    description: HTTP API密钥（用于认证）
+    required: false
+
+# MCP工具列表
+tools:
+  - name: get_ziwei_chart
+    description: 获取紫微斗数完整排盘信息
+  - name: get_ziwei_fortune
+    description: 获取紫微斗数运势信息
+  - name: analyze_ziwei_palace
+    description: 分析紫微斗数特定宫位
+  - name: get_bazi_chart
+    description: 获取八字（四柱）排盘信息
+  - name: get_bazi_fortune
+    description: 获取八字运势信息
+  - name: analyze_bazi_element
+    description: 分析八字五行强弱
+  - name: list_fortune_systems
+    description: 列出所有可用的命理系统
+
+# 标签
+tags:
+  - fortune-telling
+  - ziwei
+  - bazi
+  - chinese-astrology
+  - mcp-server

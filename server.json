@@ -1,0 +1,17 @@
+{
+  "name": "mingli-mcp",
+  "version": "1.0.3",
+  "description": "命理MCP服务 - 支持紫微斗数、八字等多种命理系统",
+  "author": "spyfree <srlixin@gmail.com>",
+  "repository": "https://github.com/spyfree/mingli-mcp",
+  "license": "MIT",
+  "mcpServers": {
+    "mingli": {
+      "command": "uvx",
+      "args": ["mingli-mcp"],
+      "env": {
+        "LOG_LEVEL": "INFO"
+      }
+    }
+  }
+}
