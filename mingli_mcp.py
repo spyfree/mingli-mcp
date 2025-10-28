@@ -42,11 +42,21 @@ class MingliMCPServer:
 
     def _initialize_transport(self):
         """初始化传输层"""
+        from transports import HTTP_TRANSPORT_AVAILABLE
+
         transport_type = config.TRANSPORT_TYPE.lower()
 
         if transport_type == "stdio":
             self.transport = StdioTransport()
         elif transport_type == "http":
+            if not HTTP_TRANSPORT_AVAILABLE:
+                raise ImportError(
+                    "HTTP transport is not available. Please install mingli-mcp with HTTP support:\n"
+                    "  pip install mingli-mcp[http]\n"
+                    "or\n"
+                    "  pip install mingli-mcp (which includes all dependencies)"
+                )
+            from transports import HttpTransport
             self.transport = HttpTransport(
                 host=config.HTTP_HOST, port=config.HTTP_PORT, api_key=config.HTTP_API_KEY
             )

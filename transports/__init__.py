@@ -8,7 +8,14 @@ MCP传输层抽象模块
 """
 
 from .base_transport import BaseTransport
-from .http_transport import HttpTransport
 from .stdio_transport import StdioTransport
 
-__all__ = ["BaseTransport", "StdioTransport", "HttpTransport"]
+# 延迟导入 HTTP 传输（需要 uvicorn 依赖）
+try:
+    from .http_transport import HttpTransport
+    HTTP_TRANSPORT_AVAILABLE = True
+except ImportError:
+    HttpTransport = None
+    HTTP_TRANSPORT_AVAILABLE = False
+
+__all__ = ["BaseTransport", "StdioTransport", "HttpTransport", "HTTP_TRANSPORT_AVAILABLE"]
