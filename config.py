@@ -48,7 +48,7 @@ class Config:
 
     # MCP服务配置
     MCP_SERVER_NAME: str = os.getenv("MCP_SERVER_NAME", "ziwei_mcp")
-    MCP_SERVER_VERSION: str = "1.0.6"
+    MCP_SERVER_VERSION: str = "1.0.7"
 
     # 默认语言
     DEFAULT_LANGUAGE: str = os.getenv("DEFAULT_LANGUAGE", "zh-CN")

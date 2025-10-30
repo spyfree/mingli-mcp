@@ -151,6 +151,7 @@ class MingliMCPServer:
                     "prompts": {},
                     "resources": {},
                 },
+                "instructions": "命理MCP服务提供紫微斗数、八字等中国传统命理系统的分析工具。所有配置都是可选的，服务器可以在没有任何配置的情况下运行。",
             },
             request_id,
         )
@@ -218,35 +219,39 @@ class MingliMCPServer:
                     "properties": {
                         "birth_date": {
                             "type": "string",
-                            "description": "出生日期，格式：YYYY-MM-DD",
+                            "description": "出生日期，格式：YYYY-MM-DD，例如：2000-08-16",
                         },
                         "time_index": {
                             "type": "integer",
-                            "description": "出生时辰序号（0-12）",
+                            "description": "出生时辰序号（0-12）：0=早子时(23-01), 1=丑时(01-03), 2=寅时(03-05), 3=卯时(05-07), 4=辰时(07-09), 5=巳时(09-11), 6=午时(11-13), 7=未时(13-15), 8=申时(15-17), 9=酉时(17-19), 10=戌时(19-21), 11=亥时(21-23), 12=晚子时(23-01)",
                             "minimum": 0,
                             "maximum": 12,
                         },
-                        "gender": {"type": "string", "enum": ["男", "女"], "description": "性别"},
+                        "gender": {
+                            "type": "string",
+                            "enum": ["男", "女"],
+                            "description": "性别：男 或 女",
+                        },
                         "calendar": {
                             "type": "string",
                             "enum": ["solar", "lunar"],
                             "default": "solar",
-                            "description": "历法类型",
+                            "description": "历法类型：solar(阳历/公历) 或 lunar(农历/阴历)，默认为阳历",
                         },
                         "is_leap_month": {
                             "type": "boolean",
                             "default": False,
-                            "description": "是否为闰月",
+                            "description": "是否为闰月（仅当calendar=lunar时有效），默认为否",
                         },
                         "query_date": {
                             "type": "string",
-                            "description": "查询运势的日期，格式：YYYY-MM-DD，不填则为今天",
+                            "description": "查询运势的日期，格式：YYYY-MM-DD，例如：2025-01-15。不填则为今天",
                         },
                         "format": {
                             "type": "string",
                             "enum": ["json", "markdown"],
                             "default": "markdown",
-                            "description": "输出格式",
+                            "description": "输出格式：json(结构化数据) 或 markdown(易读格式)，默认为markdown",
                         },
                     },
                     "required": ["birth_date", "time_index", "gender"],
@@ -265,15 +270,19 @@ class MingliMCPServer:
                     "properties": {
                         "birth_date": {
                             "type": "string",
-                            "description": "出生日期，格式：YYYY-MM-DD",
+                            "description": "出生日期，格式：YYYY-MM-DD，例如：2000-08-16",
                         },
                         "time_index": {
                             "type": "integer",
-                            "description": "出生时辰序号（0-12）",
+                            "description": "出生时辰序号（0-12）：0=早子时(23-01), 1=丑时(01-03), 2=寅时(03-05), 3=卯时(05-07), 4=辰时(07-09), 5=巳时(09-11), 6=午时(11-13), 7=未时(13-15), 8=申时(15-17), 9=酉时(17-19), 10=戌时(19-21), 11=亥时(21-23), 12=晚子时(23-01)",
                             "minimum": 0,
                             "maximum": 12,
                         },
-                        "gender": {"type": "string", "enum": ["男", "女"], "description": "性别"},
+                        "gender": {
+                            "type": "string",
+                            "enum": ["男", "女"],
+                            "description": "性别：男 或 女",
+                        },
                         "palace_name": {
                             "type": "string",
                             "enum": [
@@ -290,24 +299,24 @@ class MingliMCPServer:
                                 "福德",
                                 "父母",
                             ],
-                            "description": "要分析的宫位名称",
+                            "description": "要分析的宫位名称。可选值：命宫(命运)、兄弟(兄弟姐妹)、夫妻(婚姻)、子女(子女)、财帛(财富)、疾厄(健康)、迁移(外出)、仆役(朋友)、官禄(事业)、田宅(房产)、福德(福气)、父母(父母)",
                         },
                         "calendar": {
                             "type": "string",
                             "enum": ["solar", "lunar"],
                             "default": "solar",
-                            "description": "历法类型",
+                            "description": "历法类型：solar(阳历/公历) 或 lunar(农历/阴历)，默认为阳历",
                         },
                         "is_leap_month": {
                             "type": "boolean",
                             "default": False,
-                            "description": "是否为闰月",
+                            "description": "是否为闰月（仅当calendar=lunar时有效），默认为否",
                         },
                         "format": {
                             "type": "string",
                             "enum": ["json", "markdown"],
                             "default": "markdown",
-                            "description": "输出格式",
+                            "description": "输出格式：json(结构化数据) 或 markdown(易读格式)，默认为markdown",
                         },
                     },
                     "required": ["birth_date", "time_index", "gender", "palace_name"],
@@ -383,35 +392,39 @@ class MingliMCPServer:
                     "properties": {
                         "birth_date": {
                             "type": "string",
-                            "description": "出生日期，格式：YYYY-MM-DD",
+                            "description": "出生日期，格式：YYYY-MM-DD，例如：2000-08-16",
                         },
                         "time_index": {
                             "type": "integer",
-                            "description": "出生时辰序号（0-12）",
+                            "description": "出生时辰序号（0-12）：0=早子时(23-01), 1=丑时(01-03), 2=寅时(03-05), 3=卯时(05-07), 4=辰时(07-09), 5=巳时(09-11), 6=午时(11-13), 7=未时(13-15), 8=申时(15-17), 9=酉时(17-19), 10=戌时(19-21), 11=亥时(21-23), 12=晚子时(23-01)",
                             "minimum": 0,
                             "maximum": 12,
                         },
-                        "gender": {"type": "string", "enum": ["男", "女"], "description": "性别"},
+                        "gender": {
+                            "type": "string",
+                            "enum": ["男", "女"],
+                            "description": "性别：男 或 女",
+                        },
                         "calendar": {
                             "type": "string",
                             "enum": ["solar", "lunar"],
                             "default": "solar",
-                            "description": "历法类型",
+                            "description": "历法类型：solar(阳历/公历) 或 lunar(农历/阴历)，默认为阳历",
                         },
                         "is_leap_month": {
                             "type": "boolean",
                             "default": False,
-                            "description": "是否为闰月",
+                            "description": "是否为闰月（仅当calendar=lunar时有效），默认为否",
                         },
                         "query_date": {
                             "type": "string",
-                            "description": "查询运势的日期，格式：YYYY-MM-DD，不填则为今天",
+                            "description": "查询运势的日期，格式：YYYY-MM-DD，例如：2025-01-15。不填则为今天",
                         },
                         "format": {
                             "type": "string",
                             "enum": ["json", "markdown"],
                             "default": "markdown",
-                            "description": "输出格式",
+                            "description": "输出格式：json(结构化数据) 或 markdown(易读格式)，默认为markdown",
                         },
                     },
                     "required": ["birth_date", "time_index", "gender"],
@@ -430,31 +443,35 @@ class MingliMCPServer:
                     "properties": {
                         "birth_date": {
                             "type": "string",
-                            "description": "出生日期，格式：YYYY-MM-DD",
+                            "description": "出生日期，格式：YYYY-MM-DD，例如：2000-08-16",
                         },
                         "time_index": {
                             "type": "integer",
-                            "description": "出生时辰序号（0-12）",
+                            "description": "出生时辰序号（0-12）：0=早子时(23-01), 1=丑时(01-03), 2=寅时(03-05), 3=卯时(05-07), 4=辰时(07-09), 5=巳时(09-11), 6=午时(11-13), 7=未时(13-15), 8=申时(15-17), 9=酉时(17-19), 10=戌时(19-21), 11=亥时(21-23), 12=晚子时(23-01)",
                             "minimum": 0,
                             "maximum": 12,
                         },
-                        "gender": {"type": "string", "enum": ["男", "女"], "description": "性别"},
+                        "gender": {
+                            "type": "string",
+                            "enum": ["男", "女"],
+                            "description": "性别：男 或 女",
+                        },
                         "calendar": {
                             "type": "string",
                             "enum": ["solar", "lunar"],
                             "default": "solar",
-                            "description": "历法类型",
+                            "description": "历法类型：solar(阳历/公历) 或 lunar(农历/阴历)，默认为阳历",
                         },
                         "is_leap_month": {
                             "type": "boolean",
                             "default": False,
-                            "description": "是否为闰月",
+                            "description": "是否为闰月（仅当calendar=lunar时有效），默认为否",
                         },
                         "format": {
                             "type": "string",
                             "enum": ["json", "markdown"],
                             "default": "markdown",
-                            "description": "输出格式",
+                            "description": "输出格式：json(结构化数据) 或 markdown(易读格式)，默认为markdown",
                         },
                     },
                     "required": ["birth_date", "time_index", "gender"],
@@ -777,6 +794,11 @@ class MingliMCPServer:
         """处理资源列表请求"""
         resources = [
             {
+                "uri": "mingli://configuration",
+                "name": "服务器配置选项",
+                "description": "可选的环境变量配置，用于自定义服务器行为（无配置也可正常运行）",
+            },
+            {
                 "uri": "mingli://heavenly-stems",
                 "name": "天干地支对照表",
                 "description": "十天干十二地支的详细信息，包括五行属性、阴阳属性等",
@@ -819,7 +841,9 @@ class MingliMCPServer:
             return format_error_response(-32602, "Resource URI is required", request_id)
 
         # Get resource content based on URI
-        if uri == "mingli://heavenly-stems":
+        if uri == "mingli://configuration":
+            content = self._get_configuration_content()
+        elif uri == "mingli://heavenly-stems":
             content = self._get_heavenly_stems_content()
         elif uri == "mingli://five-elements":
             content = self._get_five_elements_content()
@@ -845,6 +869,92 @@ class MingliMCPServer:
             },
             request_id,
         )
+
+    def _get_configuration_content(self) -> str:
+        """获取配置选项内容"""
+        return """# 服务器配置选项
+
+## 重要说明
+
+**本服务器无需任何配置即可运行**。所有配置选项都是可选的，用于自定义服务器行为。
+
+## 可选环境变量
+
+### LOG_LEVEL
+- **描述**: 日志级别
+- **可选值**: DEBUG, INFO, WARNING, ERROR, CRITICAL
+- **默认值**: INFO
+- **示例**: `LOG_LEVEL=DEBUG`
+
+### TRANSPORT_TYPE
+- **描述**: 传输协议类型
+- **可选值**: stdio, http
+- **默认值**: stdio
+- **示例**: `TRANSPORT_TYPE=stdio`
+- **说明**: stdio模式用于MCP客户端集成，http模式用于Docker部署
+
+### HTTP_HOST
+- **描述**: HTTP服务器监听地址（仅HTTP模式）
+- **默认值**: 0.0.0.0
+- **示例**: `HTTP_HOST=localhost`
+
+### HTTP_PORT
+- **描述**: HTTP服务器端口（仅HTTP模式）
+- **默认值**: 8080
+- **示例**: `HTTP_PORT=3000`
+
+### HTTP_API_KEY
+- **描述**: HTTP API密钥（仅HTTP模式，可选）
+- **默认值**: ""（空字符串，不启用认证）
+- **示例**: `HTTP_API_KEY=your-secret-key`
+
+### DEFAULT_LANGUAGE
+- **描述**: 默认语言
+- **默认值**: zh-CN
+- **示例**: `DEFAULT_LANGUAGE=zh-CN`
+
+## 使用示例
+
+### Claude Desktop配置（无需配置）
+```json
+{
+  "mcpServers": {
+    "mingli": {
+      "command": "uvx",
+      "args": ["mingli-mcp"]
+    }
+  }
+}
+```
+
+### 自定义日志级别
+```json
+{
+  "mcpServers": {
+    "mingli": {
+      "command": "uvx",
+      "args": ["mingli-mcp"],
+      "env": {
+        "LOG_LEVEL": "DEBUG"
+      }
+    }
+  }
+}
+```
+
+### Docker部署（HTTP模式）
+```bash
+docker run -e TRANSPORT_TYPE=http -e HTTP_PORT=8080 mingli-mcp
+```
+
+## 配置优先级
+
+1. 环境变量
+2. .env文件
+3. 默认值
+
+所有配置都有合理的默认值，确保开箱即用。
+"""
 
     def _get_heavenly_stems_content(self) -> str:
         """获取天干地支内容"""
