@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="246" fill="#1a365d" stroke="#d4af37" stroke-width="10"/>
+
+  <!-- Yin-Yang symbol -->
+  <circle cx="256" cy="256" r="120" fill="white"/>
+  <circle cx="256" cy="196" r="60" fill="#1a365d"/>
+  <circle cx="256" cy="316" r="60" fill="white"/>
+  <circle cx="256" cy="196" r="15" fill="white"/>
+  <circle cx="256" cy="316" r="15" fill="#1a365d"/>
+
+  <!-- Decorative stars around the circle -->
+  <g fill="#d4af37">
+    <circle cx="256" cy="30" r="4"/>
+    <circle cx="482" cy="256" r="4"/>
+    <circle cx="256" cy="482" r="4"/>
+    <circle cx="30" cy="256" r="4"/>
+    <circle cx="396" cy="116" r="3"/>
+    <circle cx="116" cy="396" r="3"/>
+    <circle cx="396" cy="396" r="3"/>
+    <circle cx="116" cy="116" r="3"/>
+  </g>
+
+  <!-- Chinese character for fortune telling (命) in center -->
+  <text x="256" y="270" font-family="serif" font-size="80" font-weight="bold"
+        text-anchor="middle" fill="#1a365d" stroke="white" stroke-width="2">命</text>
+</svg>

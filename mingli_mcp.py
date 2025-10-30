@@ -106,6 +106,14 @@ class MingliMCPServer:
             elif method == "tools/call":
                 return self._handle_tools_call(request, request_id)
 
+            # 列出提示词
+            elif method == "prompts/list":
+                return self._handle_prompts_list(request_id)
+
+            # 获取提示词
+            elif method == "prompts/get":
+                return self._handle_prompts_get(request, request_id)
+
             # 未知方法
             else:
                 logger.warning(f"Unknown method: {method}")
@@ -132,6 +140,7 @@ class MingliMCPServer:
                 },
                 "capabilities": {
                     "tools": {},
+                    "prompts": {},
                 },
             },
             request_id,
@@ -143,6 +152,11 @@ class MingliMCPServer:
             {
                 "name": "get_ziwei_chart",
                 "description": "获取紫微斗数排盘信息，包含命盘十二宫、主星、辅星、四化等详细信息",
+                "annotations": {
+                    "readOnlyHint": True,
+                    "destructiveHint": False,
+                    "idempotentHint": True,
+                },
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -185,6 +199,11 @@ class MingliMCPServer:
             {
                 "name": "get_ziwei_fortune",
                 "description": "获取紫微斗数运势信息，包含大限、流年、流月、流日、流时的运势详情",
+                "annotations": {
+                    "readOnlyHint": True,
+                    "destructiveHint": False,
+                    "idempotentHint": True,
+                },
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -227,6 +246,11 @@ class MingliMCPServer:
             {
                 "name": "analyze_ziwei_palace",
                 "description": "分析紫微斗数特定宫位的详细信息，包括该宫位的星曜配置、大限、四化等",
+                "annotations": {
+                    "readOnlyHint": True,
+                    "destructiveHint": False,
+                    "idempotentHint": True,
+                },
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -283,11 +307,21 @@ class MingliMCPServer:
             {
                 "name": "list_fortune_systems",
                 "description": "列出所有可用的命理系统（紫微斗数、八字、占星等）",
+                "annotations": {
+                    "readOnlyHint": True,
+                    "destructiveHint": False,
+                    "idempotentHint": True,
+                },
                 "inputSchema": {"type": "object", "properties": {}},
             },
             {
                 "name": "get_bazi_chart",
                 "description": "获取八字（四柱）排盘信息，包含年月日时四柱、十神、五行、地支藏干等详细信息",
+                "annotations": {
+                    "readOnlyHint": True,
+                    "destructiveHint": False,
+                    "idempotentHint": True,
+                },
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -330,6 +364,11 @@ class MingliMCPServer:
             {
                 "name": "get_bazi_fortune",
                 "description": "获取八字运势信息，包含大运、流年等详情",
+                "annotations": {
+                    "readOnlyHint": True,
+                    "destructiveHint": False,
+                    "idempotentHint": True,
+                },
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -372,6 +411,11 @@ class MingliMCPServer:
             {
                 "name": "analyze_bazi_element",
                 "description": "分析八字五行强弱，包含五行分数、平衡度、缺失五行等",
+                "annotations": {
+                    "readOnlyHint": True,
+                    "destructiveHint": False,
+                    "idempotentHint": True,
+                },
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -647,6 +691,78 @@ class MingliMCPServer:
             return json.dumps(analysis, ensure_ascii=False, indent=2)
         else:
             return self.bazi_formatter.format_element_analysis(analysis, "markdown")
+
+    def _handle_prompts_list(self, request_id: Any) -> Dict[str, Any]:
+        """处理提示词列表请求"""
+        import os
+
+        prompts_dir = os.path.join(os.path.dirname(__file__), "prompts")
+        prompts = []
+
+        if os.path.exists(prompts_dir):
+            for filename in os.listdir(prompts_dir):
+                if filename.endswith(".md"):
+                    filepath = os.path.join(prompts_dir, filename)
+                    with open(filepath, "r", encoding="utf-8") as f:
+                        content = f.read()
+                        # Extract title from first line
+                        lines = content.split("\n")
+                        title = lines[0].replace("#", "").strip()
+                        description = ""
+                        # Find description section or use first paragraph
+                        for line in lines[1:]:
+                            if line.strip() and not line.startswith("#"):
+                                description = line.strip()
+                                break
+
+                        prompt_name = filename[:-3]  # Remove .md extension
+                        prompts.append(
+                            {
+                                "name": prompt_name,
+                                "description": description or title,
+                            }
+                        )
+
+        return format_success_response({"prompts": prompts}, request_id)
+
+    def _handle_prompts_get(self, request: Dict[str, Any], request_id: Any) -> Dict[str, Any]:
+        """处理获取提示词请求"""
+        import os
+
+        params = request.get("params", {})
+        name = params.get("name")
+        arguments = params.get("arguments", {})
+
+        if not name:
+            return format_error_response(-32602, "Prompt name is required", request_id)
+
+        prompts_dir = os.path.join(os.path.dirname(__file__), "prompts")
+        filepath = os.path.join(prompts_dir, f"{name}.md")
+
+        if not os.path.exists(filepath):
+            return format_error_response(-32602, f"Prompt not found: {name}", request_id)
+
+        with open(filepath, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # Format the prompt with any arguments
+        try:
+            formatted_content = content.format(**arguments)
+        except (KeyError, ValueError):
+            formatted_content = content
+
+        return format_success_response(
+            {
+                "description": "命理咨询提示词模板",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": {"type": "text", "text": formatted_content},
+                    }
+                ],
+            },
+            request_id,
+        )
 
 
 def main():
