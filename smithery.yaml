@@ -1,6 +1,18 @@
-runtime: container
-startCommand:
-  type: http
-build:
-  dockerfile: Dockerfile
-  dockerBuildPath: "."
+# Smithery deployment configuration
+# See: https://smithery.ai/docs/build
+
+# Install with HTTP support for Smithery playground
+install:
+  command: "pip"
+  args: ["install", ".[http]"]
+
+# Use HTTP transport for Smithery's "Try" button
+transport: "http"
+
+# Server configuration
+server:
+  command: "mingli-mcp"
+  env:
+    TRANSPORT_TYPE: "http"
+    HTTP_HOST: "0.0.0.0"
+    HTTP_PORT: "8080"
