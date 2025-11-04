@@ -330,7 +330,12 @@ class MingliMCPServer:
                     "destructiveHint": False,
                     "idempotentHint": True,
                 },
-                "inputSchema": {"type": "object", "properties": {}},
+                "inputSchema": {
+                    "type": "object",
+                    "description": "此工具不需要任何参数",
+                    "properties": {},
+                    "additionalProperties": False,
+                },
             },
             {
                 "name": "get_bazi_chart",

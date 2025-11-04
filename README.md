@@ -230,9 +230,19 @@ venv\Scripts\activate  # Windows
 ```
 
 ### 3. 安装依赖
+
+#### 基础安装（stdio模式，推荐）
 ```bash
 pip install -r requirements.txt
 ```
+
+#### 或完整安装（包含HTTP传输支持）
+```bash
+pip install -r requirements-http.txt
+# 或使用 pip install .[http]
+```
+
+> **注意**: stdio模式无需任何额外配置即可使用，推荐日常使用。HTTP模式仅在需要Docker部署或服务器环境时使用。
 
 ### 4. 配置环境变量（可选）
 ```bash
