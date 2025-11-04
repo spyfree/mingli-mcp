@@ -1,0 +1,36 @@
+{
+  "name": "mingli-mcp",
+  "version": "1.0.8",
+  "description": "命理MCP服务 - 支持紫微斗数、八字等多种命理系统",
+  "license": "MIT",
+  "author": {
+    "name": "spyfree",
+    "email": "srlixin@gmail.com"
+  },
+  "homepage": "https://github.com/spyfree/mingli-mcp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/spyfree/mingli-mcp"
+  },
+  "bugs": {
+    "url": "https://github.com/spyfree/mingli-mcp/issues"
+  },
+  "keywords": [
+    "mcp",
+    "ziwei",
+    "bazi",
+    "fortune",
+    "astrology",
+    "chinese-fortune-telling"
+  ],
+  "mcp": {
+    "transport": "stdio",
+    "command": "uvx",
+    "args": ["mingli-mcp"],
+    "capabilities": {
+      "tools": true,
+      "prompts": true,
+      "resources": true
+    }
+  }
+}
