@@ -1,0 +1,26 @@
+# Smithery configuration for Mingli MCP Server
+# See: https://smithery.ai/docs/build/project-config/smithery-yaml
+
+runtime: "container"
+
+startCommand:
+  type: "http"
+
+  # Configuration schema - empty because no config is required!
+  configSchema:
+    type: "object"
+    properties: {}
+    additionalProperties: false
+
+  # Example config - empty object since no config needed
+  exampleConfig: {}
+
+build:
+  dockerfile: "Dockerfile"
+  dockerBuildPath: "."
+
+env:
+  TRANSPORT_TYPE: "http"
+  HTTP_HOST: "0.0.0.0"
+  HTTP_PORT: "8080"
+  LOG_LEVEL: "INFO"
