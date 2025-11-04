@@ -10,6 +10,7 @@ startCommand:
   configSchema:
     type: "object"
     properties: {}
+    required: []
     additionalProperties: false
 
   # Example config - empty object since no config needed

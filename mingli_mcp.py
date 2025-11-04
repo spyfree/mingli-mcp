@@ -390,8 +390,15 @@ class MingliMCPServer:
                 },
                 "inputSchema": {
                     "type": "object",
-                    "description": "此工具不需要任何参数",
-                    "properties": {},
+                    "description": "可选参数：detailed 为 true 时输出更详细信息（默认 false）",
+                    "properties": {
+                        "detailed": {
+                            "type": "boolean",
+                            "description": "是否输出更详细信息（默认 false）",
+                            "default": False
+                        }
+                    },
+                    "required": [],
                     "additionalProperties": False,
                 },
             },
@@ -568,7 +575,7 @@ class MingliMCPServer:
 
             # 列出系统
             elif tool_name == "list_fortune_systems":
-                result = self._tool_list_systems()
+                result = self._tool_list_systems(arguments)
 
             # 八字排盘
             elif tool_name == "get_bazi_chart":
@@ -681,9 +688,15 @@ class MingliMCPServer:
         else:
             return self.ziwei_formatter.format_palace_analysis_markdown(analysis)
 
-    def _tool_list_systems(self) -> str:
-        """工具：列出所有命理系统"""
+    def _tool_list_systems(self, args: Dict[str, Any]) -> str:
+        """工具：列出所有命理系统
+
+        可选参数：
+        - detailed: 是否输出更详细的信息（默认False）
+        """
         systems = list_systems()
+
+        detailed = bool(args.get("detailed", False))
 
         result = "# 可用的命理系统\n\n"
         for system_name in systems:
@@ -699,7 +712,7 @@ class MingliMCPServer:
                     status = "✅" if cap_value else "❌"
                     result += f"  - {cap_name}: {status}\n"
 
-                if hasattr(system, "get_supported_palaces"):
+                if detailed and hasattr(system, "get_supported_palaces"):
                     palaces = system.get_supported_palaces()
                     if palaces:
                         result += f"- **支持宫位**: {', '.join(palaces)}\n"
