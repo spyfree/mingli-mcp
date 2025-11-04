@@ -1,6 +1,6 @@
 {
   "name": "mingli-mcp",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "命理MCP服务 - 支持紫微斗数、八字等多种命理系统",
   "license": "MIT",
   "author": {
@@ -31,15 +31,6 @@
       "tools": true,
       "prompts": true,
       "resources": true
-    },
-    "smithery": {
-      "transport": "http",
-      "install": "pip install .[http]",
-      "env": {
-        "TRANSPORT_TYPE": "http",
-        "HTTP_HOST": "0.0.0.0",
-        "HTTP_PORT": "8080"
-      }
     }
   }
 }

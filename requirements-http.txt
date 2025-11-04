@@ -1,9 +1,0 @@
-# HTTP传输可选依赖
-# 仅在需要HTTP传输模式时安装这些依赖
-
-# 包含所有基础依赖
--r requirements.txt
-
-# HTTP传输支持
-fastapi>=0.104.0
-uvicorn[standard]>=0.24.0

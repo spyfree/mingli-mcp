@@ -15,6 +15,6 @@ python-dateutil>=2.8.0
 # 配置管理
 python-dotenv>=1.0.0
 
-# 注意: HTTP传输支持已移至可选依赖
-# 如需HTTP模式，请安装: pip install .[http]
-# 或使用: pip install -r requirements-http.txt
+# HTTP传输支持（用于 Smithery 部署）
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
