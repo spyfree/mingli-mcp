@@ -5,7 +5,12 @@
 runtime: python
 
 env:
+  # MCP server configuration
   TRANSPORT_TYPE: http
   HTTP_HOST: "0.0.0.0"
   HTTP_PORT: "8080"
   LOG_LEVEL: INFO
+
+  # Force uv to use pre-built wheels only (avoid building from source)
+  # This is critical for pythonmonkey which has pre-built wheels but requires npm to build from source
+  UV_ONLY_BINARY: ":all:"
