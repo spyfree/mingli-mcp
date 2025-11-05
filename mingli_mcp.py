@@ -57,6 +57,7 @@ class MingliMCPServer:
                     "  pip install mingli-mcp (which includes all dependencies)"
                 )
             from transports import HttpTransport
+
             self.transport = HttpTransport(
                 host=config.HTTP_HOST, port=config.HTTP_PORT, api_key=config.HTTP_API_KEY
             )
@@ -395,7 +396,7 @@ class MingliMCPServer:
                         "detailed": {
                             "type": "boolean",
                             "description": "是否输出更详细信息（默认 false）",
-                            "default": False
+                            "default": False,
                         }
                     },
                     "required": [],
