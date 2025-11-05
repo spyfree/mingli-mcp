@@ -13,9 +13,9 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from systems import get_system, clear_cache, list_systems
-from utils.metrics import get_metrics, record_request
-from utils.rate_limiter import RateLimiter
+from systems import get_system, clear_cache, list_systems  # noqa: E402
+from utils.metrics import get_metrics, record_request  # noqa: E402
+from utils.rate_limiter import RateLimiter  # noqa: E402
 
 
 def demo_system_cache():
@@ -86,7 +86,7 @@ def demo_rate_limiter():
         if not allowed:
             reset_time = limiter.get_reset_time(client_id)
             print(f"  重置时间: {reset_time.strftime('%H:%M:%S')}")
-            print(f"  提示: 请求已被限流，请稍后重试")
+            print("  提示: 请求已被限流，请稍后重试")
 
         time.sleep(0.5)
 
@@ -132,29 +132,29 @@ def demo_metrics():
     print("\n获取统计摘要:")
     summary = metrics.get_summary()
 
-    print(f"\n总体统计:")
+    print("\n总体统计:")
     print(f"  运行时间: {summary['uptime_seconds']:.2f}秒")
     print(f"  总请求数: {summary['total_requests']}")
     print(f"  成功请求: {summary['successful_requests']}")
     print(f"  失败请求: {summary['failed_requests']}")
     print(f"  成功率: {summary['success_rate']:.1f}%")
 
-    print(f"\n性能指标:")
+    print("\n性能指标:")
     print(f"  平均响应时间: {summary['average_response_time']:.3f}秒")
     print(f"  最小响应时间: {summary['min_response_time']:.3f}秒")
     print(f"  最大响应时间: {summary['max_response_time']:.3f}秒")
     print(f"  每秒请求数: {summary['requests_per_second']:.2f}")
 
-    print(f"\n系统调用:")
+    print("\n系统调用:")
     for system, count in summary["system_calls"].items():
         print(f"  {system}: {count}次")
 
-    print(f"\n最常调用的方法:")
+    print("\n最常调用的方法:")
     top_methods = metrics.get_top_methods(5)
     for i, (method, count) in enumerate(top_methods, 1):
         print(f"  {i}. {method}: {count}次")
 
-    print(f"\n错误统计:")
+    print("\n错误统计:")
     top_errors = metrics.get_top_errors(5)
     for i, (error, count) in enumerate(top_errors, 1):
         print(f"  {i}. {error}: {count}次")
@@ -205,7 +205,7 @@ def demo_list_systems():
 
         print(f"\n{i}. {system.get_system_name()} ({system_name})")
         print(f"   版本: {system.get_system_version()}")
-        print(f"   功能:")
+        print("   功能:")
         for cap_name, cap_value in capabilities.items():
             status = "✅" if cap_value else "❌"
             print(f"     {status} {cap_name}")
