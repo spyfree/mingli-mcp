@@ -6,13 +6,15 @@ HTTP传输层实现
 """
 
 import logging
-from typing import Any, Callable, Dict, Optional
+import secrets
+from typing import Any, Callable, Dict, List, Optional
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from config import config
 from utils.rate_limiter import RateLimiter
 
 from .base_transport import BaseTransport
@@ -31,6 +33,8 @@ class HttpTransport(BaseTransport):
         enable_rate_limit: bool = True,
         rate_limit_requests: int = 100,
         rate_limit_window: int = 60,
+        cors_origins: Optional[List[str]] = None,
+        cors_allow_credentials: bool = False,
     ):
         """
         初始化HTTP传输
@@ -42,6 +46,8 @@ class HttpTransport(BaseTransport):
             enable_rate_limit: 是否启用限流
             rate_limit_requests: 限流窗口内最大请求数
             rate_limit_window: 限流窗口大小（秒）
+            cors_origins: 允许的CORS来源列表
+            cors_allow_credentials: 是否允许携带凭证
         """
         self.host = host
         self.port = port
@@ -61,14 +67,31 @@ class HttpTransport(BaseTransport):
             title="Mingli MCP Server", description="命理MCP服务 - HTTP API", version="1.0.0"
         )
 
-        # 添加CORS支持
+        # CORS配置 - 从配置文件读取或使用参数
+        if cors_origins is None:
+            cors_origins = config.CORS_ORIGINS.split(",")
+
+        # 过滤空字符串
+        cors_origins = [origin.strip() for origin in cors_origins if origin.strip()]
+
+        # 如果没有配置，使用安全默认值
+        if not cors_origins:
+            cors_origins = ["http://localhost:3000", "http://localhost:8080"]
+            logger.warning(
+                "No CORS origins configured, using default: localhost only. "
+                "Set CORS_ORIGINS environment variable for production."
+            )
+
+        # 添加CORS支持（安全配置）
         self.app.add_middleware(
             CORSMiddleware,
-            allow_origins=["*"],
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
+            allow_origins=cors_origins,
+            allow_credentials=cors_allow_credentials or config.CORS_ALLOW_CREDENTIALS,
+            allow_methods=["GET", "POST", "OPTIONS"],  # 只允许必要的方法
+            allow_headers=["Content-Type", "Authorization"],  # 只允许必要的头
         )
+
+        logger.info(f"CORS enabled for origins: {cors_origins}")
 
         self._setup_routes()
         logger.info(f"HTTP transport initialized on {host}:{port}")
@@ -102,9 +125,12 @@ class HttpTransport(BaseTransport):
             """获取限流器统计信息（需要API key）"""
             # API密钥验证
             if self.api_key:
-                auth_header = request.headers.get("Authorization")
-                if not auth_header or auth_header != f"Bearer {self.api_key}":
-                    raise HTTPException(status_code=401, detail="Invalid API key")
+                auth_header = request.headers.get("Authorization", "")
+                expected = f"Bearer {self.api_key}"
+                # 使用常量时间比较防止时序攻击
+                if not auth_header or not secrets.compare_digest(auth_header, expected):
+                    logger.warning("Invalid API key attempt for /stats endpoint")
+                    raise HTTPException(status_code=401, detail="Unauthorized")
 
             if not self.enable_rate_limit:
                 return {"rate_limiting": False, "message": "Rate limiting is disabled"}
@@ -140,10 +166,14 @@ class HttpTransport(BaseTransport):
 
             # API密钥验证（如果配置了）
             if self.api_key:
-                auth_header = request.headers.get("Authorization")
-                if not auth_header or auth_header != f"Bearer {self.api_key}":
-                    raise HTTPException(status_code=401, detail="Invalid API key")
+                auth_header = request.headers.get("Authorization", "")
+                expected = f"Bearer {self.api_key}"
+                # 使用常量时间比较防止时序攻击
+                if not auth_header or not secrets.compare_digest(auth_header, expected):
+                    logger.warning(f"Invalid API key attempt from {client_id}")
+                    raise HTTPException(status_code=401, detail="Unauthorized")
 
+            data = None
             try:
                 # 获取请求数据
                 data = await request.json()
@@ -161,13 +191,21 @@ class HttpTransport(BaseTransport):
 
                 return JSONResponse(content=response)
 
+            except HTTPException:
+                # FastAPI 异常直接抛出
+                raise
             except Exception as e:
+                # 记录完整错误详情到日志
                 logger.exception("Error handling MCP request")
+                # 返回通用错误消息，不暴露内部实现细节
                 return JSONResponse(
                     content={
                         "jsonrpc": "2.0",
-                        "error": {"code": -32603, "message": f"Internal error: {str(e)}"},
-                        "id": data.get("id"),
+                        "error": {
+                            "code": -32603,
+                            "message": "Internal server error"
+                        },
+                        "id": data.get("id") if data else None,
                     },
                     status_code=500,
                 )

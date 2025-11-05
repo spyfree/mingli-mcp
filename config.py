@@ -61,6 +61,11 @@ class Config:
     HTTP_PORT: int = int(os.getenv("HTTP_PORT", "8080"))
     HTTP_API_KEY: str = os.getenv("HTTP_API_KEY", "")
 
+    # CORS配置（安全性）
+    # 默认只允许本地访问，生产环境应明确指定允许的域名
+    CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8080")
+    CORS_ALLOW_CREDENTIALS: bool = os.getenv("CORS_ALLOW_CREDENTIALS", "false").lower() == "true"
+
     # WebSocket传输配置（预留）
     WS_HOST: str = os.getenv("WS_HOST", "0.0.0.0")
     WS_PORT: int = int(os.getenv("WS_PORT", "8081"))
