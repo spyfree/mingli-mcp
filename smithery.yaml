@@ -6,42 +6,20 @@ runtime: "container"
 startCommand:
   type: "http"
 
-  # All configuration is optional - server works out of the box without any config
-  # The following environment variables can be customized if needed:
+  # No configuration required! Server works out of the box.
+  # All settings have sensible defaults provided in the env: section below.
   #
-  # LOG_LEVEL (string, default: "INFO") - Logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL
-  # TRANSPORT_TYPE (string, default: "stdio") - Transport protocol: stdio or http
-  # HTTP_HOST (string, default: "0.0.0.0") - HTTP server host (http transport only)
-  # HTTP_PORT (number, default: 8080) - HTTP server port (http transport only)
-  # HTTP_API_KEY (string, default: "") - Optional API key for HTTP authentication
-  # DEFAULT_LANGUAGE (string, default: "zh-CN") - Default language for responses
+  # Optional: Users can override these environment variables if needed:
+  # - LOG_LEVEL: Logging level (DEBUG/INFO/WARNING/ERROR/CRITICAL)
+  # - HTTP_HOST: HTTP server host (default: 0.0.0.0)
+  # - HTTP_PORT: HTTP server port (default: 8080)
+  # - HTTP_API_KEY: Optional API key for authentication
+  # - DEFAULT_LANGUAGE: Response language (default: zh-CN)
   #
-  # No configuration is required. All fields have sensible defaults.
+  # But no configuration is required to run the server!
   configSchema:
-    properties:
-      LOG_LEVEL:
-        type: "string"
-        default: "INFO"
-      TRANSPORT_TYPE:
-        type: "string"
-        default: "stdio"
-      HTTP_HOST:
-        type: "string"
-        default: "0.0.0.0"
-      HTTP_PORT:
-        type: "number"
-        default: 8080
-      HTTP_API_KEY:
-        type: "string"
-        default: ""
-      DEFAULT_LANGUAGE:
-        type: "string"
-        default: "zh-CN"
+    properties: {}
     required: []
-
-  # Example: customize logging level (optional)
-  exampleConfig:
-    LOG_LEVEL: "DEBUG"
 
 build:
   dockerfile: "Dockerfile"
