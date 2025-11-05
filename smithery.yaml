@@ -1,10 +1,17 @@
 # Smithery configuration for Mingli MCP Server
-# For Python runtime, only 'runtime' and 'env' fields are allowed
+# Using container runtime to use our custom Dockerfile (which has Node.js for pythonmonkey)
 
-# Python runtime - no configuration required!
-runtime: python
+runtime: container
 
-# Optional environment variables (no configuration required to run)
+startCommand:
+  type: http
+
+build:
+  dockerfile: Dockerfile
+  dockerBuildPath: .
+
 env:
+  TRANSPORT_TYPE: http
+  HTTP_HOST: 0.0.0.0
+  HTTP_PORT: 8080
   LOG_LEVEL: INFO
-  TRANSPORT_TYPE: stdio
