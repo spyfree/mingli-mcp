@@ -13,6 +13,7 @@ from .stdio_transport import StdioTransport
 # 延迟导入 HTTP 传输（需要 uvicorn 依赖）
 try:
     from .http_transport import HttpTransport
+
     HTTP_TRANSPORT_AVAILABLE = True
 except ImportError:
     HttpTransport = None

@@ -201,10 +201,7 @@ class HttpTransport(BaseTransport):
                 return JSONResponse(
                     content={
                         "jsonrpc": "2.0",
-                        "error": {
-                            "code": -32603,
-                            "message": "Internal server error"
-                        },
+                        "error": {"code": -32603, "message": "Internal server error"},
                         "id": data.get("id") if data else None,
                     },
                     status_code=500,
