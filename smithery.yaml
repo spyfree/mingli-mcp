@@ -1,17 +1,11 @@
 # Smithery configuration for Mingli MCP Server
-# Using container runtime to use our custom Dockerfile (which has Node.js for pythonmonkey)
+# Python runtime (Smithery only accepts 'python' or 'typescript', not 'container')
+# Note: HTTP_PORT must be string, not number
 
-runtime: container
-
-startCommand:
-  type: http
-
-build:
-  dockerfile: Dockerfile
-  dockerBuildPath: .
+runtime: python
 
 env:
   TRANSPORT_TYPE: http
-  HTTP_HOST: 0.0.0.0
-  HTTP_PORT: 8080
+  HTTP_HOST: "0.0.0.0"
+  HTTP_PORT: "8080"
   LOG_LEVEL: INFO
