@@ -6,42 +6,40 @@ runtime: "container"
 startCommand:
   type: "http"
 
-  # Configuration schema - all fields are optional with sensible defaults
-  # Users can run the server without any configuration
+  # All configuration is optional - server works out of the box without any config
+  # The following environment variables can be customized if needed:
+  #
+  # LOG_LEVEL (string, default: "INFO") - Logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  # TRANSPORT_TYPE (string, default: "stdio") - Transport protocol: stdio or http
+  # HTTP_HOST (string, default: "0.0.0.0") - HTTP server host (http transport only)
+  # HTTP_PORT (number, default: 8080) - HTTP server port (http transport only)
+  # HTTP_API_KEY (string, default: "") - Optional API key for HTTP authentication
+  # DEFAULT_LANGUAGE (string, default: "zh-CN") - Default language for responses
+  #
+  # No configuration is required. All fields have sensible defaults.
   configSchema:
-    type: "object"
-    description: "All configuration is optional. The server works out of the box without any config."
     properties:
       LOG_LEVEL:
         type: "string"
-        description: "Logging level for debugging"
         default: "INFO"
-        enum: ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
       TRANSPORT_TYPE:
         type: "string"
-        description: "Transport protocol (stdio for local, http for Docker)"
         default: "stdio"
-        enum: ["stdio", "http"]
       HTTP_HOST:
         type: "string"
-        description: "HTTP server host (only for http transport)"
         default: "0.0.0.0"
       HTTP_PORT:
-        type: "integer"
-        description: "HTTP server port (only for http transport)"
+        type: "number"
         default: 8080
       HTTP_API_KEY:
         type: "string"
-        description: "Optional API key for HTTP authentication"
         default: ""
       DEFAULT_LANGUAGE:
         type: "string"
-        description: "Default language for responses"
         default: "zh-CN"
     required: []
-    additionalProperties: false
 
-  # Example showing optional customization (not required to run)
+  # Example: customize logging level (optional)
   exampleConfig:
     LOG_LEVEL: "DEBUG"
 
