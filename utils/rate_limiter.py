@@ -6,8 +6,8 @@
 
 import time
 from collections import defaultdict, deque
-from typing import Dict, Optional
 from datetime import datetime, timedelta
+from typing import Dict, Optional
 
 
 class RateLimiter:

@@ -4,7 +4,6 @@
 提供请求性能统计、系统调用监控等功能
 """
 
-import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from threading import Lock

@@ -6,15 +6,14 @@
 """
 
 import sys
+from datetime import datetime
 from pathlib import Path
+
+from systems import get_system
 
 # 添加项目根目录到路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
-
-from datetime import datetime
-
-from systems import get_system
 
 
 def test_bazi_chart():
@@ -92,11 +91,11 @@ def test_bazi_fortune():
     print(f"当前年龄: {fortune['age']}岁")
     print(f"日主: {fortune['day_master']}")
 
-    print(f"\n大运:")
+    print("\n大运:")
     print(f"  {fortune['da_yun']['description']}")
     print(f"  年龄范围: {fortune['da_yun']['age_range']}")
 
-    print(f"\n流年:")
+    print("\n流年:")
     print(f"  {fortune['liu_nian']['year']}年")
     print(f"  干支: {fortune['liu_nian']['gan_zhi']}")
     print(f"  生肖: {fortune['liu_nian']['zodiac']}")

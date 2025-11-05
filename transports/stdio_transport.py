@@ -37,7 +37,7 @@ class StdioTransport(BaseTransport):
                     self.send_message(response)
         except KeyboardInterrupt:
             logger.info("Received keyboard interrupt")
-        except Exception as e:
+        except Exception:
             logger.exception("Error in message loop")
         finally:
             self.stop()
@@ -59,7 +59,7 @@ class StdioTransport(BaseTransport):
             sys.stdout.write(json_str + "\n")
             sys.stdout.flush()
             logger.debug(f"Sent message: {json_str[:200]}...")
-        except Exception as e:
+        except Exception:
             logger.exception("Error sending message")
 
     def receive_message(self) -> Optional[Dict[str, Any]]:
@@ -85,6 +85,6 @@ class StdioTransport(BaseTransport):
         except json.JSONDecodeError as e:
             logger.error(f"JSON decode error: {e}")
             return None
-        except Exception as e:
+        except Exception:
             logger.exception("Error receiving message")
             return None

@@ -6,7 +6,6 @@
 
 import re
 import sys
-from pathlib import Path
 
 
 def test_path_traversal_fix():
@@ -58,10 +57,10 @@ def test_timing_attack_fix():
 
     # 检查是否移除了直接字符串比较
     if re.search(r'auth_header\s*!=\s*f"Bearer', content):
-        print(f"  ❌ 仍在使用不安全的字符串比较")
+        print("  ❌ 仍在使用不安全的字符串比较")
         return False
 
-    print(f"  ✅ 已移除不安全的字符串比较")
+    print("  ✅ 已移除不安全的字符串比较")
     passed += 1
 
     return passed == len(checks) + 1
@@ -91,7 +90,7 @@ def test_info_disclosure_fix():
 
     # 检查是否移除了详细错误暴露
     if re.search(r'"message":\s*f"Internal error:\s*\{str\(e\)\}"', content):
-        print(f"  ❌ 仍在暴露详细错误信息")
+        print("  ❌ 仍在暴露详细错误信息")
         return False
 
     return passed == len(checks)
@@ -142,10 +141,10 @@ def test_cors_hardening():
 
     # 检查是否移除了 allow_origins=["*"]
     if re.search(r'allow_origins=\["\*"\]', transport_content):
-        print(f"  ❌ 仍在使用不安全的 CORS 配置 (allow all)")
+        print("  ❌ 仍在使用不安全的 CORS 配置 (allow all)")
         return False
 
-    print(f"  ✅ 已移除不安全的通配符配置")
+    print("  ✅ 已移除不安全的通配符配置")
     passed += 1
 
     return passed == total + 1

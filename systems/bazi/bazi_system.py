@@ -289,8 +289,6 @@ class BaziSystem(BaseFortuneSystem):
             query_date = datetime.now()
 
         try:
-            lunar = self._get_lunar_object(birth_info)
-
             # 获取基本八字
             chart = self.get_chart(birth_info)
 
@@ -405,7 +403,6 @@ class BaziSystem(BaseFortuneSystem):
 
         if birth_info.get("calendar", "solar") == "lunar":
             # 农历
-            is_leap = birth_info.get("is_leap_month", False)
             lunar = Lunar.fromYmd(year, month, day)
             # lunar_python 需要用Solar来设置时间
             solar = Solar.fromYmdHms(

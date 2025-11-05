@@ -6,14 +6,12 @@
 支持多种传输方式（stdio、HTTP、WebSocket）
 """
 
-import logging
 import sys
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from config import config
 from core.exceptions import (
-    ConfigError,
     SystemError,
     SystemNotFoundError,
     ToolCallError,
@@ -22,7 +20,7 @@ from core.exceptions import (
 from systems import get_system, list_systems
 from systems.bazi.formatter import BaziFormatter
 from systems.ziwei.formatter import ZiweiFormatter
-from transports import HttpTransport, StdioTransport
+from transports import StdioTransport
 from utils.formatters import format_error_response, format_success_response
 
 logger = config.get_logger(__name__)
@@ -830,7 +828,6 @@ class MingliMCPServer:
 
     def _handle_prompts_get(self, request: Dict[str, Any], request_id: Any) -> Dict[str, Any]:
         """处理获取提示词请求"""
-        import os
         from pathlib import Path
 
         params = request.get("params", {})
@@ -1368,7 +1365,7 @@ def main():
         server.start()
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
-    except Exception as e:
+    except Exception:
         logger.exception("Fatal error")
         sys.exit(1)
 
