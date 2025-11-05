@@ -830,6 +830,7 @@ class MingliMCPServer:
     def _handle_prompts_get(self, request: Dict[str, Any], request_id: Any) -> Dict[str, Any]:
         """处理获取提示词请求"""
         import os
+        from pathlib import Path
 
         params = request.get("params", {})
         name = params.get("name")
@@ -838,10 +839,22 @@ class MingliMCPServer:
         if not name:
             return format_error_response(-32602, "Prompt name is required", request_id)
 
-        prompts_dir = os.path.join(os.path.dirname(__file__), "prompts")
-        filepath = os.path.join(prompts_dir, f"{name}.md")
+        # 安全性：验证文件名，防止路径遍历攻击
+        if "/" in name or "\\" in name or name.startswith(".") or ".." in name:
+            logger.warning(f"Potential path traversal attempt: {name}")
+            return format_error_response(-32602, "Invalid prompt name", request_id)
 
-        if not os.path.exists(filepath):
+        prompts_dir = Path(__file__).parent / "prompts"
+        filepath = prompts_dir / f"{name}.md"
+
+        # 确保目标文件在 prompts 目录内
+        try:
+            filepath.resolve().relative_to(prompts_dir.resolve())
+        except ValueError:
+            logger.warning(f"Path traversal blocked: {filepath}")
+            return format_error_response(-32602, "Invalid prompt path", request_id)
+
+        if not filepath.exists():
             return format_error_response(-32602, f"Prompt not found: {name}", request_id)
 
         with open(filepath, "r", encoding="utf-8") as f:
