@@ -1,32 +1,67 @@
 # Smithery configuration for Mingli MCP Server
 # See: https://smithery.ai/docs/build/project-config/smithery-yaml
 
-runtime: "container"
+name: mingli-mcp
+displayName: 命理MCP服务器 | Mingli MCP Server
+description: 支持紫微斗数、八字等多种中国传统命理系统的MCP服务器 | MCP server for Chinese fortune-telling systems (Ziwei Doushu, BaZi, etc.)
+version: 1.0.10
+author: spyfree
+license: MIT
+homepage: https://github.com/spyfree/mingli-mcp
+repository: https://github.com/spyfree/mingli-mcp
 
-startCommand:
-  type: "http"
+# Python runtime - no configuration required!
+runtime: python
 
-  # No configuration required! Server works out of the box.
-  # All settings have sensible defaults provided in the env: section below.
-  #
-  # Optional: Users can override these environment variables if needed:
-  # - LOG_LEVEL: Logging level (DEBUG/INFO/WARNING/ERROR/CRITICAL)
-  # - HTTP_HOST: HTTP server host (default: 0.0.0.0)
-  # - HTTP_PORT: HTTP server port (default: 8080)
-  # - HTTP_API_KEY: Optional API key for authentication
-  # - DEFAULT_LANGUAGE: Response language (default: zh-CN)
-  #
-  # But no configuration is required to run the server!
-  configSchema:
-    properties: {}
-    required: []
+# Categories
+categories:
+  - fortune-telling
+  - astrology
+  - chinese-culture
+  - traditional
 
-build:
-  dockerfile: "Dockerfile"
-  dockerBuildPath: "."
+# Tags
+tags:
+  - ziwei
+  - bazi
+  - fortune
+  - astrology
+  - chinese
+  - 紫微斗数
+  - 八字
 
-env:
-  TRANSPORT_TYPE: "http"
-  HTTP_HOST: "0.0.0.0"
-  HTTP_PORT: "8080"
-  LOG_LEVEL: "INFO"
+# Installation via PyPI
+installation:
+  type: pypi
+  package: mingli-mcp
+
+# Claude Desktop configuration - no config needed!
+config:
+  mcpServers:
+    mingli:
+      command: uvx
+      args:
+        - mingli-mcp
+
+# Available tools
+tools:
+  - name: get_ziwei_chart
+    description: Get Ziwei Doushu natal chart with 12 palaces, stars, and transformations
+  - name: get_ziwei_fortune
+    description: Get Ziwei fortune analysis (decadal, yearly, monthly, daily)
+  - name: analyze_ziwei_palace
+    description: Analyze specific palace in Ziwei chart
+  - name: get_bazi_chart
+    description: Get BaZi (Four Pillars) chart with stems, branches, and ten gods
+  - name: get_bazi_fortune
+    description: Get BaZi fortune analysis (major luck periods, yearly)
+  - name: analyze_bazi_element
+    description: Analyze five elements strength and balance in BaZi
+  - name: list_fortune_systems
+    description: List all available fortune-telling systems
+
+# Additional links
+links:
+  documentation: https://github.com/spyfree/mingli-mcp/blob/main/README.md
+  issues: https://github.com/spyfree/mingli-mcp/issues
+
