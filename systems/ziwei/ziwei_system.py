@@ -15,10 +15,6 @@ from .formatter import ZiweiFormatter
 
 logger = logging.getLogger(__name__)
 
-# 使用 TYPE_CHECKING 避免运行时导入错误
-if TYPE_CHECKING:
-    from py_iztro import Astro
-
 try:
     from py_iztro import Astro
 
@@ -28,7 +24,8 @@ except ImportError:
     logger.warning("py-iztro not installed, ZiweiSystem will not work")
     PYIZTRO_AVAILABLE = False
     astro = None  # type: ignore
-    Astro = None  # type: ignore
+    if not TYPE_CHECKING:
+        Astro = None  # type: ignore
 
 
 class ZiweiSystem(BaseFortuneSystem):
@@ -65,7 +62,7 @@ class ZiweiSystem(BaseFortuneSystem):
             import pyiztro
 
             return getattr(pyiztro, "__version__", "1.0.0")
-        except:
+        except Exception:
             return "1.0.0"
 
     def get_chart(self, birth_info: Dict[str, Any]) -> Dict[str, Any]:

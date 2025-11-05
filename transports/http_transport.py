@@ -194,7 +194,7 @@ class HttpTransport(BaseTransport):
             except HTTPException:
                 # FastAPI 异常直接抛出
                 raise
-            except Exception as e:
+            except Exception:
                 # 记录完整错误详情到日志
                 logger.exception("Error handling MCP request")
                 # 返回通用错误消息，不暴露内部实现细节
