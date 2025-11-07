@@ -523,6 +523,58 @@ pytest tests/
 python -m systems.ziwei.ziwei_system
 ```
 
+## ⚙️ 配置说明
+
+本服务采用**零配置设计**，所有配置都是可选的，服务器无需任何配置即可直接运行。
+
+### 可用环境变量
+
+如果需要自定义行为，可通过以下环境变量进行配置：
+
+| 环境变量 | 描述 | 默认值 | 示例 |
+|---------|------|--------|------|
+| `LOG_LEVEL` | 日志级别 | `INFO` | `DEBUG`, `INFO`, `WARNING`, `ERROR` |
+| `TRANSPORT_TYPE` | 传输协议类型 | `stdio` | `stdio`, `http` |
+| `HTTP_HOST` | HTTP监听地址（仅http模式） | `0.0.0.0` | `127.0.0.1`, `0.0.0.0` |
+| `HTTP_PORT` | HTTP监听端口（仅http模式） | `8080` | `8080`, `3000` |
+| `HTTP_API_KEY` | HTTP API密钥（可选） | `""` | `your-secret-key` |
+| `DEFAULT_LANGUAGE` | 默认输出语言 | `zh-CN` | `zh-CN`, `zh-TW`, `en-US`, `ja-JP`, `ko-KR`, `vi-VN` |
+
+### 配置方法
+
+**方法1: 在MCP配置中设置**
+```json
+{
+  "mcpServers": {
+    "mingli": {
+      "command": "uvx",
+      "args": ["mingli-mcp"],
+      "env": {
+        "LOG_LEVEL": "DEBUG",
+        "DEFAULT_LANGUAGE": "zh-TW"
+      }
+    }
+  }
+}
+```
+
+**方法2: 使用 .env 文件**
+```bash
+# 创建 .env 文件
+cat > .env << EOF
+LOG_LEVEL=INFO
+DEFAULT_LANGUAGE=zh-CN
+TRANSPORT_TYPE=stdio
+EOF
+```
+
+**方法3: 系统环境变量**
+```bash
+export LOG_LEVEL=DEBUG
+export DEFAULT_LANGUAGE=zh-CN
+python mingli_mcp.py
+```
+
 ## 📝 依赖说明
 
 - **iztro-py**: 紫微斗数核心库（纯 Python 实现，性能比 py-iztro 提升 10 倍）
