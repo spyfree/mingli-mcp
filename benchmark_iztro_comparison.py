@@ -257,8 +257,8 @@ def test_api_compatibility():
     issues = []
 
     try:
-        from py_iztro import Astro as PyIztroAstro
         from iztro_py import astro as iztro_astro
+        from py_iztro import Astro as PyIztroAstro
 
         # 测试 by_solar
         print("\n4.1 测试 by_solar() 方法...")

@@ -13,8 +13,8 @@ def test_basic_api():
     print("API 兼容性详细分析")
     print("=" * 70)
 
-    from py_iztro import Astro as PyIztroAstro
     from iztro_py import astro as iztro_astro
+    from py_iztro import Astro as PyIztroAstro
 
     test_data = {"date": "2000-8-16", "time_index": 2, "gender": "男"}
 
@@ -192,8 +192,8 @@ def test_lunar_api():
     print("\n8. 农历日期支持")
     print("-" * 70)
 
-    from py_iztro import Astro as PyIztroAstro
     from iztro_py import astro as iztro_astro
+    from py_iztro import Astro as PyIztroAstro
 
     test_data = {
         "date": "2000-06-15",  # 农历
