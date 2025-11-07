@@ -6,54 +6,17 @@ runtime: "container"
 startCommand:
   type: "http"
 
-  # Configuration schema - all fields are optional with sensible defaults
+  # Configuration schema - no user configuration required
+  # All settings are pre-configured through container environment variables
   configSchema:
     type: "object"
-    description: "命理MCP服务配置。所有配置都是可选的，服务器可以在没有任何配置的情况下运行。"
-    properties:
-      LOG_LEVEL:
-        type: "string"
-        description: "日志级别，用于调试和监控服务器运行状态"
-        default: "INFO"
-        enum: ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-        examples:
-          - "INFO"
-          - "DEBUG"
-      DEFAULT_LANGUAGE:
-        type: "string"
-        description: "默认输出语言"
-        default: "zh-CN"
-        examples:
-          - "zh-CN"
-          - "en-US"
-      HTTP_API_KEY:
-        type: "string"
-        description: "HTTP API 访问密钥（可选）。如果设置，客户端需要在请求头中提供此密钥"
-        default: ""
-        examples:
-          - "your-secret-api-key-here"
-      CORS_ORIGINS:
-        type: "string"
-        description: "允许的 CORS 跨域来源，多个来源用逗号分隔"
-        default: "http://localhost:3000,http://localhost:8080"
-        examples:
-          - "http://localhost:3000"
-          - "https://yourdomain.com,https://app.yourdomain.com"
-      CORS_ALLOW_CREDENTIALS:
-        type: "string"
-        description: "是否允许 CORS 请求携带凭证（cookies）"
-        default: "false"
-        enum: ["true", "false"]
-        examples:
-          - "false"
-          - "true"
+    description: "服务器运行无需任何配置，所有设置通过容器环境变量预配置。用户可直接使用，无需额外设置。"
+    properties: {}
     required: []
     additionalProperties: false
 
-  # Example config - demonstrates optional customization
-  exampleConfig:
-    LOG_LEVEL: "DEBUG"
-    DEFAULT_LANGUAGE: "zh-CN"
+  # Example config - empty because no configuration is needed
+  exampleConfig: {}
 
 build:
   dockerfile: "Dockerfile"
