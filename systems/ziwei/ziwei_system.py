@@ -1,12 +1,12 @@
 """
 紫微斗数系统实现
 
-基于py-iztro库实现紫微斗数排盘和分析
+基于iztro-py库实现紫微斗数排盘和分析
 """
 
 import logging
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import Any, Dict, Optional
 
 from core.base_system import BaseFortuneSystem
 from core.exceptions import DependencyError, SystemError, ValidationError
@@ -16,22 +16,19 @@ from .formatter import ZiweiFormatter
 logger = logging.getLogger(__name__)
 
 try:
-    from py_iztro import Astro
+    from iztro_py import astro
 
-    astro = Astro()
-    PYIZTRO_AVAILABLE = True
+    IZTRO_AVAILABLE = True
 except ImportError:
-    logger.warning("py-iztro not installed, ZiweiSystem will not work")
-    PYIZTRO_AVAILABLE = False
+    logger.warning("iztro-py not installed, ZiweiSystem will not work")
+    IZTRO_AVAILABLE = False
     astro = None  # type: ignore
-    if not TYPE_CHECKING:
-        Astro = None  # type: ignore
 
 
 class ZiweiSystem(BaseFortuneSystem):
     """紫微斗数系统实现"""
 
-    # 十二宫位名称
+    # 十二宫位名称（中文）
     PALACES = [
         "命宫",
         "兄弟",
@@ -47,10 +44,26 @@ class ZiweiSystem(BaseFortuneSystem):
         "父母",
     ]
 
+    # 中英文宫位名称映射（iztro-py 使用英文名称）
+    PALACE_NAME_MAP = {
+        "命宫": "soulPalace",
+        "兄弟": "siblingsPalace",
+        "夫妻": "spousePalace",
+        "子女": "childrenPalace",
+        "财帛": "wealthPalace",
+        "疾厄": "healthPalace",
+        "迁移": "surfacePalace",
+        "仆役": "friendsPalace",
+        "官禄": "careerPalace",
+        "田宅": "propertyPalace",
+        "福德": "spiritPalace",
+        "父母": "parentsPalace",
+    }
+
     def __init__(self):
-        if not PYIZTRO_AVAILABLE:
+        if not IZTRO_AVAILABLE:
             raise DependencyError(
-                "py-iztro library is not installed. Please install it with: pip install py-iztro"
+                "iztro-py library is not installed. Please install it with: pip install iztro-py"
             )
         self.formatter = ZiweiFormatter()
 
@@ -59,11 +72,31 @@ class ZiweiSystem(BaseFortuneSystem):
 
     def get_system_version(self) -> str:
         try:
-            import pyiztro
+            import iztro_py
 
-            return getattr(pyiztro, "__version__", "1.0.0")
+            return getattr(iztro_py, "__version__", "0.1.0")
         except Exception:
-            return "1.0.0"
+            return "0.1.0"
+
+    def _convert_datetime_for_horoscope(self, dt: datetime) -> tuple:
+        """
+        转换 datetime 为 iztro-py horoscope 方法所需格式
+
+        Args:
+            dt: datetime 对象
+
+        Returns:
+            (date_str, hour_index) 元组
+            - date_str: "YYYY-M-D" 格式（月和日不补零）
+            - hour_index: 时辰索引 0-11（每个时辰2小时）
+        """
+        # 格式化日期字符串，去掉月份和日期的前导零
+        date_str = f"{dt.year}-{dt.month}-{dt.day}"
+
+        # 计算时辰索引（0-11，每个时辰2小时）
+        hour_index = dt.hour // 2
+
+        return date_str, hour_index
 
     def get_chart(self, birth_info: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -135,8 +168,9 @@ class ZiweiSystem(BaseFortuneSystem):
                     birth_info["date"], birth_info["time_index"], birth_info["gender"]
                 )
 
-            # 获取运势
-            horoscope = astrolabe.horoscope(query_date)
+            # 获取运势（iztro-py 需要日期字符串和时辰索引）
+            date_str, hour_index = self._convert_datetime_for_horoscope(query_date)
+            horoscope = astrolabe.horoscope(date_str, hour_index)
 
             # 格式化输出
             return self.formatter.format_fortune(horoscope, query_date)
@@ -156,7 +190,7 @@ class ZiweiSystem(BaseFortuneSystem):
 
         Args:
             birth_info: 生辰信息
-            palace_name: 宫位名称
+            palace_name: 宫位名称（中文，如"命宫"）
 
         Returns:
             宫位详细分析
@@ -169,10 +203,10 @@ class ZiweiSystem(BaseFortuneSystem):
         self.validate_birth_info(birth_info)
 
         try:
-            # 获取完整星盘
+            # 获取完整星盘（formatter 已经将宫位名转换为中文）
             chart = self.get_chart(birth_info)
 
-            # 找到指定宫位
+            # 找到指定宫位（直接匹配中文名）
             target_palace = None
             for palace in chart["palaces"]:
                 if palace["name"] == palace_name:

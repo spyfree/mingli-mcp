@@ -1,7 +1,7 @@
 """
 紫微斗数结果格式化器
 
-将py-iztro返回的数据格式化为易读的Markdown格式
+将iztro-py返回的数据格式化为易读的Markdown格式
 """
 
 from datetime import datetime
@@ -9,14 +9,43 @@ from typing import Any, Dict, List
 
 
 class ZiweiFormatter:
-    """紫微斗数格式化器"""
+    """紫微斗数格式化器（使用 iztro-py 0.3.0+ 的国际化功能）"""
+
+    # 天干地支映射（用于运势对象，因为 HoroscopeItem 没有 translate 方法）
+    HEAVENLY_STEMS = {
+        "jiaHeavenly": "甲",
+        "yiHeavenly": "乙",
+        "bingHeavenly": "丙",
+        "dingHeavenly": "丁",
+        "wuHeavenly": "戊",
+        "jiHeavenly": "己",
+        "gengHeavenly": "庚",
+        "xinHeavenly": "辛",
+        "renHeavenly": "壬",
+        "guiHeavenly": "癸",
+    }
+
+    EARTHLY_BRANCHES = {
+        "ziEarthly": "子",
+        "chouEarthly": "丑",
+        "yinEarthly": "寅",
+        "maoEarthly": "卯",
+        "chenEarthly": "辰",
+        "siEarthly": "巳",
+        "wuEarthly": "午",
+        "weiEarthly": "未",
+        "shenEarthly": "申",
+        "youEarthly": "酉",
+        "xuEarthly": "戌",
+        "haiEarthly": "亥",
+    }
 
     def format_chart(self, astrolabe) -> Dict[str, Any]:
         """
         格式化星盘数据
 
         Args:
-            astrolabe: py-iztro返回的astrolabe对象
+            astrolabe: iztro-py返回的astrolabe对象
 
         Returns:
             格式化后的星盘数据字典
@@ -73,7 +102,7 @@ class ZiweiFormatter:
         格式化运势数据
 
         Args:
-            horoscope: py-iztro返回的horoscope对象
+            horoscope: iztro-py返回的horoscope对象
             query_date: 查询日期
 
         Returns:
@@ -233,16 +262,23 @@ class ZiweiFormatter:
         return md
 
     def _format_palaces(self, palaces) -> List[Dict[str, Any]]:
-        """格式化十二宫数据"""
+        """格式化十二宫数据（使用 iztro-py 0.3.0 的翻译方法）"""
         result = []
         for palace in palaces:
+            # 使用 translate_name() 获取中文宫位名（iztro-py 0.3.0+）
+            chinese_name = palace.translate_name()
+
+            # 使用翻译方法获取中文天干地支
+            heavenly_stem = palace.translate_heavenly_stem()
+            earthly_branch = palace.translate_earthly_branch()
+
             result.append(
                 {
-                    "name": palace.name,
+                    "name": chinese_name,
                     "is_body_palace": palace.is_body_palace,
                     "is_original_palace": palace.is_original_palace,
-                    "heavenly_stem": palace.heavenly_stem,
-                    "earthly_branch": palace.earthly_branch,
+                    "heavenly_stem": heavenly_stem,
+                    "earthly_branch": earthly_branch,
                     "major_stars": [self._format_star(s) for s in palace.major_stars],
                     "minor_stars": [self._format_star(s) for s in palace.minor_stars],
                     "adjective_stars": [self._format_star(s) for s in palace.adjective_stars],
@@ -256,30 +292,53 @@ class ZiweiFormatter:
         return result
 
     def _format_star(self, star) -> Dict[str, str]:
-        """格式化星曜数据"""
+        """格式化星曜数据（使用 iztro-py 0.3.0 的翻译方法）"""
+        # 使用 translate_name() 获取中文星曜名
+        star_name = star.translate_name() if hasattr(star, "translate_name") else star.name
+
+        # 使用 translate_brightness() 获取中文亮度描述
+        brightness = ""
+        if hasattr(star, "translate_brightness") and star.brightness:
+            try:
+                brightness = star.translate_brightness()
+            except Exception:
+                brightness = getattr(star, "brightness", "")
+        else:
+            brightness = getattr(star, "brightness", "")
+
         return {
-            "name": star.name,
+            "name": star_name,
             "type": star.type,
-            "brightness": getattr(star, "brightness", ""),
+            "brightness": brightness,
             "scope": getattr(star, "scope", "origin"),
         }
 
     def _format_stage(self, stage) -> Dict[str, Any]:
-        """格式化大限数据"""
+        """格式化大限数据（使用 iztro-py 0.3.0 的翻译方法）"""
         if hasattr(stage, "range"):
+            # 使用翻译方法获取中文天干
+            heavenly_stem = (
+                stage.translate_heavenly_stem()
+                if hasattr(stage, "translate_heavenly_stem")
+                else stage.heavenly_stem
+            )
             return {
                 "range": list(stage.range),
-                "heavenly_stem": stage.heavenly_stem,
+                "heavenly_stem": heavenly_stem,
             }
         return {}
 
     def _format_limit(self, limit, name: str) -> Dict[str, Any]:
-        """格式化运限数据"""
+        """格式化运限数据（运势对象没有 translate 方法，使用映射表）"""
+        # HoroscopeItem 没有 translate 方法，使用映射表翻译
+        heavenly_stem = self.HEAVENLY_STEMS.get(limit.heavenly_stem, limit.heavenly_stem)
+        earthly_branch = self.EARTHLY_BRANCHES.get(limit.earthly_branch, limit.earthly_branch)
+
         result = {
             "name": name,
             "index": limit.index,
-            "heavenly_stem": limit.heavenly_stem,
-            "earthly_branch": limit.earthly_branch,
+            "heavenly_stem": heavenly_stem,
+            "earthly_branch": earthly_branch,
             "palace_names": limit.palace_names,
         }
 
