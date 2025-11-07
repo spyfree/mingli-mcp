@@ -199,7 +199,7 @@ class BaziSystem(BaseFortuneSystem):
     def get_system_version(self) -> str:
         return "1.0.0"
 
-    def get_chart(self, birth_info: Dict[str, Any]) -> Dict[str, Any]:
+    def get_chart(self, birth_info: Dict[str, Any], language: str = "zh-CN") -> Dict[str, Any]:
         """
         获取八字排盘
 
@@ -210,11 +210,13 @@ class BaziSystem(BaseFortuneSystem):
                 - gender: 性别 (男/女)
                 - calendar: 历法 (solar/lunar)，默认solar
                 - is_leap_month: 是否闰月（仅农历），默认False
+            language: 输出语言（暂未实现，保留接口一致性）
 
         Returns:
             八字排盘详细信息
         """
         self.validate_birth_info(birth_info)
+        # Note: lunar_python doesn't support i18n yet, language parameter is ignored for now
 
         try:
             # 获取lunar对象
@@ -274,7 +276,10 @@ class BaziSystem(BaseFortuneSystem):
             raise SystemError(f"八字排盘失败: {str(e)}")
 
     def get_fortune(
-        self, birth_info: Dict[str, Any], query_date: Optional[datetime] = None
+        self,
+        birth_info: Dict[str, Any],
+        query_date: Optional[datetime] = None,
+        language: str = "zh-CN",
     ) -> Dict[str, Any]:
         """
         获取八字运势（大运、流年）
@@ -282,18 +287,20 @@ class BaziSystem(BaseFortuneSystem):
         Args:
             birth_info: 生辰信息
             query_date: 查询日期，默认当前时间
+            language: 输出语言（暂未实现，保留接口一致性）
 
         Returns:
             运势信息
         """
         self.validate_birth_info(birth_info)
+        # Note: lunar_python doesn't support i18n yet, language parameter is ignored for now
 
         if query_date is None:
             query_date = datetime.now()
 
         try:
             # 获取基本八字
-            chart = self.get_chart(birth_info)
+            chart = self.get_chart(birth_info, language)
 
             # 计算年龄
             birth_year = int(birth_info["date"].split("-")[0])
@@ -483,10 +490,15 @@ class BaziSystem(BaseFortuneSystem):
         else:
             return "五行不平衡"
 
-    def analyze_palace(self, birth_info: Dict[str, Any], palace_name: str) -> Dict[str, Any]:
+    def analyze_palace(
+        self, birth_info: Dict[str, Any], palace_name: str, language: str = "zh-CN"
+    ) -> Dict[str, Any]:
         """
         八字系统不支持宫位分析
 
         八字（四柱命理）没有宫位的概念，这是紫微斗数的特性
+
+        Args:
+            language: 输出语言（保留接口一致性）
         """
         raise NotImplementedError("八字系统不支持宫位分析，请使用紫微斗数系统")

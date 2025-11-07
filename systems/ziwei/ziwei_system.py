@@ -98,12 +98,13 @@ class ZiweiSystem(BaseFortuneSystem):
 
         return date_str, hour_index
 
-    def get_chart(self, birth_info: Dict[str, Any]) -> Dict[str, Any]:
+    def get_chart(self, birth_info: Dict[str, Any], language: str = "zh-CN") -> Dict[str, Any]:
         """
         获取紫微斗数排盘
 
         Args:
             birth_info: 生辰信息
+            language: 输出语言
 
         Returns:
             排盘详细信息
@@ -124,6 +125,9 @@ class ZiweiSystem(BaseFortuneSystem):
                     birth_info["date"], birth_info["time_index"], birth_info["gender"]
                 )
 
+            # 设置语言
+            astrolabe.set_language(language)
+
             # 格式化输出
             return self.formatter.format_chart(astrolabe)
 
@@ -137,7 +141,10 @@ class ZiweiSystem(BaseFortuneSystem):
             raise SystemError(f"排盘失败: {str(e)}")
 
     def get_fortune(
-        self, birth_info: Dict[str, Any], query_date: Optional[datetime] = None
+        self,
+        birth_info: Dict[str, Any],
+        query_date: Optional[datetime] = None,
+        language: str = "zh-CN",
     ) -> Dict[str, Any]:
         """
         获取紫微斗数运势（大限、流年、流月、流日、流时）
@@ -145,6 +152,7 @@ class ZiweiSystem(BaseFortuneSystem):
         Args:
             birth_info: 生辰信息
             query_date: 查询日期，默认当前时间
+            language: 输出语言
 
         Returns:
             运势信息
@@ -168,6 +176,9 @@ class ZiweiSystem(BaseFortuneSystem):
                     birth_info["date"], birth_info["time_index"], birth_info["gender"]
                 )
 
+            # 设置语言
+            astrolabe.set_language(language)
+
             # 获取运势（iztro-py 需要日期字符串和时辰索引）
             date_str, hour_index = self._convert_datetime_for_horoscope(query_date)
             horoscope = astrolabe.horoscope(date_str, hour_index)
@@ -184,13 +195,16 @@ class ZiweiSystem(BaseFortuneSystem):
             logger.exception("Unexpected error generating ziwei fortune")
             raise SystemError(f"运势查询失败: {str(e)}")
 
-    def analyze_palace(self, birth_info: Dict[str, Any], palace_name: str) -> Dict[str, Any]:
+    def analyze_palace(
+        self, birth_info: Dict[str, Any], palace_name: str, language: str = "zh-CN"
+    ) -> Dict[str, Any]:
         """
         分析特定宫位
 
         Args:
             birth_info: 生辰信息
             palace_name: 宫位名称（中文，如"命宫"）
+            language: 输出语言
 
         Returns:
             宫位详细分析
@@ -204,7 +218,7 @@ class ZiweiSystem(BaseFortuneSystem):
 
         try:
             # 获取完整星盘（formatter 已经将宫位名转换为中文）
-            chart = self.get_chart(birth_info)
+            chart = self.get_chart(birth_info, language)
 
             # 找到指定宫位（直接匹配中文名）
             target_palace = None
