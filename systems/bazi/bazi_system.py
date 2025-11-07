@@ -7,7 +7,7 @@
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from core.base_system import BaseFortuneSystem
 from core.exceptions import DependencyError, SystemError, ValidationError
@@ -23,6 +23,9 @@ try:
 except ImportError:
     logger.warning("lunar_python not installed, BaziSystem will not work")
     LUNAR_AVAILABLE = False
+    if not TYPE_CHECKING:
+        Lunar = None  # type: ignore
+        Solar = None  # type: ignore
 
 
 class BaziSystem(BaseFortuneSystem):

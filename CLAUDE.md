@@ -223,8 +223,8 @@ chart = ziwei.get_chart(birth_info)
 
 ## Dependencies
 
-**Core** (pyproject.toml:29):
-- `py-iztro>=0.1.5`: Ziwei calculation library
+**Core** (pyproject.toml:28):
+- `iztro-py>=0.1.0`: Ziwei calculation library (pure Python, 10x faster than py-iztro)
 - `lunar_python>=1.4.7`: Chinese calendar support
 - `bidict>=0.23.0`: Bidirectional mappings
 - `python-dateutil>=2.8.0`: Date parsing

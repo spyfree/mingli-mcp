@@ -515,7 +515,7 @@ python -m systems.ziwei.ziwei_system
 
 ## 📝 依赖说明
 
-- **py-iztro**: 紫微斗数核心库，提供排盘算法
+- **iztro-py**: 紫微斗数核心库（纯 Python 实现，性能比 py-iztro 提升 10 倍）
 - **python-dotenv**: 环境变量管理
 - **python-dateutil**: 日期处理
 
@@ -539,8 +539,8 @@ MIT License
 
 ## 🙏 致谢
 
-- [iztro](https://github.com/SylarLong/iztro) - 紫微斗数 JavaScript 库
-- [py-iztro](https://github.com/x-haose/py-iztro) - Python 移植版本
+- [iztro](https://github.com/SylarLong/iztro) - 紫微斗数 JavaScript 库（原始算法来源）
+- [iztro-py](https://github.com/spyfree/iztro-py) - 紫微斗数纯 Python 实现
 - [MCP Protocol](https://modelcontextprotocol.io/) - Model Context Protocol 规范
 
 ---

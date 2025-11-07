@@ -1,7 +1,7 @@
 """
 紫微斗数结果格式化器
 
-将py-iztro返回的数据格式化为易读的Markdown格式
+将iztro-py返回的数据格式化为易读的Markdown格式
 """
 
 from datetime import datetime
@@ -11,12 +11,28 @@ from typing import Any, Dict, List
 class ZiweiFormatter:
     """紫微斗数格式化器"""
 
+    # 英文到中文宫位名称映射（iztro-py 返回英文名）
+    ENGLISH_TO_CHINESE = {
+        "soulPalace": "命宫",
+        "siblingsPalace": "兄弟",
+        "spousePalace": "夫妻",
+        "childrenPalace": "子女",
+        "wealthPalace": "财帛",
+        "healthPalace": "疾厄",
+        "surfacePalace": "迁移",
+        "friendsPalace": "仆役",
+        "careerPalace": "官禄",
+        "propertyPalace": "田宅",
+        "spiritPalace": "福德",
+        "parentsPalace": "父母",
+    }
+
     def format_chart(self, astrolabe) -> Dict[str, Any]:
         """
         格式化星盘数据
 
         Args:
-            astrolabe: py-iztro返回的astrolabe对象
+            astrolabe: iztro-py返回的astrolabe对象
 
         Returns:
             格式化后的星盘数据字典
@@ -73,7 +89,7 @@ class ZiweiFormatter:
         格式化运势数据
 
         Args:
-            horoscope: py-iztro返回的horoscope对象
+            horoscope: iztro-py返回的horoscope对象
             query_date: 查询日期
 
         Returns:
@@ -236,9 +252,12 @@ class ZiweiFormatter:
         """格式化十二宫数据"""
         result = []
         for palace in palaces:
+            # 将英文宫位名转换为中文（iztro-py 返回英文名）
+            chinese_name = self.ENGLISH_TO_CHINESE.get(palace.name, palace.name)
+
             result.append(
                 {
-                    "name": palace.name,
+                    "name": chinese_name,
                     "is_body_palace": palace.is_body_palace,
                     "is_original_palace": palace.is_original_palace,
                     "heavenly_stem": palace.heavenly_stem,
