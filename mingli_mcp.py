@@ -259,6 +259,12 @@ class MingliMCPServer:
                             "default": "markdown",
                             "description": "输出格式：json(结构化数据) 或 markdown(易读格式)，默认为markdown",
                         },
+                        "language": {
+                            "type": "string",
+                            "enum": ["zh-CN", "zh-TW", "en-US", "ja-JP", "ko-KR", "vi-VN"],
+                            "default": "zh-CN",
+                            "description": "输出语言：zh-CN(简体中文)、zh-TW(繁体中文)、en-US(English)、ja-JP(日本語)、ko-KR(한국어)、vi-VN(Tiếng Việt)，默认为zh-CN",
+                        },
                     },
                     "required": ["date", "time_index", "gender"],
                 },
@@ -309,6 +315,12 @@ class MingliMCPServer:
                             "enum": ["json", "markdown"],
                             "default": "markdown",
                             "description": "输出格式：json(结构化数据) 或 markdown(易读格式)，默认为markdown",
+                        },
+                        "language": {
+                            "type": "string",
+                            "enum": ["zh-CN", "zh-TW", "en-US", "ja-JP", "ko-KR", "vi-VN"],
+                            "default": "zh-CN",
+                            "description": "输出语言：zh-CN(简体中文)、zh-TW(繁体中文)、en-US(English)、ja-JP(日本語)、ko-KR(한국어)、vi-VN(Tiếng Việt)，默认为zh-CN",
                         },
                     },
                     "required": ["birth_date", "time_index", "gender"],
@@ -374,6 +386,12 @@ class MingliMCPServer:
                             "enum": ["json", "markdown"],
                             "default": "markdown",
                             "description": "输出格式：json(结构化数据) 或 markdown(易读格式)，默认为markdown",
+                        },
+                        "language": {
+                            "type": "string",
+                            "enum": ["zh-CN", "zh-TW", "en-US", "ja-JP", "ko-KR", "vi-VN"],
+                            "default": "zh-CN",
+                            "description": "输出语言：zh-CN(简体中文)、zh-TW(繁体中文)、en-US(English)、ja-JP(日本語)、ko-KR(한국어)、vi-VN(Tiếng Việt)，默认为zh-CN",
                         },
                     },
                     "required": ["birth_date", "time_index", "gender", "palace_name"],
@@ -444,6 +462,12 @@ class MingliMCPServer:
                             "default": "markdown",
                             "description": "输出格式：json(结构化数据) 或 markdown(易读格式)，默认为markdown",
                         },
+                        "language": {
+                            "type": "string",
+                            "enum": ["zh-CN", "zh-TW", "en-US", "ja-JP", "ko-KR", "vi-VN"],
+                            "default": "zh-CN",
+                            "description": "输出语言：zh-CN(简体中文)、zh-TW(繁体中文)、en-US(English)、ja-JP(日本語)、ko-KR(한국어)、vi-VN(Tiếng Việt)，默认为zh-CN (八字暂不支持多语言，保留此参数以保持接口一致性)",
+                        },
                     },
                     "required": ["date", "time_index", "gender"],
                 },
@@ -495,6 +519,12 @@ class MingliMCPServer:
                             "default": "markdown",
                             "description": "输出格式：json(结构化数据) 或 markdown(易读格式)，默认为markdown",
                         },
+                        "language": {
+                            "type": "string",
+                            "enum": ["zh-CN", "zh-TW", "en-US", "ja-JP", "ko-KR", "vi-VN"],
+                            "default": "zh-CN",
+                            "description": "输出语言：zh-CN(简体中文)、zh-TW(繁体中文)、en-US(English)、ja-JP(日本語)、ko-KR(한국어)、vi-VN(Tiếng Việt)，默认为zh-CN (八字暂不支持多语言，保留此参数以保持接口一致性)",
+                        },
                     },
                     "required": ["birth_date", "time_index", "gender"],
                 },
@@ -541,6 +571,12 @@ class MingliMCPServer:
                             "enum": ["json", "markdown"],
                             "default": "markdown",
                             "description": "输出格式：json(结构化数据) 或 markdown(易读格式)，默认为markdown",
+                        },
+                        "language": {
+                            "type": "string",
+                            "enum": ["zh-CN", "zh-TW", "en-US", "ja-JP", "ko-KR", "vi-VN"],
+                            "default": "zh-CN",
+                            "description": "输出语言：zh-CN(简体中文)、zh-TW(繁体中文)、en-US(English)、ja-JP(日本語)、ko-KR(한국어)、vi-VN(Tiếng Việt)，默认为zh-CN (八字暂不支持多语言，保留此参数以保持接口一致性)",
                         },
                     },
                     "required": ["birth_date", "time_index", "gender"],
@@ -625,8 +661,9 @@ class MingliMCPServer:
             "is_leap_month": args.get("is_leap_month", False),
         }
 
+        language = args.get("language", "zh-CN")
         system = get_system("ziwei")
-        chart = system.get_chart(birth_info)
+        chart = system.get_chart(birth_info, language)
 
         output_format = args.get("format", "markdown")
         if output_format == "json":
@@ -653,8 +690,9 @@ class MingliMCPServer:
         else:
             query_date = datetime.now()
 
+        language = args.get("language", "zh-CN")
         system = get_system("ziwei")
-        fortune = system.get_fortune(birth_info, query_date)
+        fortune = system.get_fortune(birth_info, query_date, language)
 
         output_format = args.get("format", "markdown")
         if output_format == "json":
@@ -675,9 +713,10 @@ class MingliMCPServer:
         }
 
         palace_name = args["palace_name"]
+        language = args.get("language", "zh-CN")
 
         system = get_system("ziwei")
-        analysis = system.analyze_palace(birth_info, palace_name)
+        analysis = system.analyze_palace(birth_info, palace_name, language)
 
         output_format = args.get("format", "markdown")
         if output_format == "json":
@@ -733,8 +772,9 @@ class MingliMCPServer:
             "is_leap_month": args.get("is_leap_month", False),
         }
 
+        language = args.get("language", "zh-CN")
         system = get_system("bazi")
-        chart = system.get_chart(birth_info)
+        chart = system.get_chart(birth_info, language)
 
         output_format = args.get("format", "markdown")
         if output_format == "json":
@@ -761,8 +801,9 @@ class MingliMCPServer:
         else:
             query_date = datetime.now()
 
+        language = args.get("language", "zh-CN")
         system = get_system("bazi")
-        fortune = system.get_fortune(birth_info, query_date)
+        fortune = system.get_fortune(birth_info, query_date, language)
 
         output_format = args.get("format", "markdown")
         if output_format == "json":

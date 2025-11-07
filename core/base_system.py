@@ -35,7 +35,7 @@ class BaseFortuneSystem(ABC):
         pass
 
     @abstractmethod
-    def get_chart(self, birth_info: Dict[str, Any]) -> Dict[str, Any]:
+    def get_chart(self, birth_info: Dict[str, Any], language: str = "zh-CN") -> Dict[str, Any]:
         """
         获取排盘信息
 
@@ -46,6 +46,8 @@ class BaseFortuneSystem(ABC):
                 - gender: 性别 (str, "男"/"女")
                 - calendar: 历法 (str, "solar"/"lunar", 默认"solar")
                 - is_leap_month: 是否闰月 (bool, 默认False, 仅农历有效)
+            language: 输出语言 (str, 默认"zh-CN")
+                支持: zh-CN, zh-TW, en-US, ja-JP, ko-KR, vi-VN
 
         Returns:
             排盘详细信息字典，包含：
@@ -64,7 +66,10 @@ class BaseFortuneSystem(ABC):
 
     @abstractmethod
     def get_fortune(
-        self, birth_info: Dict[str, Any], query_date: Optional[datetime] = None
+        self,
+        birth_info: Dict[str, Any],
+        query_date: Optional[datetime] = None,
+        language: str = "zh-CN",
     ) -> Dict[str, Any]:
         """
         获取运势信息
@@ -72,6 +77,8 @@ class BaseFortuneSystem(ABC):
         Args:
             birth_info: 生辰信息字典（同get_chart）
             query_date: 查询日期，默认为当前时间
+            language: 输出语言 (str, 默认"zh-CN")
+                支持: zh-CN, zh-TW, en-US, ja-JP, ko-KR, vi-VN
 
         Returns:
             运势信息字典，可能包含：
@@ -88,13 +95,17 @@ class BaseFortuneSystem(ABC):
         pass
 
     @abstractmethod
-    def analyze_palace(self, birth_info: Dict[str, Any], palace_name: str) -> Dict[str, Any]:
+    def analyze_palace(
+        self, birth_info: Dict[str, Any], palace_name: str, language: str = "zh-CN"
+    ) -> Dict[str, Any]:
         """
         分析特定宫位的详细信息
 
         Args:
             birth_info: 生辰信息字典
             palace_name: 宫位名称（各系统定义不同）
+            language: 输出语言 (str, 默认"zh-CN")
+                支持: zh-CN, zh-TW, en-US, ja-JP, ko-KR, vi-VN
 
         Returns:
             宫位详细分析字典，包含：

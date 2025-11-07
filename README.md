@@ -9,6 +9,13 @@
   - ✅ 紫微斗数（已实现）
   - ✅ 八字（已实现）⭐ **新增**
   - 🔄 西方占星（预留接口）
+- ✅ **多语言支持**: 支持6种语言输出 ⭐ **新增**
+  - 🇨🇳 简体中文 (zh-CN)
+  - 🇹🇼 繁体中文 (zh-TW)
+  - 🇺🇸 English (en-US)
+  - 🇯🇵 日本語 (ja-JP)
+  - 🇰🇷 한국어 (ko-KR)
+  - 🇻🇳 Tiếng Việt (vi-VN)
 - ✅ **多传输方式**: 支持stdio、HTTP、WebSocket等多种传输协议
 - ✅ **MCP标准兼容**: 完全兼容 MCP 协议规范
 - ✅ **易于扩展**: 清晰的抽象层设计，添加新系统只需3步
@@ -45,6 +52,7 @@
 - `calendar` (string, 可选): 历法 "solar"(阳历) 或 "lunar"(农历), 默认 "solar"
 - `is_leap_month` (boolean, 可选): 是否闰月，默认 false
 - `format` (string, 可选): 输出格式 "json" 或 "markdown", 默认 "markdown"
+- `language` (string, 可选): 输出语言，可选 "zh-CN", "zh-TW", "en-US", "ja-JP", "ko-KR", "vi-VN"，默认 "zh-CN" ⭐ **新增**
 
 **示例**:
 ```json
@@ -66,6 +74,7 @@
 - `calendar` (string, 可选): 历法类型
 - `query_date` (string, 可选): 查询日期，不填则为今天
 - `format` (string, 可选): 输出格式
+- `language` (string, 可选): 输出语言，默认 "zh-CN" ⭐ **新增**
 
 ### 3. analyze_ziwei_palace
 分析紫微斗数特定宫位
@@ -79,6 +88,7 @@
   - 迁移、仆役、官禄、田宅、福德、父母
 - `calendar` (string, 可选): 历法类型
 - `format` (string, 可选): 输出格式
+- `language` (string, 可选): 输出语言，默认 "zh-CN" ⭐ **新增**
 
 ### 4. list_fortune_systems
 列出所有可用的命理系统

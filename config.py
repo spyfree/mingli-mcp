@@ -52,6 +52,16 @@ class Config:
     # 默认语言
     DEFAULT_LANGUAGE: str = os.getenv("DEFAULT_LANGUAGE", "zh-CN")
 
+    # 支持的语言列表
+    SUPPORTED_LANGUAGES = [
+        "zh-CN",  # 简体中文
+        "zh-TW",  # 繁体中文
+        "en-US",  # English
+        "ja-JP",  # 日本語
+        "ko-KR",  # 한국어
+        "vi-VN",  # Tiếng Việt
+    ]
+
     # 传输层配置
     TRANSPORT_TYPE: str = os.getenv("TRANSPORT_TYPE", "stdio")
 
