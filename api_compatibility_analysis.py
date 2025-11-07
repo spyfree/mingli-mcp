@@ -16,11 +16,7 @@ def test_basic_api():
     from py_iztro import Astro as PyIztroAstro
     from iztro_py import astro as iztro_astro
 
-    test_data = {
-        "date": "2000-8-16",
-        "time_index": 2,
-        "gender": "男"
-    }
+    test_data = {"date": "2000-8-16", "time_index": 2, "gender": "男"}
 
     print("\n1. 星盘生成 API")
     print("-" * 70)
@@ -28,20 +24,14 @@ def test_basic_api():
     # py-iztro
     print("\n[py-iztro]")
     pyiztro = PyIztroAstro()
-    py_astrolabe = pyiztro.by_solar(
-        test_data["date"],
-        test_data["time_index"],
-        test_data["gender"]
-    )
+    py_astrolabe = pyiztro.by_solar(test_data["date"], test_data["time_index"], test_data["gender"])
     print(f"✓ by_solar('{test_data['date']}', {test_data['time_index']}, '{test_data['gender']}')")
     print(f"  返回类型: {type(py_astrolabe)}")
 
     # iztro-py
     print("\n[iztro-py]")
     iz_astrolabe = iztro_astro.by_solar(
-        test_data["date"],
-        test_data["time_index"],
-        test_data["gender"]
+        test_data["date"], test_data["time_index"], test_data["gender"]
     )
     print(f"✓ by_solar('{test_data['date']}', {test_data['time_index']}, '{test_data['gender']}')")
     print(f"  返回类型: {type(iz_astrolabe)}")
@@ -54,11 +44,11 @@ def test_basic_api():
     iz_attrs = set(dir(iz_astrolabe))
 
     common_attrs = py_attrs & iz_attrs
-    py_only = py_attrs - iz_attrs - set([a for a in py_attrs if a.startswith('_')])
-    iz_only = iz_attrs - py_attrs - set([a for a in iz_attrs if a.startswith('_')])
+    py_only = py_attrs - iz_attrs - set([a for a in py_attrs if a.startswith("_")])
+    iz_only = iz_attrs - py_attrs - set([a for a in iz_attrs if a.startswith("_")])
 
     print(f"\n共同方法/属性 ({len(common_attrs)}):")
-    common_public = [a for a in sorted(common_attrs) if not a.startswith('_')][:10]
+    common_public = [a for a in sorted(common_attrs) if not a.startswith("_")][:10]
     for attr in common_public:
         print(f"  ✓ {attr}")
     if len(common_public) > 10:
@@ -112,7 +102,7 @@ def test_basic_api():
 
     # py-iztro 运势对象
     print("\n[py-iztro] 运势对象属性:")
-    py_horoscope_attrs = [a for a in dir(py_horoscope) if not a.startswith('_')]
+    py_horoscope_attrs = [a for a in dir(py_horoscope) if not a.startswith("_")]
     for attr in py_horoscope_attrs[:10]:
         try:
             val = getattr(py_horoscope, attr)
@@ -123,7 +113,7 @@ def test_basic_api():
 
     # iztro-py 运势对象
     print("\n[iztro-py] 运势对象属性:")
-    iz_horoscope_attrs = [a for a in dir(iz_horoscope) if not a.startswith('_')]
+    iz_horoscope_attrs = [a for a in dir(iz_horoscope) if not a.startswith("_")]
     for attr in iz_horoscope_attrs[:10]:
         try:
             val = getattr(iz_horoscope, attr)
@@ -138,8 +128,8 @@ def test_basic_api():
     # py-iztro
     print("\n[py-iztro] 宫位访问:")
     try:
-        if hasattr(py_astrolabe, 'palace'):
-            palace = py_astrolabe.palace('命宫')
+        if hasattr(py_astrolabe, "palace"):
+            palace = py_astrolabe.palace("命宫")
             print(f"✓ palace('命宫'): {type(palace)}")
         else:
             print("✗ 不支持 palace() 方法")
@@ -150,13 +140,13 @@ def test_basic_api():
     # iztro-py
     print("\n[iztro-py] 宫位访问:")
     try:
-        palace = iz_astrolabe.palace('命宫')
+        palace = iz_astrolabe.palace("命宫")
         print(f"✓ palace('命宫'): {type(palace)}")
 
         # 测试宫位方法
-        if hasattr(palace, 'name'):
+        if hasattr(palace, "name"):
             print(f"  宫位名称: {palace.name}")
-        if hasattr(palace, 'stars'):
+        if hasattr(palace, "stars"):
             print(f"  星曜数量: {len(palace.stars) if palace.stars else 0}")
     except Exception as e:
         print(f"✗ palace('命宫') 失败: {e}")
@@ -167,12 +157,12 @@ def test_basic_api():
     # iztro-py
     print("\n[iztro-py] 星曜访问:")
     try:
-        star = iz_astrolabe.star('紫微')
+        star = iz_astrolabe.star("紫微")
         print(f"✓ star('紫微'): {type(star)}")
 
-        if hasattr(star, 'name'):
+        if hasattr(star, "name"):
             print(f"  星曜名称: {star.name}")
-        if hasattr(star, 'brightness'):
+        if hasattr(star, "brightness"):
             print(f"  亮度: {star.brightness}")
     except Exception as e:
         print(f"✗ star('紫微') 失败: {e}")
@@ -183,17 +173,17 @@ def test_basic_api():
     # py-iztro 数据结构
     print("\n[py-iztro] 数据结构:")
     print(f"  星盘类型: {type(py_astrolabe).__name__}")
-    if hasattr(py_astrolabe, 'palaces'):
+    if hasattr(py_astrolabe, "palaces"):
         print(f"  palaces 类型: {type(py_astrolabe.palaces).__name__}")
-    if hasattr(py_astrolabe, 'stars'):
+    if hasattr(py_astrolabe, "stars"):
         print(f"  stars 类型: {type(py_astrolabe.stars).__name__}")
 
     # iztro-py 数据结构
     print("\n[iztro-py] 数据结构:")
     print(f"  星盘类型: {type(iz_astrolabe).__name__}")
-    if hasattr(iz_astrolabe, 'palaces'):
+    if hasattr(iz_astrolabe, "palaces"):
         print(f"  palaces 类型: {type(iz_astrolabe.palaces).__name__}")
-    if hasattr(iz_astrolabe, 'stars'):
+    if hasattr(iz_astrolabe, "stars"):
         print(f"  stars 类型: {type(iz_astrolabe.stars).__name__}")
 
 
@@ -209,7 +199,7 @@ def test_lunar_api():
         "date": "2000-06-15",  # 农历
         "time_index": 2,
         "gender": "男",
-        "is_leap_month": False
+        "is_leap_month": False,
     }
 
     # py-iztro
@@ -220,10 +210,12 @@ def test_lunar_api():
             test_data["date"],
             test_data["time_index"],
             test_data["gender"],
-            test_data["is_leap_month"]
+            test_data["is_leap_month"],
         )
-        print(f"✓ by_lunar('{test_data['date']}', {test_data['time_index']}, "
-              f"'{test_data['gender']}', {test_data['is_leap_month']})")
+        print(
+            f"✓ by_lunar('{test_data['date']}', {test_data['time_index']}, "
+            f"'{test_data['gender']}', {test_data['is_leap_month']})"
+        )
     except Exception as e:
         print(f"✗ by_lunar 失败: {e}")
 
@@ -234,10 +226,12 @@ def test_lunar_api():
             test_data["date"],
             test_data["time_index"],
             test_data["gender"],
-            test_data["is_leap_month"]
+            test_data["is_leap_month"],
         )
-        print(f"✓ by_lunar('{test_data['date']}', {test_data['time_index']}, "
-              f"'{test_data['gender']}', {test_data['is_leap_month']})")
+        print(
+            f"✓ by_lunar('{test_data['date']}', {test_data['time_index']}, "
+            f"'{test_data['gender']}', {test_data['is_leap_month']})"
+        )
     except Exception as e:
         print(f"✗ by_lunar 失败: {e}")
 
@@ -254,7 +248,8 @@ def main():
     print("\n" + "=" * 70)
     print("总结")
     print("=" * 70)
-    print("""
+    print(
+        """
 主要差异:
 
 1. ✓ 基本API兼容: by_solar(), by_lunar() 参数一致
@@ -276,7 +271,8 @@ def main():
 - 需要修改 horoscope() 调用方式
 - 可利用 iztro-py 的增强 API 简化代码
 - 测试所有数据访问路径
-    """)
+    """
+    )
 
 
 if __name__ == "__main__":

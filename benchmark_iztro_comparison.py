@@ -24,6 +24,7 @@ def benchmark_import():
     start = time.perf_counter()
     try:
         from py_iztro import Astro as PyIztroAstro
+
         end = time.perf_counter()
         pyiztro_time = end - start
         print(f"   ✓ py-iztro 导入成功: {pyiztro_time:.4f} 秒")
@@ -38,6 +39,7 @@ def benchmark_import():
     start = time.perf_counter()
     try:
         from iztro_py import astro as iztro_astro
+
         end = time.perf_counter()
         iztropy_time = end - start
         print(f"   ✓ iztro-py 导入成功: {iztropy_time:.4f} 秒")
@@ -64,15 +66,12 @@ def benchmark_chart_generation(iterations=100):
     print(f"测试 2: 星盘生成性能 (运行 {iterations} 次)")
     print("=" * 60)
 
-    test_data = {
-        "date": "2000-8-16",
-        "time_index": 2,
-        "gender": "男"
-    }
+    test_data = {"date": "2000-8-16", "time_index": 2, "gender": "男"}
 
     # 测试 py-iztro
     try:
         from py_iztro import Astro as PyIztroAstro
+
         pyiztro = PyIztroAstro()
 
         print(f"\n2.1 测试 py-iztro 星盘生成 ({iterations} 次)...")
@@ -81,9 +80,7 @@ def benchmark_chart_generation(iterations=100):
 
         for _ in range(iterations):
             astrolabe = pyiztro.by_solar(
-                test_data["date"],
-                test_data["time_index"],
-                test_data["gender"]
+                test_data["date"], test_data["time_index"], test_data["gender"]
             )
 
         end = time.perf_counter()
@@ -114,9 +111,7 @@ def benchmark_chart_generation(iterations=100):
 
         for _ in range(iterations):
             astrolabe = astro.by_solar(
-                test_data["date"],
-                test_data["time_index"],
-                test_data["gender"]
+                test_data["date"], test_data["time_index"], test_data["gender"]
             )
 
         end = time.perf_counter()
@@ -162,23 +157,18 @@ def benchmark_horoscope(iterations=50):
     print(f"测试 3: 运势计算性能 (运行 {iterations} 次)")
     print("=" * 60)
 
-    test_data = {
-        "date": "2000-8-16",
-        "time_index": 2,
-        "gender": "男"
-    }
+    test_data = {"date": "2000-8-16", "time_index": 2, "gender": "男"}
     query_date = datetime(2024, 1, 1)
 
     # 测试 py-iztro
     try:
         from py_iztro import Astro as PyIztroAstro
+
         pyiztro = PyIztroAstro()
 
         print(f"\n3.1 测试 py-iztro 运势计算 ({iterations} 次)...")
         astrolabe = pyiztro.by_solar(
-            test_data["date"],
-            test_data["time_index"],
-            test_data["gender"]
+            test_data["date"], test_data["time_index"], test_data["gender"]
         )
 
         tracemalloc.start()
@@ -210,11 +200,7 @@ def benchmark_horoscope(iterations=50):
         from iztro_py import astro
 
         print(f"\n3.2 测试 iztro-py 运势计算 ({iterations} 次)...")
-        astrolabe = astro.by_solar(
-            test_data["date"],
-            test_data["time_index"],
-            test_data["gender"]
-        )
+        astrolabe = astro.by_solar(test_data["date"], test_data["time_index"], test_data["gender"])
 
         tracemalloc.start()
         start = time.perf_counter()
@@ -265,11 +251,7 @@ def test_api_compatibility():
     print("测试 4: API 兼容性检查")
     print("=" * 60)
 
-    test_data = {
-        "date": "2000-8-16",
-        "time_index": 2,
-        "gender": "男"
-    }
+    test_data = {"date": "2000-8-16", "time_index": 2, "gender": "男"}
 
     compatible = True
     issues = []
@@ -281,14 +263,10 @@ def test_api_compatibility():
         # 测试 by_solar
         print("\n4.1 测试 by_solar() 方法...")
         py_astrolabe = PyIztroAstro().by_solar(
-            test_data["date"],
-            test_data["time_index"],
-            test_data["gender"]
+            test_data["date"], test_data["time_index"], test_data["gender"]
         )
         iz_astrolabe = iztro_astro.by_solar(
-            test_data["date"],
-            test_data["time_index"],
-            test_data["gender"]
+            test_data["date"], test_data["time_index"], test_data["gender"]
         )
         print("   ✓ 两个库都支持 by_solar()")
 
@@ -304,7 +282,7 @@ def test_api_compatibility():
         py_attrs = dir(py_astrolabe)
         iz_attrs = dir(iz_astrolabe)
 
-        key_methods = ['palace', 'star', 'horoscope']
+        key_methods = ["palace", "star", "horoscope"]
         for method in key_methods:
             if method in py_attrs and method in iz_attrs:
                 print(f"   ✓ 方法 {method}() 都支持")
@@ -324,6 +302,7 @@ def test_api_compatibility():
     except Exception as e:
         print(f"\n✗ API 兼容性测试失败: {e}")
         import traceback
+
         traceback.print_exc()
 
 
