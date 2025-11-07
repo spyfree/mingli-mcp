@@ -75,14 +75,14 @@ def test_basic_api():
     print("\n[py-iztro] horoscope(datetime)")
     query_date_dt = datetime(2024, 1, 1)
     py_horoscope = py_astrolabe.horoscope(query_date_dt)
-    print(f"✓ horoscope(datetime(2024, 1, 1))")
+    print("✓ horoscope(datetime(2024, 1, 1))")
     print(f"  返回类型: {type(py_horoscope)}")
 
     # iztro-py: 需要字符串格式
     print("\n[iztro-py] horoscope(str, int)")
     try:
         iz_horoscope = iz_astrolabe.horoscope(query_date_dt)
-        print(f"✓ horoscope(datetime(2024, 1, 1))")
+        print("✓ horoscope(datetime(2024, 1, 1))")
     except AttributeError as e:
         print(f"✗ horoscope(datetime(2024, 1, 1)) - {e}")
         print("  需要使用字符串格式:")
@@ -108,7 +108,7 @@ def test_basic_api():
             val = getattr(py_horoscope, attr)
             if not callable(val):
                 print(f"  • {attr}: {type(val).__name__}")
-        except:
+        except Exception:
             pass
 
     # iztro-py 运势对象
@@ -119,7 +119,7 @@ def test_basic_api():
             val = getattr(iz_horoscope, attr)
             if not callable(val):
                 print(f"  • {attr}: {type(val).__name__}")
-        except:
+        except Exception:
             pass
 
     print("\n5. 宫位访问 API")
@@ -206,7 +206,7 @@ def test_lunar_api():
     print("\n[py-iztro] by_lunar:")
     try:
         pyiztro = PyIztroAstro()
-        py_astrolabe = pyiztro.by_lunar(
+        _py_astrolabe = pyiztro.by_lunar(  # noqa: F841
             test_data["date"],
             test_data["time_index"],
             test_data["gender"],
@@ -222,7 +222,7 @@ def test_lunar_api():
     # iztro-py
     print("\n[iztro-py] by_lunar:")
     try:
-        iz_astrolabe = iztro_astro.by_lunar(
+        _iz_astrolabe = iztro_astro.by_lunar(  # noqa: F841
             test_data["date"],
             test_data["time_index"],
             test_data["gender"],

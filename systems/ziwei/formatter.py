@@ -301,7 +301,7 @@ class ZiweiFormatter:
         if hasattr(star, "translate_brightness") and star.brightness:
             try:
                 brightness = star.translate_brightness()
-            except:
+            except Exception:
                 brightness = getattr(star, "brightness", "")
         else:
             brightness = getattr(star, "brightness", "")

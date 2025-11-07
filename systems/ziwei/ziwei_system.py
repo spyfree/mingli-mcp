@@ -6,7 +6,7 @@
 
 import logging
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import Any, Dict, Optional
 
 from core.base_system import BaseFortuneSystem
 from core.exceptions import DependencyError, SystemError, ValidationError

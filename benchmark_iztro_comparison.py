@@ -23,7 +23,7 @@ def benchmark_import():
     print("\n1.1 测试 py-iztro 导入...")
     start = time.perf_counter()
     try:
-        from py_iztro import Astro as PyIztroAstro
+        from py_iztro import Astro as PyIztroAstro  # noqa: F401
 
         end = time.perf_counter()
         pyiztro_time = end - start
@@ -38,7 +38,7 @@ def benchmark_import():
     print("\n1.2 测试 iztro-py 导入...")
     start = time.perf_counter()
     try:
-        from iztro_py import astro as iztro_astro
+        from iztro_py import astro as iztro_astro  # noqa: F401
 
         end = time.perf_counter()
         iztropy_time = end - start
@@ -52,7 +52,7 @@ def benchmark_import():
     # 对比结果
     if pyiztro_time and iztropy_time:
         speedup = pyiztro_time / iztropy_time
-        print(f"\n📊 导入时间对比:")
+        print("\n📊 导入时间对比:")
         print(f"   py-iztro:  {pyiztro_time:.4f} 秒")
         print(f"   iztro-py:  {iztropy_time:.4f} 秒")
         print(f"   性能提升:  {speedup:.2f}x" if speedup > 1 else f"   性能降低:  {1/speedup:.2f}x")
@@ -79,7 +79,7 @@ def benchmark_chart_generation(iterations=100):
         start = time.perf_counter()
 
         for _ in range(iterations):
-            astrolabe = pyiztro.by_solar(
+            astrolabe = pyiztro.by_solar(  # noqa: F841
                 test_data["date"], test_data["time_index"], test_data["gender"]
             )
 
@@ -110,7 +110,7 @@ def benchmark_chart_generation(iterations=100):
         start = time.perf_counter()
 
         for _ in range(iterations):
-            astrolabe = astro.by_solar(
+            _astrolabe = astro.by_solar(  # noqa: F841
                 test_data["date"], test_data["time_index"], test_data["gender"]
             )
 
@@ -137,7 +137,7 @@ def benchmark_chart_generation(iterations=100):
         speedup = pyiztro_time / iztropy_time
         mem_ratio = pyiztro_mem / iztropy_mem if iztropy_mem > 0 else 0
 
-        print(f"\n📊 星盘生成性能对比:")
+        print("\n📊 星盘生成性能对比:")
         print(f"   py-iztro:  {pyiztro_avg:.6f} 秒/次, {pyiztro_mem:.2f} MB")
         print(f"   iztro-py:  {iztropy_avg:.6f} 秒/次, {iztropy_mem:.2f} MB")
         if speedup > 1:
@@ -175,7 +175,7 @@ def benchmark_horoscope(iterations=50):
         start = time.perf_counter()
 
         for _ in range(iterations):
-            horoscope = astrolabe.horoscope(query_date)
+            _horoscope = astrolabe.horoscope(query_date)  # noqa: F841
 
         end = time.perf_counter()
         current, peak = tracemalloc.get_traced_memory()
@@ -206,7 +206,7 @@ def benchmark_horoscope(iterations=50):
         start = time.perf_counter()
 
         for _ in range(iterations):
-            horoscope = astrolabe.horoscope(query_date)
+            _horoscope = astrolabe.horoscope(query_date)  # noqa: F841
 
         end = time.perf_counter()
         current, peak = tracemalloc.get_traced_memory()
@@ -231,7 +231,7 @@ def benchmark_horoscope(iterations=50):
         speedup = pyiztro_time / iztropy_time
         mem_ratio = pyiztro_mem / iztropy_mem if iztropy_mem > 0 else 0
 
-        print(f"\n📊 运势计算性能对比:")
+        print("\n📊 运势计算性能对比:")
         print(f"   py-iztro:  {pyiztro_avg:.6f} 秒/次, {pyiztro_mem:.2f} MB")
         print(f"   iztro-py:  {iztropy_avg:.6f} 秒/次, {iztropy_mem:.2f} MB")
         if speedup > 1:
@@ -273,8 +273,8 @@ def test_api_compatibility():
         # 测试 horoscope
         print("\n4.2 测试 horoscope() 方法...")
         query_date = datetime(2024, 1, 1)
-        py_horoscope = py_astrolabe.horoscope(query_date)
-        iz_horoscope = iz_astrolabe.horoscope(query_date)
+        _py_horoscope = py_astrolabe.horoscope(query_date)  # noqa: F841
+        _iz_horoscope = iz_astrolabe.horoscope(query_date)  # noqa: F841
         print("   ✓ 两个库都支持 horoscope()")
 
         # 检查关键属性
