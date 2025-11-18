@@ -8,6 +8,8 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, Optional
 
+from utils.validators import validate_date_range, validate_language
+
 from .exceptions import ValidationError
 
 
@@ -128,11 +130,15 @@ class BaseFortuneSystem(ABC):
 
         Raises:
             ValidationError: 参数无效或缺失
+            DateRangeError: 日期超出支持范围
         """
         required_fields = ["date", "time_index", "gender"]
         for field in required_fields:
             if field not in birth_info:
                 raise ValidationError(f"缺少必需字段: {field}")
+
+        # 验证日期格式和范围
+        validate_date_range(birth_info["date"])
 
         # 验证时辰
         if not 0 <= birth_info["time_index"] <= 12:
@@ -141,6 +147,18 @@ class BaseFortuneSystem(ABC):
         # 验证性别
         if birth_info["gender"] not in ["男", "女"]:
             raise ValidationError("性别必须是'男'或'女'")
+
+    def validate_language(self, language: str) -> None:
+        """
+        验证语言是否支持
+
+        Args:
+            language: 语言代码
+
+        Raises:
+            LanguageNotSupportedError: 语言不支持
+        """
+        validate_language(language)
 
     def get_supported_palaces(self) -> list:
         """

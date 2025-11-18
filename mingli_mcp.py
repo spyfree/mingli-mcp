@@ -12,6 +12,9 @@ from typing import Any, Dict
 
 from config import config
 from core.exceptions import (
+    CalculationError,
+    DateRangeError,
+    LanguageNotSupportedError,
     SystemError,
     SystemNotFoundError,
     ToolCallError,
@@ -22,6 +25,7 @@ from systems.bazi.formatter import BaziFormatter
 from systems.ziwei.formatter import ZiweiFormatter
 from transports import StdioTransport
 from utils.formatters import format_error_response, format_success_response
+from utils.performance import PerformanceTimer, log_performance
 
 logger = config.get_logger(__name__)
 
@@ -37,6 +41,42 @@ class MingliMCPServer:
         self.ziwei_formatter = ZiweiFormatter()
         self.bazi_formatter = BaziFormatter()
         self._initialize_transport()
+
+    def _build_birth_info(self, args: Dict[str, Any], date_key: str = "date") -> Dict[str, Any]:
+        """
+        构建生辰信息字典（提取重复代码）
+
+        Args:
+            args: 参数字典
+            date_key: 日期字段名称，默认为"date"，运势查询时为"birth_date"
+
+        Returns:
+            生辰信息字典
+        """
+        return {
+            "date": args[date_key],
+            "time_index": args["time_index"],
+            "gender": args["gender"],
+            "calendar": args.get("calendar", "solar"),
+            "is_leap_month": args.get("is_leap_month", False),
+        }
+
+    def _format_response(self, data: Any, output_format: str) -> str:
+        """
+        格式化响应数据（提取重复代码）
+
+        Args:
+            data: 数据对象
+            output_format: 输出格式 "json" 或其他
+
+        Returns:
+            格式化后的字符串
+        """
+        if output_format == "json":
+            import json
+
+            return json.dumps(data, ensure_ascii=False, indent=2)
+        return data
 
     def _initialize_transport(self):
         """初始化传输层"""
@@ -595,80 +635,61 @@ class MingliMCPServer:
             logger.exception("Unexpected error in tool call")
             return format_error_response(-32603, f"Internal error: {str(e)}", request_id)
 
+    @log_performance
     def _tool_get_ziwei_chart(self, args: Dict[str, Any]) -> str:
         """工具：获取紫微斗数排盘"""
-        birth_info = {
-            "date": args["date"],
-            "time_index": args["time_index"],
-            "gender": args["gender"],
-            "calendar": args.get("calendar", "solar"),
-            "is_leap_month": args.get("is_leap_month", False),
-        }
+        with PerformanceTimer("紫微排盘"):
+            birth_info = self._build_birth_info(args)
+            language = args.get("language", "zh-CN")
 
-        language = args.get("language", "zh-CN")
-        system = get_system("ziwei")
-        chart = system.get_chart(birth_info, language)
+            system = get_system("ziwei")
+            chart = system.get_chart(birth_info, language)
 
-        output_format = args.get("format", "markdown")
-        if output_format == "json":
-            import json
+            output_format = args.get("format", "markdown")
+            if output_format == "json":
+                return self._format_response(chart, "json")
+            else:
+                return self.ziwei_formatter.format_chart_markdown(chart)
 
-            return json.dumps(chart, ensure_ascii=False, indent=2)
-        else:
-            return self.ziwei_formatter.format_chart_markdown(chart)
-
+    @log_performance
     def _tool_get_ziwei_fortune(self, args: Dict[str, Any]) -> str:
         """工具：获取紫微斗数运势"""
-        birth_info = {
-            "date": args["birth_date"],
-            "time_index": args["time_index"],
-            "gender": args["gender"],
-            "calendar": args.get("calendar", "solar"),
-            "is_leap_month": args.get("is_leap_month", False),
-        }
+        with PerformanceTimer("紫微运势查询"):
+            birth_info = self._build_birth_info(args, date_key="birth_date")
 
-        # 解析查询日期
-        query_date_str = args.get("query_date")
-        if query_date_str:
-            query_date = datetime.strptime(query_date_str, "%Y-%m-%d")
-        else:
-            query_date = datetime.now()
+            # 解析查询日期
+            query_date_str = args.get("query_date")
+            if query_date_str:
+                query_date = datetime.strptime(query_date_str, "%Y-%m-%d")
+            else:
+                query_date = datetime.now()
 
-        language = args.get("language", "zh-CN")
-        system = get_system("ziwei")
-        fortune = system.get_fortune(birth_info, query_date, language)
+            language = args.get("language", "zh-CN")
+            system = get_system("ziwei")
+            fortune = system.get_fortune(birth_info, query_date, language)
 
-        output_format = args.get("format", "markdown")
-        if output_format == "json":
-            import json
+            output_format = args.get("format", "markdown")
+            if output_format == "json":
+                return self._format_response(fortune, "json")
+            else:
+                return self.ziwei_formatter.format_fortune_markdown(fortune)
 
-            return json.dumps(fortune, ensure_ascii=False, indent=2)
-        else:
-            return self.ziwei_formatter.format_fortune_markdown(fortune)
-
+    @log_performance
     def _tool_analyze_ziwei_palace(self, args: Dict[str, Any]) -> str:
         """工具：分析紫微斗数宫位"""
-        birth_info = {
-            "date": args["birth_date"],
-            "time_index": args["time_index"],
-            "gender": args["gender"],
-            "calendar": args.get("calendar", "solar"),
-            "is_leap_month": args.get("is_leap_month", False),
-        }
+        with PerformanceTimer("紫微宫位分析"):
+            birth_info = self._build_birth_info(args, date_key="birth_date")
+            palace_name = args["palace_name"]
+            language = args.get("language", "zh-CN")
 
-        palace_name = args["palace_name"]
-        language = args.get("language", "zh-CN")
+            system = get_system("ziwei")
+            analysis = system.analyze_palace(birth_info, palace_name, language)
 
-        system = get_system("ziwei")
-        analysis = system.analyze_palace(birth_info, palace_name, language)
-
-        output_format = args.get("format", "markdown")
-        if output_format == "json":
-            import json
-
-            return json.dumps(analysis, ensure_ascii=False, indent=2)
-        else:
-            return self.ziwei_formatter.format_palace_analysis_markdown(analysis)
+            output_format = args.get("format", "markdown")
+            if output_format == "json":
+                return self._format_response(analysis, "json")
+            else:
+                return self.ziwei_formatter.format_palace_analysis_markdown(analysis)
 
     def _tool_list_systems(self, args: Dict[str, Any]) -> str:
         """工具：列出所有命理系统
@@ -706,77 +727,59 @@ class MingliMCPServer:
 
         return result
 
+    @log_performance
     def _tool_get_bazi_chart(self, args: Dict[str, Any]) -> str:
         """工具：获取八字排盘"""
-        birth_info = {
-            "date": args["date"],
-            "time_index": args["time_index"],
-            "gender": args["gender"],
-            "calendar": args.get("calendar", "solar"),
-            "is_leap_month": args.get("is_leap_month", False),
-        }
+        with PerformanceTimer("八字排盘"):
+            birth_info = self._build_birth_info(args)
+            language = args.get("language", "zh-CN")
 
-        language = args.get("language", "zh-CN")
-        system = get_system("bazi")
-        chart = system.get_chart(birth_info, language)
+            system = get_system("bazi")
+            chart = system.get_chart(birth_info, language)
 
-        output_format = args.get("format", "markdown")
-        if output_format == "json":
-            import json
+            output_format = args.get("format", "markdown")
+            if output_format == "json":
+                return self._format_response(chart, "json")
+            else:
+                return self.bazi_formatter.format_chart(chart, "markdown")
 
-            return json.dumps(chart, ensure_ascii=False, indent=2)
-        else:
-            return self.bazi_formatter.format_chart(chart, "markdown")
-
+    @log_performance
     def _tool_get_bazi_fortune(self, args: Dict[str, Any]) -> str:
         """工具：获取八字运势"""
-        birth_info = {
-            "date": args["birth_date"],
-            "time_index": args["time_index"],
-            "gender": args["gender"],
-            "calendar": args.get("calendar", "solar"),
-            "is_leap_month": args.get("is_leap_month", False),
-        }
+        with PerformanceTimer("八字运势查询"):
+            birth_info = self._build_birth_info(args, date_key="birth_date")
 
-        # 解析查询日期
-        query_date_str = args.get("query_date")
-        if query_date_str:
-            query_date = datetime.strptime(query_date_str, "%Y-%m-%d")
-        else:
-            query_date = datetime.now()
+            # 解析查询日期
+            query_date_str = args.get("query_date")
+            if query_date_str:
+                query_date = datetime.strptime(query_date_str, "%Y-%m-%d")
+            else:
+                query_date = datetime.now()
 
-        language = args.get("language", "zh-CN")
-        system = get_system("bazi")
-        fortune = system.get_fortune(birth_info, query_date, language)
+            language = args.get("language", "zh-CN")
+            system = get_system("bazi")
+            fortune = system.get_fortune(birth_info, query_date, language)
 
-        output_format = args.get("format", "markdown")
-        if output_format == "json":
-            import json
+            output_format = args.get("format", "markdown")
+            if output_format == "json":
+                return self._format_response(fortune, "json")
+            else:
+                return self.bazi_formatter.format_fortune(fortune, "markdown")
 
-            return json.dumps(fortune, ensure_ascii=False, indent=2)
-        else:
-            return self.bazi_formatter.format_fortune(fortune, "markdown")
-
+    @log_performance
     def _tool_analyze_bazi_element(self, args: Dict[str, Any]) -> str:
         """工具：分析八字五行"""
-        birth_info = {
-            "date": args["birth_date"],
-            "time_index": args["time_index"],
-            "gender": args["gender"],
-            "calendar": args.get("calendar", "solar"),
-            "is_leap_month": args.get("is_leap_month", False),
-        }
+        with PerformanceTimer("八字五行分析"):
+            birth_info = self._build_birth_info(args, date_key="birth_date")
 
-        system = get_system("bazi")
-        analysis = system.analyze_element(birth_info)
+            system = get_system("bazi")
+            analysis = system.analyze_element(birth_info)
 
-        output_format = args.get("format", "markdown")
-        if output_format == "json":
-            import json
-
-            return json.dumps(analysis, ensure_ascii=False, indent=2)
-        else:
-            return self.bazi_formatter.format_element_analysis(analysis, "markdown")
+            output_format = args.get("format", "markdown")
+            if output_format == "json":
+                return self._format_response(analysis, "json")
+            else:
+                return self.bazi_formatter.format_element_analysis(analysis, "markdown")
 
     def _handle_prompts_list(self, request_id: Any) -> Dict[str, Any]:
         """处理提示词列表请求"""
