@@ -7,6 +7,7 @@ These documents are included in the repository and available on GitHub:
 ### 🚀 Getting Started (New User Guides)
 - **[QUICK_START.md](QUICK_START.md)** - 5分钟快速开始指南 (推荐新用户)
 - **[USER_GUIDE.md](USER_GUIDE.md)** - 完整用户指南
+- **[TRUE_SOLAR_TIME.md](TRUE_SOLAR_TIME.md)** ⭐ 真太阳时使用指南（精确时辰修正）
 - **[API_EXAMPLES.md](API_EXAMPLES.md)** - API使用示例与代码参考
 - **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - 故障排查指南
 
@@ -51,6 +52,7 @@ These include:
 ### 🌟 Getting Started (Recommended for New Users)
 - **QUICK_START.md** - 5分钟快速上手 (Start here!)
 - **USER_GUIDE.md** - 完整功能说明
+- **TRUE_SOLAR_TIME.md** ⭐ - 真太阳时精确排盘（新功能）
 - **API_EXAMPLES.md** - 代码示例
 - **TROUBLESHOOTING.md** - 问题解决
 
