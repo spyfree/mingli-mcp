@@ -115,7 +115,9 @@ class TestHttpTransport:
     def test_cors_headers(self, client):
         """测试CORS头"""
         response = client.options("/mcp")
-        assert "access-control-allow-origin" in response.headers.keys() or response.status_code == 200
+        assert (
+            "access-control-allow-origin" in response.headers.keys() or response.status_code == 200
+        )
 
 
 class TestRateLimiting:

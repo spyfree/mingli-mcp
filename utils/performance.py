@@ -67,13 +67,9 @@ class PerformanceTimer:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.elapsed = time.time() - self.start_time
         if exc_type is None:
-            logger.log(
-                self.log_level, f"{self.operation_name} 完成，耗时: {self.elapsed:.3f}s"
-            )
+            logger.log(self.log_level, f"{self.operation_name} 完成，耗时: {self.elapsed:.3f}s")
         else:
-            logger.error(
-                f"{self.operation_name} 失败，耗时: {self.elapsed:.3f}s，错误: {exc_val}"
-            )
+            logger.error(f"{self.operation_name} 失败，耗时: {self.elapsed:.3f}s，错误: {exc_val}")
         return False
 
 
@@ -96,7 +92,12 @@ class PerformanceMetrics:
             elapsed: 耗时（秒）
         """
         if operation not in self.metrics:
-            self.metrics[operation] = {"count": 0, "total_time": 0.0, "min": float("inf"), "max": 0.0}
+            self.metrics[operation] = {
+                "count": 0,
+                "total_time": 0.0,
+                "min": float("inf"),
+                "max": 0.0,
+            }
 
         self.metrics[operation]["count"] += 1
         self.metrics[operation]["total_time"] += elapsed

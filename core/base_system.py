@@ -238,14 +238,10 @@ class BaseFortuneSystem(ABC):
 
         # 如果没有提供具体时刻，使用时辰的中点时间
         if birth_hour is None or birth_minute is None:
-            birth_hour, birth_minute = self._get_time_index_midpoint(
-                birth_info["time_index"]
-            )
+            birth_hour, birth_minute = self._get_time_index_midpoint(birth_info["time_index"])
 
         # 计算真太阳时修正后的时辰
-        adjusted_index, _, _ = adjust_time_index_for_solar_time(
-            birth_hour, birth_minute, longitude
-        )
+        adjusted_index, _, _ = adjust_time_index_for_solar_time(birth_hour, birth_minute, longitude)
 
         return adjusted_index
 
@@ -260,11 +256,11 @@ class BaseFortuneSystem(ABC):
             (小时, 分钟) 元组
         """
         midpoints = [
-            (0, 0),   # 0 早子时
-            (2, 0),   # 1 丑时
-            (4, 0),   # 2 寅时
-            (6, 0),   # 3 卯时
-            (8, 0),   # 4 辰时
+            (0, 0),  # 0 早子时
+            (2, 0),  # 1 丑时
+            (4, 0),  # 2 寅时
+            (6, 0),  # 3 卯时
+            (8, 0),  # 4 辰时
             (10, 0),  # 5 巳时
             (12, 0),  # 6 午时
             (14, 0),  # 7 未时
@@ -272,6 +268,6 @@ class BaseFortuneSystem(ABC):
             (18, 0),  # 9 酉时
             (20, 0),  # 10 戌时
             (22, 0),  # 11 亥时
-            (0, 0),   # 12 晚子时
+            (0, 0),  # 12 晚子时
         ]
         return midpoints[time_index]

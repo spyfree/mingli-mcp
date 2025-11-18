@@ -46,9 +46,7 @@ def validate_date_range(date_str: str) -> None:
     try:
         dt = datetime.strptime(date_str, "%Y-%m-%d")
         if not (MIN_YEAR <= dt.year <= MAX_YEAR):
-            raise DateRangeError(
-                f"日期超出支持范围（{MIN_YEAR}-{MAX_YEAR}）: {date_str}"
-            )
+            raise DateRangeError(f"日期超出支持范围（{MIN_YEAR}-{MAX_YEAR}）: {date_str}")
     except ValueError as e:
         raise ValidationError(f"日期格式错误: {date_str}，应为 YYYY-MM-DD 格式") from e
 

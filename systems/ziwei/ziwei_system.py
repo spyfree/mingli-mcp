@@ -125,7 +125,9 @@ class ZiweiSystem(BaseFortuneSystem):
                 )
             else:
                 astrolabe = astro.by_solar(
-                    birth_info["date"], adjusted_time_index, birth_info["gender"]  # 使用修正后的时辰
+                    birth_info["date"],
+                    adjusted_time_index,
+                    birth_info["gender"],  # 使用修正后的时辰
                 )
 
             # 设置语言
@@ -179,7 +181,9 @@ class ZiweiSystem(BaseFortuneSystem):
                 )
             else:
                 astrolabe = astro.by_solar(
-                    birth_info["date"], adjusted_time_index, birth_info["gender"]  # 使用修正后的时辰
+                    birth_info["date"],
+                    adjusted_time_index,
+                    birth_info["gender"],  # 使用修正后的时辰
                 )
 
             # 设置语言

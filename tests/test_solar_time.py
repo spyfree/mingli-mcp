@@ -165,11 +165,7 @@ class TestBirthInfoSolarTime:
 
     def test_normal_mode_no_correction(self):
         """测试普通模式不修正"""
-        info = BirthInfo(
-            date="2000-08-16",
-            time_index=6,
-            gender="女"
-        )
+        info = BirthInfo(date="2000-08-16", time_index=6, gender="女")
         assert info.get_adjusted_time_index() == 6
 
     def test_solar_time_enabled_beijing(self):
@@ -181,7 +177,7 @@ class TestBirthInfoSolarTime:
             longitude=116.4,
             use_solar_time=True,
             birth_hour=12,
-            birth_minute=0
+            birth_minute=0,
         )
         # 北京12:00午时，真太阳时11:46仍是午时
         assert info.get_adjusted_time_index() == 6
@@ -195,7 +191,7 @@ class TestBirthInfoSolarTime:
             longitude=87.6,
             use_solar_time=True,
             birth_hour=12,
-            birth_minute=0
+            birth_minute=0,
         )
         # 乌鲁木齐12:00午时，真太阳时9:50变为巳时
         assert info.get_adjusted_time_index() == 5
@@ -220,7 +216,7 @@ class TestBirthInfoSolarTime:
             longitude=116.4,
             use_solar_time=True,
             birth_hour=12,
-            birth_minute=0
+            birth_minute=0,
         )
         info_str = info.get_solar_time_info()
         assert info_str is not None
@@ -230,11 +226,7 @@ class TestBirthInfoSolarTime:
 
     def test_solar_time_info_none_when_disabled(self):
         """测试禁用真太阳时时信息为None"""
-        info = BirthInfo(
-            date="2000-08-16",
-            time_index=6,
-            gender="女"
-        )
+        info = BirthInfo(date="2000-08-16", time_index=6, gender="女")
         assert info.get_solar_time_info() is None
 
     def test_to_dict_with_solar_time(self):
@@ -247,7 +239,7 @@ class TestBirthInfoSolarTime:
             latitude=39.9,
             use_solar_time=True,
             birth_hour=12,
-            birth_minute=0
+            birth_minute=0,
         )
         data = info.to_dict()
         assert data["longitude"] == 116.4
@@ -265,7 +257,7 @@ class TestBirthInfoSolarTime:
             "longitude": 116.4,
             "use_solar_time": True,
             "birth_hour": 12,
-            "birth_minute": 0
+            "birth_minute": 0,
         }
         info = BirthInfo.from_dict(data)
         assert info.longitude == 116.4

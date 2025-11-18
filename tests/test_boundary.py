@@ -145,12 +145,8 @@ class TestBirthInfoValidation:
 
         # 测试无效时辰
         with pytest.raises(ValidationError):
-            system.validate_birth_info(
-                {"date": "2000-08-16", "time_index": 13, "gender": "女"}
-            )
+            system.validate_birth_info({"date": "2000-08-16", "time_index": 13, "gender": "女"})
 
         # 测试无效性别
         with pytest.raises(ValidationError):
-            system.validate_birth_info(
-                {"date": "2000-08-16", "time_index": 2, "gender": "M"}
-            )
+            system.validate_birth_info({"date": "2000-08-16", "time_index": 2, "gender": "M"})
