@@ -112,17 +112,22 @@ class ZiweiSystem(BaseFortuneSystem):
         self.validate_birth_info(birth_info)
 
         try:
+            # 应用真太阳时修正（如果启用）
+            adjusted_time_index = self.apply_solar_time_correction(birth_info)
+
             # 根据历法类型调用不同的方法
             if birth_info.get("calendar", "solar") == "lunar":
                 astrolabe = astro.by_lunar(
                     birth_info["date"],
-                    birth_info["time_index"],
+                    adjusted_time_index,  # 使用修正后的时辰
                     birth_info["gender"],
                     birth_info.get("is_leap_month", False),
                 )
             else:
                 astrolabe = astro.by_solar(
-                    birth_info["date"], birth_info["time_index"], birth_info["gender"]
+                    birth_info["date"],
+                    adjusted_time_index,
+                    birth_info["gender"],  # 使用修正后的时辰
                 )
 
             # 设置语言
@@ -163,17 +168,22 @@ class ZiweiSystem(BaseFortuneSystem):
             query_date = datetime.now()
 
         try:
+            # 应用真太阳时修正（如果启用）
+            adjusted_time_index = self.apply_solar_time_correction(birth_info)
+
             # 先获取星盘
             if birth_info.get("calendar", "solar") == "lunar":
                 astrolabe = astro.by_lunar(
                     birth_info["date"],
-                    birth_info["time_index"],
+                    adjusted_time_index,  # 使用修正后的时辰
                     birth_info["gender"],
                     birth_info.get("is_leap_month", False),
                 )
             else:
                 astrolabe = astro.by_solar(
-                    birth_info["date"], birth_info["time_index"], birth_info["gender"]
+                    birth_info["date"],
+                    adjusted_time_index,
+                    birth_info["gender"],  # 使用修正后的时辰
                 )
 
             # 设置语言

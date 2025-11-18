@@ -95,3 +95,33 @@ class FormatError(MingliMCPError):
     """
 
     pass
+
+
+class DateRangeError(ValidationError):
+    """
+    日期范围错误
+
+    当日期超出支持范围时抛出（如：1900-2100）
+    """
+
+    pass
+
+
+class CalculationError(SystemError):
+    """
+    计算错误
+
+    当天文历法计算失败时抛出
+    """
+
+    pass
+
+
+class LanguageNotSupportedError(ValidationError):
+    """
+    语言不支持错误
+
+    当请求的语言不在支持列表中时抛出
+    """
+
+    pass

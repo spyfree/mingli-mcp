@@ -25,7 +25,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "iztro-py>=0.3.1",
+    "iztro-py>=0.3.3",
     "lunar_python>=1.4.7",
     "bidict>=0.23.0",
     "colorama>=0.4.6",
@@ -39,6 +39,7 @@ dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "pytest-asyncio>=0.21.0",
+    "httpx>=0.24.0",
     "black>=23.0.0",
     "flake8>=6.0.0",
     "mypy>=1.0.0",

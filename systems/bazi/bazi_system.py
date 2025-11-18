@@ -401,7 +401,9 @@ class BaziSystem(BaseFortuneSystem):
         if "hour" in birth_info:
             hour = birth_info["hour"]
         elif "time_index" in birth_info:
-            time_index = birth_info["time_index"]
+            # 应用真太阳时修正（如果启用）
+            time_index = self.apply_solar_time_correction(birth_info)
+
             # 时辰对应关系：0=早子时(0点), 1=丑时(1点), ... 12=晚子时(23点)
             # 简化处理：每个时辰2小时，从早子时23点开始
             if time_index == 0:
