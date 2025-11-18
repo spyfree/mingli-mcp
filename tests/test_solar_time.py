@@ -3,18 +3,19 @@
 真太阳时计算测试
 """
 
-import pytest
 from datetime import datetime
 
+import pytest
+
+from core.birth_info import BirthInfo
 from utils.solar_time import (
-    calculate_solar_time_offset,
-    beijing_to_solar_time,
     adjust_time_index_for_solar_time,
+    beijing_to_solar_time,
+    calculate_solar_time_offset,
     calculate_time_index,
     get_longitude_by_city,
     get_major_cities_longitude,
 )
-from core.birth_info import BirthInfo
 
 
 class TestSolarTimeOffset:

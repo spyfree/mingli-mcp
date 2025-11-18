@@ -241,8 +241,8 @@ class BirthInfo:
 
         # 延迟导入
         from utils.solar_time import (
-            calculate_solar_time_offset,
             beijing_to_solar_time,
+            calculate_solar_time_offset,
         )
 
         # 获取出生时刻
