@@ -53,6 +53,7 @@ class HttpTransport(BaseTransport):
         self.port = port
         self.api_key = api_key
         self.enable_rate_limit = enable_rate_limit
+        self.message_handler = None  # 初始化消息处理器
 
         # 初始化限流器
         if self.enable_rate_limit:
