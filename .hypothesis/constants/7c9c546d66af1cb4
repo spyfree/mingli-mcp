@@ -1,0 +1,4 @@
+# file: /Users/lix18854/Documents/code/ziwei_mcp/config.py
+# hypothesis_version: 6.148.3
+
+['0.0.0.0', '1.0.11', '8080', '8081', 'CORS_ORIGINS', 'CRITICAL', 'DEBUG', 'DEFAULT_LANGUAGE', 'ERROR', 'HTTP_API_KEY', 'HTTP_HOST', 'HTTP_PORT', 'INFO', 'LOG_LEVEL', 'MCP_SERVER_NAME', 'TRANSPORT_TYPE', 'WARNING', 'WS_HOST', 'WS_PORT', 'en-US', 'false', 'ja-JP', 'ko-KR', 'stdio', 'true', 'vi-VN', 'zh-CN', 'zh-TW', 'ziwei_mcp']

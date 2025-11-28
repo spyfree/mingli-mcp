@@ -1,0 +1,4 @@
+# file: /Users/lix18854/Documents/code/ziwei_mcp/utils/performance.py
+# hypothesis_version: 6.148.3
+
+[0.0, 'avg_time', 'count', 'inf', 'max', 'max_time', 'min', 'min_time', 'operation', 'total_time']

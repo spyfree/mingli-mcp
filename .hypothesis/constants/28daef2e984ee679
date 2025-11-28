@@ -1,0 +1,4 @@
+# file: /Users/lix18854/Documents/code/ziwei_mcp/systems/__init__.py
+# hypothesis_version: 6.148.3
+
+['astrology', 'bazi', 'clear_cache', 'get_system', 'list_systems', 'register_system', 'ziwei']

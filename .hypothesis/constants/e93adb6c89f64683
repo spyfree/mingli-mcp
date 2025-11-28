@@ -1,0 +1,4 @@
+# file: /Users/lix18854/Documents/code/ziwei_mcp/utils/rate_limiter.py
+# hypothesis_version: 6.148.3
+
+[100, 300, 'limited_clients', 'total_clients', 'total_requests', 'window_seconds']

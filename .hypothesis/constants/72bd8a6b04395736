@@ -1,0 +1,4 @@
+# file: /Users/lix18854/Documents/code/ziwei_mcp/transports/http_transport.py
+# hypothesis_version: 6.148.3
+
+[-32603, 100, 204, 401, 500, 8080, ',', '/', '/docs', '/health', '/mcp', '/stats', '0.0.0.0', '1.0.0', '2.0', 'Authorization', 'Content-Type', 'GET', 'HTTP', 'HTTP server stopped', 'MCP', 'Mingli MCP Server', 'OPTIONS', 'POST', 'Too Many Requests', 'Unauthorized', 'X-RateLimit-Limit', 'X-RateLimit-Reset', 'bazi', 'code', 'docs', 'endpoints', 'error', 'health', 'healthy', 'http', 'id', 'info', 'jsonrpc', 'mcp', 'message', 'name', 'protocol', 'rate_limiting', 'reset_time', 'status', 'systems', 'transport', 'unknown', 'version', 'ziwei', '命理MCP服务 - HTTP API']

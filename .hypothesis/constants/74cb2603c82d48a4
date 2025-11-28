@@ -1,0 +1,4 @@
+# file: /Users/lix18854/Documents/code/ziwei_mcp/mcp/tools/__init__.py
+# hypothesis_version: 6.148.3
+
+['# 可用的命理系统\n\n', '- **功能支持**:\n', 'ToolRegistry', 'analyze_bazi_element', 'analyze_ziwei_palace', 'detailed', 'get_bazi_chart', 'get_bazi_fortune', 'get_ziwei_chart', 'get_ziwei_fortune', 'list_fortune_systems', '✅', '❌']

@@ -1,0 +1,4 @@
+# file: /Users/lix18854/Documents/code/ziwei_mcp/core/base_system.py
+# hypothesis_version: 6.148.3
+
+['birth_hour', 'birth_minute', 'chart', 'compatibility', 'date', 'fortune', 'gender', 'longitude', 'palace_analysis', 'time_index', 'use_solar_time', 'zh-CN', '女', "性别必须是'男'或'女'", '时辰序号必须在0-12之间', '男']

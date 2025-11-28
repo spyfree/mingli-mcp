@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mingli-mcp"
-version = "1.0.13"
+version = "1.0.15"
 description = "命理MCP服务 - 支持紫微斗数、八字等多种命理系统"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -45,6 +45,7 @@ dev = [
     "mypy>=1.0.0",
     "pylint>=2.17.0",
     "isort>=5.12.0",
+    "hypothesis>=6.0.0",
 ]
 
 [project.urls]
@@ -58,7 +59,7 @@ mingli-mcp = "mingli_mcp:main"
 
 [tool.setuptools]
 py-modules = ["mingli_mcp", "config"]
-packages = ["systems", "transports", "utils", "core"]
+packages = ["systems", "transports", "utils", "core", "mcp", "mcp.tools"]
 
 [tool.setuptools.package-data]
 systems = ["bazi/lib/*.py"]
@@ -109,6 +110,13 @@ omit = [
     "*/build/*",
     "*/dist/*",
     "*/__pycache__/*",
+    "api_compatibility_analysis.py",
+    "benchmark_iztro_comparison.py",
+    "test_security_fixes.py",
+    "systems/bazi/lib/*",
+    "utils/metrics.py",
+    "setup.py",
+    "conftest.py",
 ]
 
 [tool.coverage.report]

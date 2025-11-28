@@ -44,13 +44,17 @@ class TestDateValidation:
         """测试日期过早"""
         with pytest.raises(DateRangeError) as exc_info:
             validate_date_range("1899-12-31")
-        assert "1900-2100" in str(exc_info.value)
+        error_msg = str(exc_info.value)
+        assert "1899-12-31" in error_msg  # Should include the invalid value
+        assert "1900" in error_msg and "2100" in error_msg  # Should include valid range
 
     def test_date_range_too_late(self):
         """测试日期过晚"""
         with pytest.raises(DateRangeError) as exc_info:
             validate_date_range("2101-01-01")
-        assert "1900-2100" in str(exc_info.value)
+        error_msg = str(exc_info.value)
+        assert "2101-01-01" in error_msg  # Should include the invalid value
+        assert "1900" in error_msg and "2100" in error_msg  # Should include valid range
 
     def test_date_range_invalid_format(self):
         """测试无效格式"""

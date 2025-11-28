@@ -1,0 +1,4 @@
+# file: /Users/lix18854/Documents/code/ziwei_mcp/core/chart_result.py
+# hypothesis_version: 6.148.3
+
+['\n## 宫位信息\n', '## 基本信息\n', 'ChartResult', 'basic_info', 'metadata', 'name', 'palaces', 'system', '未知宫位']

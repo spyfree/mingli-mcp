@@ -1,0 +1,4 @@
+# file: /Users/lix18854/Documents/code/ziwei_mcp/systems/ziwei/ziwei_system.py
+# hypothesis_version: 6.148.3
+
+['0.1.0', '__version__', 'basic_info', 'calendar', 'careerPalace', 'chart', 'childrenPalace', 'compatibility', 'date', 'fortune', 'friendsPalace', 'gender', 'healthPalace', 'is_leap_month', 'lunar', 'name', 'palace_analysis', 'palaces', 'parentsPalace', 'propertyPalace', 'siblingsPalace', 'solar', 'soulPalace', 'spiritPalace', 'spousePalace', 'surfacePalace', 'transit', 'wealthPalace', 'zh-CN', '交友宫', '仆役', '兄弟', '兄弟宫', '命宫', '夫妻', '夫妻宫', '子女', '子女宫', '官禄', '官禄宫', '父母', '父母宫', '田宅', '田宅宫', '疾厄', '疾厄宫', '福德', '福德宫', '紫微斗数', '财帛', '财帛宫', '迁移', '迁移宫']

@@ -1,0 +1,4 @@
+# file: /Users/lix18854/Documents/code/ziwei_mcp/systems/bazi/bazi_system.py
+# hypothesis_version: 6.148.3
+
+[100, '%Y-%m-%d', '-', '1.0.0', 'age', 'age_range', 'balance', 'basic_chart', 'calendar', 'da_yun', 'date', 'day', 'day_gan', 'day_master', 'day_master_element', 'deities', 'description', 'eight_char', 'element', 'gan', 'gan_zhi', 'gender', 'hour', 'hour_gan', 'index', 'liu_nian', 'lunar', 'lunar_date', 'missing', 'month', 'month_gan', 'percentages', 'pillar', 'pillars', 'query_date', 'score', 'scores', 'solar', 'solar_date', 'strongest', 'time_index', 'weakest', 'wu_xing', 'year', 'year_gan', 'zh-CN', 'zhi', 'zhi_cang_gan', 'zodiac', '、', '丁', '七杀', '丑', '丙', '丙丁巳午', '乙', '五行不平衡', '五行平衡', '五行较平衡', '亥', '伤官', '偏印', '偏财', '八字', '劫财', '午', '卯', '土', '壬', '壬癸子亥', '子', '寅', '己', '巳', '庚', '庚辛申酉', '戊', '戊己丑辰未戌', '戌', '木', '未', '未知', '正印', '正官', '正财', '比肩', '水', '火', '甲', '甲乙寅卯', '申', '癸', '辛', '辰', '酉', '金', '食神']
