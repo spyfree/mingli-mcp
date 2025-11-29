@@ -50,7 +50,7 @@ class TestMingliMCPServerRequestRouting:
 
         with patch.object(server.protocol_handler, "handle_initialize") as mock:
             mock.return_value = {"jsonrpc": "2.0", "result": {}, "id": 1}
-            response = server.handle_request(request)
+            server.handle_request(request)
             mock.assert_called_once_with(request, 1)
 
     def test_routes_tools_list_request(self, server):
@@ -59,7 +59,7 @@ class TestMingliMCPServerRequestRouting:
 
         with patch.object(server.protocol_handler, "handle_tools_list") as mock:
             mock.return_value = {"jsonrpc": "2.0", "result": {"tools": []}, "id": 2}
-            response = server.handle_request(request)
+            server.handle_request(request)
             mock.assert_called_once()
 
     def test_routes_prompts_list_request(self, server):
@@ -68,7 +68,7 @@ class TestMingliMCPServerRequestRouting:
 
         with patch.object(server.protocol_handler, "handle_prompts_list") as mock:
             mock.return_value = {"jsonrpc": "2.0", "result": {"prompts": []}, "id": 3}
-            response = server.handle_request(request)
+            server.handle_request(request)
             mock.assert_called_once_with(3)
 
     def test_routes_resources_list_request(self, server):
@@ -77,7 +77,7 @@ class TestMingliMCPServerRequestRouting:
 
         with patch.object(server.protocol_handler, "handle_resources_list") as mock:
             mock.return_value = {"jsonrpc": "2.0", "result": {"resources": []}, "id": 4}
-            response = server.handle_request(request)
+            server.handle_request(request)
             mock.assert_called_once_with(4)
 
     def test_routes_tools_call_request(self, server):

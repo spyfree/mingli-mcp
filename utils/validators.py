@@ -159,6 +159,6 @@ def validate_required_params(
             missing_details = [
                 f"  - {p}: {param_descriptions.get(p, '必需参数')}" for p in missing_params
             ]
-            raise ValidationError(f"缺少必需参数:\n" + "\n".join(missing_details))
+            raise ValidationError("缺少必需参数:\n" + "\n".join(missing_details))
         else:
             raise ValidationError(f"缺少必需参数: {', '.join(missing_params)}")

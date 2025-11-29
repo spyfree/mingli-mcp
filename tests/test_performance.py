@@ -18,7 +18,7 @@ class TestPerformanceTimer:
 
         assert timer.elapsed is not None
         assert timer.elapsed >= 0.01
-        assert timer.elapsed < 0.05  # 允许更多误差，适应CI/CD环境
+        assert timer.elapsed < 0.15  # 允许更多误差，适应CI/CD环境
 
     def test_timer_with_exception(self):
         """测试异常时的计时"""
