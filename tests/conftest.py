@@ -5,12 +5,12 @@ This module provides common test fixtures for birth_info, dates, and other
 test data used across multiple test modules.
 """
 
-import pytest
 from datetime import date, datetime
-from typing import Dict, Any
+from typing import Any, Dict
+
+import pytest
 
 from core.birth_info import BirthInfo
-
 
 # ============================================================================
 # Birth Info Fixtures

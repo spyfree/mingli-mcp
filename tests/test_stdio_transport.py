@@ -6,15 +6,15 @@ Tests for message sending, receiving, and error handling in the stdio transport.
 Requirements: 2.3
 """
 
-import json
 import io
+import json
 import sys
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from transports.stdio_transport import StdioTransport
 from transports.base_transport import BaseTransport
+from transports.stdio_transport import StdioTransport
 
 
 class TestStdioTransportBasics:

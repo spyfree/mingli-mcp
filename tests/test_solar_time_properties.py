@@ -7,17 +7,18 @@ of the solar time calculation functions across a wide range of inputs.
 """
 
 from datetime import datetime
-from hypothesis import given, strategies as st, settings
+
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from utils.solar_time import (
     BEIJING_LONGITUDE,
     MINUTES_PER_DEGREE,
-    calculate_solar_time_offset,
-    beijing_to_solar_time,
-    calculate_time_index,
     adjust_time_index_for_solar_time,
+    beijing_to_solar_time,
+    calculate_solar_time_offset,
+    calculate_time_index,
 )
-
 
 # ============================================================================
 # Hypothesis Strategies

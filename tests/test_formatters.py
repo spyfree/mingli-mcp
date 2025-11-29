@@ -9,14 +9,14 @@ This module tests:
 Requirements: 2.4
 """
 
-import pytest
 from datetime import datetime
 from typing import Any, Dict
 
-from utils.formatters import format_error_response, format_success_response
-from systems.ziwei.formatter import ZiweiFormatter
-from systems.bazi.formatter import BaziFormatter
+import pytest
 
+from systems.bazi.formatter import BaziFormatter
+from systems.ziwei.formatter import ZiweiFormatter
+from utils.formatters import format_error_response, format_success_response
 
 # ============================================================================
 # JSON-RPC Response Formatting Tests (utils/formatters.py)

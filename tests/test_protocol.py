@@ -6,6 +6,7 @@ Requirements: 2.1
 """
 
 import pytest
+
 from mcp.protocol import ProtocolHandler
 
 

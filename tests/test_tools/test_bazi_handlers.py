@@ -5,15 +5,16 @@ Tests for get_bazi_chart, get_bazi_fortune, analyze_bazi_element handlers.
 Requirements: 2.2
 """
 
-import pytest
 import json
 
+import pytest
+
+from core.exceptions import ValidationError
 from mcp.tools.bazi_handlers import (
+    handle_analyze_bazi_element,
     handle_get_bazi_chart,
     handle_get_bazi_fortune,
-    handle_analyze_bazi_element,
 )
-from core.exceptions import ValidationError
 
 
 class TestGetBaziChart:

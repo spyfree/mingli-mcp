@@ -5,15 +5,16 @@ Tests for get_ziwei_chart, get_ziwei_fortune, analyze_ziwei_palace handlers.
 Requirements: 2.2
 """
 
-import pytest
 import json
 
+import pytest
+
+from core.exceptions import ValidationError
 from mcp.tools.ziwei_handlers import (
+    handle_analyze_ziwei_palace,
     handle_get_ziwei_chart,
     handle_get_ziwei_fortune,
-    handle_analyze_ziwei_palace,
 )
-from core.exceptions import ValidationError
 
 
 class TestGetZiweiChart:

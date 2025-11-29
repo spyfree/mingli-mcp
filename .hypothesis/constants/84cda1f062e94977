@@ -1,0 +1,4 @@
+# file: /Users/lix18854/Documents/code/ziwei_mcp/mcp/tools/ziwei_handlers.py
+# hypothesis_version: 6.148.3
+
+['%Y-%m-%d', 'birth_date', 'calendar', 'date', 'format', 'gender', 'is_leap_month', 'json', 'language', 'markdown', 'palace_name', 'query_date', 'solar', 'time_index', 'zh-CN', 'ziwei', '出生时辰序号 (0-12)', '宫位名称', '性别 (男/女)', '紫微宫位分析', '紫微排盘', '紫微运势查询']

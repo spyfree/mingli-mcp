@@ -1,0 +1,4 @@
+# file: /Users/lix18854/Documents/code/ziwei_mcp/utils/validators.py
+# hypothesis_version: 6.148.3
+
+[1900, 2100, '%Y-%m-%d', 'en-US', 'ja-JP', 'ko-KR', 'vi-VN', 'zh-CN', 'zh-TW', '女', '男']

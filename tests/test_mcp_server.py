@@ -5,11 +5,12 @@ Tests for server initialization and request routing.
 Requirements: 2.1
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-from mcp.server import MingliMCPServer
+import pytest
+
 from mcp.protocol import ProtocolHandler
+from mcp.server import MingliMCPServer
 from mcp.tools import ToolRegistry
 
 

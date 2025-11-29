@@ -7,11 +7,12 @@ of the BirthInfo class across a wide range of inputs.
 """
 
 from datetime import date
-from hypothesis import given, strategies as st, settings, assume
+
+from hypothesis import assume, given, settings
+from hypothesis import strategies as st
 
 from core.birth_info import BirthInfo
-from utils.validators import MIN_YEAR, MAX_YEAR
-
+from utils.validators import MAX_YEAR, MIN_YEAR
 
 # ============================================================================
 # Hypothesis Strategies for BirthInfo Fields

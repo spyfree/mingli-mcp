@@ -1,0 +1,4 @@
+# file: /Users/lix18854/Documents/code/ziwei_mcp/mcp/tools/bazi_handlers.py
+# hypothesis_version: 6.148.3
+
+['%Y-%m-%d', 'bazi', 'birth_date', 'calendar', 'date', 'format', 'gender', 'is_leap_month', 'json', 'language', 'markdown', 'query_date', 'solar', 'time_index', 'zh-CN', '八字五行分析', '八字排盘', '八字运势查询', '出生时辰序号 (0-12)', '性别 (男/女)']
