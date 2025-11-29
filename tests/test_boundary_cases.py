@@ -24,7 +24,7 @@ from utils.validators import (
 class TestDateBoundaries:
     """
     Date boundary tests for the supported range (1900-2100).
-    
+
     Requirements: 3.1, 3.2
     """
 
@@ -105,7 +105,7 @@ class TestDateBoundaries:
 class TestTimeIndexBoundaries:
     """
     Time index boundary tests for valid range (0-12).
-    
+
     Requirements: 3.3
     """
 
@@ -168,7 +168,7 @@ class TestTimeIndexBoundaries:
 class TestLunarLeapMonthBoundaries:
     """
     Lunar leap month validation tests.
-    
+
     Requirements: 3.4
     """
 
@@ -245,7 +245,7 @@ class TestLunarLeapMonthBoundaries:
 class TestBirthInfoBoundaries:
     """
     BirthInfo boundary tests combining multiple validations.
-    
+
     Requirements: 3.1, 3.3, 3.4
     """
 
@@ -330,7 +330,7 @@ class TestBirthInfoBoundaries:
         """Test time range strings for boundary time indices."""
         birth_info_0 = BirthInfo(date="2000-08-16", time_index=0, gender="男")
         birth_info_12 = BirthInfo(date="2000-08-16", time_index=12, gender="女")
-        
+
         # Both early and late Zi hour should have same time range
         assert birth_info_0.get_time_range() == "23:00~01:00"
         assert birth_info_12.get_time_range() == "23:00~01:00"

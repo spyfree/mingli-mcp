@@ -26,9 +26,9 @@ class TestGetZiweiChart:
             "time_index": sample_birth_info_dict["time_index"],
             "gender": sample_birth_info_dict["gender"],
         }
-        
+
         result = handle_get_ziwei_chart(args)
-        
+
         assert isinstance(result, str)
         assert "#" in result  # Markdown headers
 
@@ -40,9 +40,9 @@ class TestGetZiweiChart:
             "gender": sample_birth_info_dict["gender"],
             "format": "json",
         }
-        
+
         result = handle_get_ziwei_chart(args)
-        
+
         # Should be valid JSON
         data = json.loads(result)
         assert "system" in data
@@ -54,7 +54,7 @@ class TestGetZiweiChart:
             "time_index": sample_birth_info_dict["time_index"],
             "gender": sample_birth_info_dict["gender"],
         }
-        
+
         with pytest.raises(ValidationError):
             handle_get_ziwei_chart(args)
 
@@ -64,7 +64,7 @@ class TestGetZiweiChart:
             "date": sample_birth_info_dict["date"],
             "gender": sample_birth_info_dict["gender"],
         }
-        
+
         with pytest.raises(ValidationError):
             handle_get_ziwei_chart(args)
 
@@ -74,7 +74,7 @@ class TestGetZiweiChart:
             "date": sample_birth_info_dict["date"],
             "time_index": sample_birth_info_dict["time_index"],
         }
-        
+
         with pytest.raises(ValidationError):
             handle_get_ziwei_chart(args)
 
@@ -85,7 +85,7 @@ class TestGetZiweiChart:
             "time_index": sample_birth_info_dict["time_index"],
             "gender": sample_birth_info_dict["gender"],
         }
-        
+
         with pytest.raises(ValidationError):
             handle_get_ziwei_chart(args)
 
@@ -96,7 +96,7 @@ class TestGetZiweiChart:
             "time_index": 15,  # Invalid
             "gender": sample_birth_info_dict["gender"],
         }
-        
+
         with pytest.raises(ValidationError):
             handle_get_ziwei_chart(args)
 
@@ -107,7 +107,7 @@ class TestGetZiweiChart:
             "time_index": sample_birth_info_dict["time_index"],
             "gender": "invalid",
         }
-        
+
         with pytest.raises(ValidationError):
             handle_get_ziwei_chart(args)
 
@@ -122,9 +122,9 @@ class TestGetZiweiFortune:
             "time_index": sample_birth_info_dict["time_index"],
             "gender": sample_birth_info_dict["gender"],
         }
-        
+
         result = handle_get_ziwei_fortune(args)
-        
+
         assert isinstance(result, str)
         assert "#" in result  # Markdown headers
 
@@ -136,9 +136,9 @@ class TestGetZiweiFortune:
             "gender": sample_birth_info_dict["gender"],
             "format": "json",
         }
-        
+
         result = handle_get_ziwei_fortune(args)
-        
+
         # Should be valid JSON
         data = json.loads(result)
         assert "query_date" in data
@@ -152,10 +152,10 @@ class TestGetZiweiFortune:
             "query_date": "2024-06-15",
             "format": "json",
         }
-        
+
         result = handle_get_ziwei_fortune(args)
         data = json.loads(result)
-        
+
         assert "2024-06-15" in data["query_date"]
 
     def test_raises_error_for_missing_birth_date(self, sample_birth_info_dict):
@@ -164,7 +164,7 @@ class TestGetZiweiFortune:
             "time_index": sample_birth_info_dict["time_index"],
             "gender": sample_birth_info_dict["gender"],
         }
-        
+
         with pytest.raises(ValidationError):
             handle_get_ziwei_fortune(args)
 
@@ -180,9 +180,9 @@ class TestAnalyzeZiweiPalace:
             "gender": sample_birth_info_dict["gender"],
             "palace_name": "命宫",
         }
-        
+
         result = handle_analyze_ziwei_palace(args)
-        
+
         assert isinstance(result, str)
         assert "#" in result  # Markdown headers
 
@@ -195,9 +195,9 @@ class TestAnalyzeZiweiPalace:
             "palace_name": "命宫",
             "format": "json",
         }
-        
+
         result = handle_analyze_ziwei_palace(args)
-        
+
         # Should be valid JSON
         data = json.loads(result)
         assert "palace_name" in data
@@ -209,14 +209,14 @@ class TestAnalyzeZiweiPalace:
             "time_index": sample_birth_info_dict["time_index"],
             "gender": sample_birth_info_dict["gender"],
         }
-        
+
         with pytest.raises(ValidationError):
             handle_analyze_ziwei_palace(args)
 
     def test_analyzes_different_palaces(self, sample_birth_info_dict):
         """analyze_ziwei_palace should work for different palace names."""
         palaces = ["命宫", "财帛宫", "官禄宫"]
-        
+
         for palace in palaces:
             args = {
                 "birth_date": sample_birth_info_dict["date"],
@@ -225,8 +225,8 @@ class TestAnalyzeZiweiPalace:
                 "palace_name": palace,
                 "format": "json",
             }
-            
+
             result = handle_analyze_ziwei_palace(args)
             data = json.loads(result)
-            
+
             assert data["palace_name"] == palace

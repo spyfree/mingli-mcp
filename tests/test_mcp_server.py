@@ -18,19 +18,19 @@ class TestMingliMCPServerInitialization:
 
     def test_server_creates_protocol_handler(self):
         """Server should create a ProtocolHandler instance."""
-        with patch.object(MingliMCPServer, '_initialize_transport'):
+        with patch.object(MingliMCPServer, "_initialize_transport"):
             server = MingliMCPServer()
             assert isinstance(server.protocol_handler, ProtocolHandler)
 
     def test_server_creates_tool_registry(self):
         """Server should create a ToolRegistry instance."""
-        with patch.object(MingliMCPServer, '_initialize_transport'):
+        with patch.object(MingliMCPServer, "_initialize_transport"):
             server = MingliMCPServer()
             assert isinstance(server.tool_registry, ToolRegistry)
 
     def test_server_initializes_transport_on_creation(self):
         """Server should initialize transport during __init__."""
-        with patch.object(MingliMCPServer, '_initialize_transport') as mock_init:
+        with patch.object(MingliMCPServer, "_initialize_transport") as mock_init:
             MingliMCPServer()
             mock_init.assert_called_once()
 
@@ -41,14 +41,14 @@ class TestMingliMCPServerRequestRouting:
     @pytest.fixture
     def server(self):
         """Create a server instance with mocked transport."""
-        with patch.object(MingliMCPServer, '_initialize_transport'):
+        with patch.object(MingliMCPServer, "_initialize_transport"):
             return MingliMCPServer()
 
     def test_routes_initialize_request(self, server):
         """Server should route initialize requests to protocol handler."""
         request = {"method": "initialize", "id": 1, "params": {}}
-        
-        with patch.object(server.protocol_handler, 'handle_initialize') as mock:
+
+        with patch.object(server.protocol_handler, "handle_initialize") as mock:
             mock.return_value = {"jsonrpc": "2.0", "result": {}, "id": 1}
             response = server.handle_request(request)
             mock.assert_called_once_with(request, 1)
@@ -56,8 +56,8 @@ class TestMingliMCPServerRequestRouting:
     def test_routes_tools_list_request(self, server):
         """Server should route tools/list requests to protocol handler."""
         request = {"method": "tools/list", "id": 2}
-        
-        with patch.object(server.protocol_handler, 'handle_tools_list') as mock:
+
+        with patch.object(server.protocol_handler, "handle_tools_list") as mock:
             mock.return_value = {"jsonrpc": "2.0", "result": {"tools": []}, "id": 2}
             response = server.handle_request(request)
             mock.assert_called_once()
@@ -65,8 +65,8 @@ class TestMingliMCPServerRequestRouting:
     def test_routes_prompts_list_request(self, server):
         """Server should route prompts/list requests to protocol handler."""
         request = {"method": "prompts/list", "id": 3}
-        
-        with patch.object(server.protocol_handler, 'handle_prompts_list') as mock:
+
+        with patch.object(server.protocol_handler, "handle_prompts_list") as mock:
             mock.return_value = {"jsonrpc": "2.0", "result": {"prompts": []}, "id": 3}
             response = server.handle_request(request)
             mock.assert_called_once_with(3)
@@ -74,8 +74,8 @@ class TestMingliMCPServerRequestRouting:
     def test_routes_resources_list_request(self, server):
         """Server should route resources/list requests to protocol handler."""
         request = {"method": "resources/list", "id": 4}
-        
-        with patch.object(server.protocol_handler, 'handle_resources_list') as mock:
+
+        with patch.object(server.protocol_handler, "handle_resources_list") as mock:
             mock.return_value = {"jsonrpc": "2.0", "result": {"resources": []}, "id": 4}
             response = server.handle_request(request)
             mock.assert_called_once_with(4)
@@ -85,16 +85,16 @@ class TestMingliMCPServerRequestRouting:
         request = {
             "method": "tools/call",
             "id": 5,
-            "params": {"name": "list_fortune_systems", "arguments": {}}
+            "params": {"name": "list_fortune_systems", "arguments": {}},
         }
-        
+
         response = server.handle_request(request)
         assert "result" in response or "error" in response
 
     def test_returns_error_for_unknown_method(self, server):
         """Server should return error for unknown methods."""
         request = {"method": "unknown/method", "id": 6}
-        
+
         response = server.handle_request(request)
         assert "error" in response
         assert response["error"]["code"] == -32601
@@ -103,7 +103,7 @@ class TestMingliMCPServerRequestRouting:
     def test_handles_notifications_initialized(self, server):
         """Server should handle notifications/initialized without response."""
         request = {"method": "notifications/initialized"}
-        
+
         response = server.handle_request(request)
         assert response is None
 
@@ -114,7 +114,7 @@ class TestMingliMCPServerToolsCall:
     @pytest.fixture
     def server(self):
         """Create a server instance with mocked transport."""
-        with patch.object(MingliMCPServer, '_initialize_transport'):
+        with patch.object(MingliMCPServer, "_initialize_transport"):
             return MingliMCPServer()
 
     def test_calls_registered_tool_handler(self, server):
@@ -122,9 +122,9 @@ class TestMingliMCPServerToolsCall:
         request = {
             "method": "tools/call",
             "id": 1,
-            "params": {"name": "list_fortune_systems", "arguments": {}}
+            "params": {"name": "list_fortune_systems", "arguments": {}},
         }
-        
+
         response = server.handle_request(request)
         assert "result" in response
         assert "content" in response["result"]
@@ -134,9 +134,9 @@ class TestMingliMCPServerToolsCall:
         request = {
             "method": "tools/call",
             "id": 2,
-            "params": {"name": "unknown_tool", "arguments": {}}
+            "params": {"name": "unknown_tool", "arguments": {}},
         }
-        
+
         response = server.handle_request(request)
         assert "error" in response
         assert "Unknown tool" in response["error"]["message"]
@@ -146,12 +146,9 @@ class TestMingliMCPServerToolsCall:
         request = {
             "method": "tools/call",
             "id": 3,
-            "params": {
-                "name": "get_ziwei_chart",
-                "arguments": {}  # Missing required params
-            }
+            "params": {"name": "get_ziwei_chart", "arguments": {}},  # Missing required params
         }
-        
+
         response = server.handle_request(request)
         assert "error" in response
         assert response["error"]["code"] == -32602

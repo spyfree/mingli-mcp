@@ -47,17 +47,17 @@ def _validate_common_params(
     args: Dict[str, Any],
     required_params: List[str],
     param_descriptions: Dict[str, str],
-    date_key: str = "date"
+    date_key: str = "date",
 ) -> None:
     """验证通用参数"""
     # Check required params first
     validate_required_params(args, required_params, param_descriptions)
-    
+
     # Validate individual fields
     validate_date_range(args[date_key])
     validate_time_index_strict(args["time_index"])
     validate_gender_strict(args["gender"])
-    
+
     # Validate language if provided
     language = args.get("language")
     if language:
@@ -87,12 +87,9 @@ def handle_get_ziwei_chart(args: Dict[str, Any]) -> str:
     """工具：获取紫微斗数排盘"""
     # Validate parameters
     _validate_common_params(
-        args,
-        ["date", "time_index", "gender"],
-        ZIWEI_CHART_PARAM_DESCRIPTIONS,
-        date_key="date"
+        args, ["date", "time_index", "gender"], ZIWEI_CHART_PARAM_DESCRIPTIONS, date_key="date"
     )
-    
+
     with PerformanceTimer("紫微排盘"):
         birth_info = _build_birth_info(args)
         language = args.get("language", "zh-CN")
@@ -115,9 +112,9 @@ def handle_get_ziwei_fortune(args: Dict[str, Any]) -> str:
         args,
         ["birth_date", "time_index", "gender"],
         ZIWEI_FORTUNE_PARAM_DESCRIPTIONS,
-        date_key="birth_date"
+        date_key="birth_date",
     )
-    
+
     with PerformanceTimer("紫微运势查询"):
         birth_info = _build_birth_info(args, date_key="birth_date")
 
@@ -146,9 +143,9 @@ def handle_analyze_ziwei_palace(args: Dict[str, Any]) -> str:
         args,
         ["birth_date", "time_index", "gender", "palace_name"],
         ZIWEI_PALACE_PARAM_DESCRIPTIONS,
-        date_key="birth_date"
+        date_key="birth_date",
     )
-    
+
     with PerformanceTimer("紫微宫位分析"):
         birth_info = _build_birth_info(args, date_key="birth_date")
         palace_name = args["palace_name"]

@@ -18,10 +18,9 @@ from utils.validators import MIN_YEAR, MAX_YEAR
 # ============================================================================
 
 # Strategy for valid dates within the supported range (1900-2100)
-valid_dates = st.dates(
-    min_value=date(MIN_YEAR, 1, 1),
-    max_value=date(MAX_YEAR, 12, 31)
-).map(lambda d: d.strftime("%Y-%m-%d"))
+valid_dates = st.dates(min_value=date(MIN_YEAR, 1, 1), max_value=date(MAX_YEAR, 12, 31)).map(
+    lambda d: d.strftime("%Y-%m-%d")
+)
 
 # Strategy for valid time indices (0-12)
 valid_time_indices = st.integers(min_value=0, max_value=12)
@@ -36,7 +35,9 @@ valid_calendars = st.sampled_from(["solar", "lunar"])
 is_leap_month_values = st.booleans()
 
 # Strategy for valid longitude values (-180 to 180)
-valid_longitudes = st.floats(min_value=-180.0, max_value=180.0, allow_nan=False, allow_infinity=False)
+valid_longitudes = st.floats(
+    min_value=-180.0, max_value=180.0, allow_nan=False, allow_infinity=False
+)
 
 # Strategy for valid latitude values (-90 to 90)
 valid_latitudes = st.floats(min_value=-90.0, max_value=90.0, allow_nan=False, allow_infinity=False)
@@ -64,11 +65,12 @@ optional_birth_minutes = st.one_of(st.none(), valid_birth_minutes)
 # Composite Strategies for BirthInfo
 # ============================================================================
 
+
 @st.composite
 def birth_info_without_solar_time(draw):
     """
     Strategy for generating valid BirthInfo objects without solar time.
-    
+
     This generates BirthInfo with the required fields only, without
     any solar time correction fields.
     """
@@ -85,7 +87,7 @@ def birth_info_without_solar_time(draw):
 def birth_info_with_solar_time(draw):
     """
     Strategy for generating valid BirthInfo objects with solar time enabled.
-    
+
     When use_solar_time is True, longitude is required. This strategy
     ensures all solar time constraints are satisfied.
     """
@@ -107,12 +109,12 @@ def birth_info_with_solar_time(draw):
 def birth_info_any(draw):
     """
     Strategy for generating any valid BirthInfo object.
-    
+
     This can generate BirthInfo with or without solar time correction,
     covering the full range of valid configurations.
     """
     use_solar = draw(st.booleans())
-    
+
     if use_solar:
         # When using solar time, longitude is required
         return BirthInfo(
@@ -148,11 +150,11 @@ def birth_info_any(draw):
 def birth_info_dict_strategy(draw):
     """
     Strategy for generating valid BirthInfo dictionaries.
-    
+
     This generates dictionaries that can be passed to BirthInfo.from_dict().
     """
     use_solar = draw(st.booleans())
-    
+
     data = {
         "date": draw(valid_dates),
         "time_index": draw(valid_time_indices),
@@ -160,7 +162,7 @@ def birth_info_dict_strategy(draw):
         "calendar": draw(valid_calendars),
         "is_leap_month": draw(is_leap_month_values),
     }
-    
+
     if use_solar:
         data["longitude"] = draw(valid_longitudes)
         data["use_solar_time"] = True
@@ -177,13 +179,14 @@ def birth_info_dict_strategy(draw):
             data["longitude"] = draw(valid_longitudes)
             if draw(st.booleans()):
                 data["latitude"] = draw(valid_latitudes)
-    
+
     return data
 
 
 # ============================================================================
 # Property Tests for BirthInfo
 # ============================================================================
+
 
 class TestBirthInfoProperties:
     """Property-based tests for BirthInfo class."""
@@ -225,7 +228,18 @@ class TestBirthInfoProperties:
         assert len(time_name) > 0
         # Should be one of the valid time names
         valid_names = [
-            "早子时", "丑时", "寅时", "卯时", "辰时", "巳时",
-            "午时", "未时", "申时", "酉时", "戌时", "亥时", "晚子时"
+            "早子时",
+            "丑时",
+            "寅时",
+            "卯时",
+            "辰时",
+            "巳时",
+            "午时",
+            "未时",
+            "申时",
+            "酉时",
+            "戌时",
+            "亥时",
+            "晚子时",
         ]
         assert time_name in valid_names

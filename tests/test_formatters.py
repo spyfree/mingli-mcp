@@ -22,17 +22,16 @@ from systems.bazi.formatter import BaziFormatter
 # JSON-RPC Response Formatting Tests (utils/formatters.py)
 # ============================================================================
 
+
 class TestFormatErrorResponse:
     """Tests for format_error_response function."""
 
     def test_error_response_with_request_id(self):
         """Error response includes request_id when provided."""
         response = format_error_response(
-            error_code=-32600,
-            error_message="Invalid Request",
-            request_id=1
+            error_code=-32600, error_message="Invalid Request", request_id=1
         )
-        
+
         assert response["jsonrpc"] == "2.0"
         assert response["error"]["code"] == -32600
         assert response["error"]["message"] == "Invalid Request"
@@ -41,11 +40,9 @@ class TestFormatErrorResponse:
     def test_error_response_without_request_id(self):
         """Error response omits id when request_id is None."""
         response = format_error_response(
-            error_code=-32700,
-            error_message="Parse error",
-            request_id=None
+            error_code=-32700, error_message="Parse error", request_id=None
         )
-        
+
         assert response["jsonrpc"] == "2.0"
         assert response["error"]["code"] == -32700
         assert response["error"]["message"] == "Parse error"
@@ -54,11 +51,9 @@ class TestFormatErrorResponse:
     def test_error_response_with_string_request_id(self):
         """Error response handles string request_id."""
         response = format_error_response(
-            error_code=-32601,
-            error_message="Method not found",
-            request_id="abc-123"
+            error_code=-32601, error_message="Method not found", request_id="abc-123"
         )
-        
+
         assert response["id"] == "abc-123"
 
 
@@ -69,7 +64,7 @@ class TestFormatSuccessResponse:
         """Success response with dictionary result."""
         result = {"tools": [{"name": "test_tool"}]}
         response = format_success_response(result=result, request_id=1)
-        
+
         assert response["jsonrpc"] == "2.0"
         assert response["result"] == result
         assert response["id"] == 1
@@ -78,13 +73,13 @@ class TestFormatSuccessResponse:
         """Success response with list result."""
         result = [1, 2, 3]
         response = format_success_response(result=result, request_id=2)
-        
+
         assert response["result"] == result
 
     def test_success_response_without_request_id(self):
         """Success response omits id when request_id is None."""
         response = format_success_response(result="ok", request_id=None)
-        
+
         assert response["jsonrpc"] == "2.0"
         assert response["result"] == "ok"
         assert "id" not in response
@@ -92,13 +87,14 @@ class TestFormatSuccessResponse:
     def test_success_response_with_null_result(self):
         """Success response handles None result."""
         response = format_success_response(result=None, request_id=1)
-        
+
         assert response["result"] is None
 
 
 # ============================================================================
 # Ziwei Formatter Tests (systems/ziwei/formatter.py)
 # ============================================================================
+
 
 class TestZiweiFormatter:
     """Tests for ZiweiFormatter class."""
@@ -200,7 +196,7 @@ class TestZiweiFormatter:
     def test_format_chart_markdown_contains_basic_info(self, formatter, sample_chart_data):
         """Chart markdown contains all basic info fields."""
         md = formatter.format_chart_markdown(sample_chart_data)
-        
+
         for key in sample_chart_data["basic_info"]:
             assert key in md
 
@@ -297,6 +293,7 @@ class TestZiweiFormatter:
 # ============================================================================
 # Bazi Formatter Tests (systems/bazi/formatter.py)
 # ============================================================================
+
 
 class TestBaziFormatter:
     """Tests for BaziFormatter class."""
@@ -508,9 +505,7 @@ class TestBaziFormatter:
         assert "建议" in md
         assert "水" in md  # Missing element
 
-    def test_format_element_markdown_contains_balance_advice(
-        self, formatter, sample_element_data
-    ):
+    def test_format_element_markdown_contains_balance_advice(self, formatter, sample_element_data):
         """Element analysis markdown contains balance advice."""
         md = formatter.format_element_analysis(sample_element_data, format_type="markdown")
         assert "不平衡" in md

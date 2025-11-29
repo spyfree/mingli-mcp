@@ -46,17 +46,17 @@ def _validate_common_params(
     args: Dict[str, Any],
     required_params: List[str],
     param_descriptions: Dict[str, str],
-    date_key: str = "date"
+    date_key: str = "date",
 ) -> None:
     """验证通用参数"""
     # Check required params first
     validate_required_params(args, required_params, param_descriptions)
-    
+
     # Validate individual fields
     validate_date_range(args[date_key])
     validate_time_index_strict(args["time_index"])
     validate_gender_strict(args["gender"])
-    
+
     # Validate language if provided
     language = args.get("language")
     if language:
@@ -86,12 +86,9 @@ def handle_get_bazi_chart(args: Dict[str, Any]) -> str:
     """工具：获取八字排盘"""
     # Validate parameters
     _validate_common_params(
-        args,
-        ["date", "time_index", "gender"],
-        BAZI_CHART_PARAM_DESCRIPTIONS,
-        date_key="date"
+        args, ["date", "time_index", "gender"], BAZI_CHART_PARAM_DESCRIPTIONS, date_key="date"
     )
-    
+
     with PerformanceTimer("八字排盘"):
         birth_info = _build_birth_info(args)
         language = args.get("language", "zh-CN")
@@ -114,9 +111,9 @@ def handle_get_bazi_fortune(args: Dict[str, Any]) -> str:
         args,
         ["birth_date", "time_index", "gender"],
         BAZI_FORTUNE_PARAM_DESCRIPTIONS,
-        date_key="birth_date"
+        date_key="birth_date",
     )
-    
+
     with PerformanceTimer("八字运势查询"):
         birth_info = _build_birth_info(args, date_key="birth_date")
 
@@ -145,9 +142,9 @@ def handle_analyze_bazi_element(args: Dict[str, Any]) -> str:
         args,
         ["birth_date", "time_index", "gender"],
         BAZI_ELEMENT_PARAM_DESCRIPTIONS,
-        date_key="birth_date"
+        date_key="birth_date",
     )
-    
+
     with PerformanceTimer("八字五行分析"):
         birth_info = _build_birth_info(args, date_key="birth_date")
 

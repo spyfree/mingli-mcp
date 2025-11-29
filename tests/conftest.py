@@ -16,6 +16,7 @@ from core.birth_info import BirthInfo
 # Birth Info Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def sample_birth_info_dict() -> Dict[str, Any]:
     """Standard birth info dictionary for testing."""
@@ -94,6 +95,7 @@ def solar_time_birth_info(solar_time_birth_info_dict) -> BirthInfo:
 # Date Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def valid_date_str() -> str:
     """A valid date string within supported range."""
@@ -140,6 +142,7 @@ def non_leap_year_feb_29() -> str:
 # Time Index Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def valid_time_indices() -> list:
     """All valid time indices (0-12)."""
@@ -170,6 +173,7 @@ def time_index_names() -> Dict[int, str]:
 # Language Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def supported_languages() -> list:
     """List of supported language codes."""
@@ -185,6 +189,7 @@ def unsupported_language() -> str:
 # ============================================================================
 # Longitude/Latitude Fixtures (for solar time tests)
 # ============================================================================
+
 
 @pytest.fixture
 def beijing_coordinates() -> Dict[str, float]:
@@ -207,6 +212,7 @@ def shanghai_coordinates() -> Dict[str, float]:
 # ============================================================================
 # Query Date Fixtures
 # ============================================================================
+
 
 @pytest.fixture
 def current_datetime() -> datetime:

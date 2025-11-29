@@ -45,7 +45,7 @@ class TestSendMessage:
         transport = StdioTransport()
         message = {"jsonrpc": "2.0", "id": 1, "result": {"test": "value"}}
 
-        with patch.object(sys, 'stdout', new_callable=io.StringIO) as mock_stdout:
+        with patch.object(sys, "stdout", new_callable=io.StringIO) as mock_stdout:
             transport.send_message(message)
             output = mock_stdout.getvalue()
 
@@ -59,7 +59,7 @@ class TestSendMessage:
         transport = StdioTransport()
         message = {"jsonrpc": "2.0", "id": 1, "result": {"name": "紫微斗数"}}
 
-        with patch.object(sys, 'stdout', new_callable=io.StringIO) as mock_stdout:
+        with patch.object(sys, "stdout", new_callable=io.StringIO) as mock_stdout:
             transport.send_message(message)
             output = mock_stdout.getvalue()
 
@@ -75,7 +75,7 @@ class TestSendMessage:
         mock_stdout.write = MagicMock()
         mock_stdout.flush = MagicMock()
 
-        with patch.object(sys, 'stdout', mock_stdout):
+        with patch.object(sys, "stdout", mock_stdout):
             transport.send_message(message)
 
         mock_stdout.write.assert_called_once()
@@ -89,7 +89,7 @@ class TestSendMessage:
         mock_stdout = MagicMock()
         mock_stdout.write = MagicMock(side_effect=IOError("Write failed"))
 
-        with patch.object(sys, 'stdout', mock_stdout):
+        with patch.object(sys, "stdout", mock_stdout):
             # Should not raise, just log the error
             transport.send_message(message)
 
@@ -103,7 +103,7 @@ class TestReceiveMessage:
         message = {"jsonrpc": "2.0", "id": 1, "method": "tools/list"}
         json_line = json.dumps(message) + "\n"
 
-        with patch.object(sys, 'stdin', io.StringIO(json_line)):
+        with patch.object(sys, "stdin", io.StringIO(json_line)):
             received = transport.receive_message()
 
         assert received == message
@@ -112,7 +112,7 @@ class TestReceiveMessage:
         """Test that receive_message returns None on EOF."""
         transport = StdioTransport()
 
-        with patch.object(sys, 'stdin', io.StringIO("")):
+        with patch.object(sys, "stdin", io.StringIO("")):
             received = transport.receive_message()
 
         assert received is None
@@ -124,7 +124,7 @@ class TestReceiveMessage:
         # Empty line followed by valid message
         input_data = "\n" + json.dumps(message) + "\n"
 
-        with patch.object(sys, 'stdin', io.StringIO(input_data)):
+        with patch.object(sys, "stdin", io.StringIO(input_data)):
             received = transport.receive_message()
 
         assert received == message
@@ -133,7 +133,7 @@ class TestReceiveMessage:
         """Test that receive_message handles invalid JSON gracefully."""
         transport = StdioTransport()
 
-        with patch.object(sys, 'stdin', io.StringIO("not valid json\n")):
+        with patch.object(sys, "stdin", io.StringIO("not valid json\n")):
             received = transport.receive_message()
 
         assert received is None
@@ -144,7 +144,7 @@ class TestReceiveMessage:
         message = {"jsonrpc": "2.0", "id": 1, "params": {"name": "八字命理"}}
         json_line = json.dumps(message, ensure_ascii=False) + "\n"
 
-        with patch.object(sys, 'stdin', io.StringIO(json_line)):
+        with patch.object(sys, "stdin", io.StringIO(json_line)):
             received = transport.receive_message()
 
         assert received == message
@@ -157,7 +157,7 @@ class TestReceiveMessage:
         mock_stdin = MagicMock()
         mock_stdin.readline = MagicMock(side_effect=IOError("Read failed"))
 
-        with patch.object(sys, 'stdin', mock_stdin):
+        with patch.object(sys, "stdin", mock_stdin):
             received = transport.receive_message()
 
         assert received is None
@@ -234,8 +234,8 @@ class TestStartStop:
         transport = StdioTransport()
 
         # Mock stdin to return EOF immediately
-        with patch.object(sys, 'stdin', io.StringIO("")):
-            with patch.object(sys, 'stdout', io.StringIO()):
+        with patch.object(sys, "stdin", io.StringIO("")):
+            with patch.object(sys, "stdout", io.StringIO()):
                 transport.start()
 
         # After start completes (due to EOF), running should be False
@@ -257,8 +257,8 @@ class TestStartStop:
         msg2 = {"jsonrpc": "2.0", "id": 2, "method": "test2"}
         input_data = json.dumps(msg1) + "\n" + json.dumps(msg2) + "\n"
 
-        with patch.object(sys, 'stdin', io.StringIO(input_data)):
-            with patch.object(sys, 'stdout', io.StringIO()):
+        with patch.object(sys, "stdin", io.StringIO(input_data)):
+            with patch.object(sys, "stdout", io.StringIO()):
                 transport.start()
 
         assert len(messages_received) == 2
@@ -272,8 +272,8 @@ class TestStartStop:
         mock_stdin = MagicMock()
         mock_stdin.readline = MagicMock(side_effect=KeyboardInterrupt())
 
-        with patch.object(sys, 'stdin', mock_stdin):
-            with patch.object(sys, 'stdout', io.StringIO()):
+        with patch.object(sys, "stdin", mock_stdin):
+            with patch.object(sys, "stdout", io.StringIO()):
                 # Should not raise
                 transport.start()
 
@@ -289,7 +289,7 @@ class TestErrorHandling:
         # Sets are not JSON serializable
         message = {"data": {1, 2, 3}}
 
-        with patch.object(sys, 'stdout', io.StringIO()):
+        with patch.object(sys, "stdout", io.StringIO()):
             # Should not raise, just log the error
             transport.send_message(message)
 
@@ -300,7 +300,7 @@ class TestErrorHandling:
         # Whitespace line followed by valid message
         input_data = "   \n" + json.dumps(message) + "\n"
 
-        with patch.object(sys, 'stdin', io.StringIO(input_data)):
+        with patch.object(sys, "stdin", io.StringIO(input_data)):
             received = transport.receive_message()
 
         assert received == message

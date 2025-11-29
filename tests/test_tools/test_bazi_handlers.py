@@ -26,9 +26,9 @@ class TestGetBaziChart:
             "time_index": sample_birth_info_dict["time_index"],
             "gender": sample_birth_info_dict["gender"],
         }
-        
+
         result = handle_get_bazi_chart(args)
-        
+
         assert isinstance(result, str)
         assert "#" in result  # Markdown headers
 
@@ -40,9 +40,9 @@ class TestGetBaziChart:
             "gender": sample_birth_info_dict["gender"],
             "format": "json",
         }
-        
+
         result = handle_get_bazi_chart(args)
-        
+
         # Should be valid JSON
         data = json.loads(result)
         assert "eight_char" in data
@@ -54,7 +54,7 @@ class TestGetBaziChart:
             "time_index": sample_birth_info_dict["time_index"],
             "gender": sample_birth_info_dict["gender"],
         }
-        
+
         with pytest.raises(ValidationError):
             handle_get_bazi_chart(args)
 
@@ -64,7 +64,7 @@ class TestGetBaziChart:
             "date": sample_birth_info_dict["date"],
             "gender": sample_birth_info_dict["gender"],
         }
-        
+
         with pytest.raises(ValidationError):
             handle_get_bazi_chart(args)
 
@@ -74,7 +74,7 @@ class TestGetBaziChart:
             "date": sample_birth_info_dict["date"],
             "time_index": sample_birth_info_dict["time_index"],
         }
-        
+
         with pytest.raises(ValidationError):
             handle_get_bazi_chart(args)
 
@@ -85,7 +85,7 @@ class TestGetBaziChart:
             "time_index": sample_birth_info_dict["time_index"],
             "gender": sample_birth_info_dict["gender"],
         }
-        
+
         with pytest.raises(ValidationError):
             handle_get_bazi_chart(args)
 
@@ -96,7 +96,7 @@ class TestGetBaziChart:
             "time_index": 15,  # Invalid
             "gender": sample_birth_info_dict["gender"],
         }
-        
+
         with pytest.raises(ValidationError):
             handle_get_bazi_chart(args)
 
@@ -107,7 +107,7 @@ class TestGetBaziChart:
             "time_index": sample_birth_info_dict["time_index"],
             "gender": "invalid",
         }
-        
+
         with pytest.raises(ValidationError):
             handle_get_bazi_chart(args)
 
@@ -122,9 +122,9 @@ class TestGetBaziFortune:
             "time_index": sample_birth_info_dict["time_index"],
             "gender": sample_birth_info_dict["gender"],
         }
-        
+
         result = handle_get_bazi_fortune(args)
-        
+
         assert isinstance(result, str)
         assert "#" in result  # Markdown headers
 
@@ -136,9 +136,9 @@ class TestGetBaziFortune:
             "gender": sample_birth_info_dict["gender"],
             "format": "json",
         }
-        
+
         result = handle_get_bazi_fortune(args)
-        
+
         # Should be valid JSON
         data = json.loads(result)
         assert "query_date" in data
@@ -153,10 +153,10 @@ class TestGetBaziFortune:
             "query_date": "2024-06-15",
             "format": "json",
         }
-        
+
         result = handle_get_bazi_fortune(args)
         data = json.loads(result)
-        
+
         assert "2024-06-15" in data["query_date"]
 
     def test_raises_error_for_missing_birth_date(self, sample_birth_info_dict):
@@ -165,7 +165,7 @@ class TestGetBaziFortune:
             "time_index": sample_birth_info_dict["time_index"],
             "gender": sample_birth_info_dict["gender"],
         }
-        
+
         with pytest.raises(ValidationError):
             handle_get_bazi_fortune(args)
 
@@ -180,9 +180,9 @@ class TestAnalyzeBaziElement:
             "time_index": sample_birth_info_dict["time_index"],
             "gender": sample_birth_info_dict["gender"],
         }
-        
+
         result = handle_analyze_bazi_element(args)
-        
+
         assert isinstance(result, str)
         assert "#" in result  # Markdown headers
 
@@ -194,9 +194,9 @@ class TestAnalyzeBaziElement:
             "gender": sample_birth_info_dict["gender"],
             "format": "json",
         }
-        
+
         result = handle_analyze_bazi_element(args)
-        
+
         # Should be valid JSON
         data = json.loads(result)
         assert "day_master" in data
@@ -209,7 +209,7 @@ class TestAnalyzeBaziElement:
             "time_index": sample_birth_info_dict["time_index"],
             "gender": sample_birth_info_dict["gender"],
         }
-        
+
         with pytest.raises(ValidationError):
             handle_analyze_bazi_element(args)
 
@@ -221,12 +221,12 @@ class TestAnalyzeBaziElement:
             "gender": sample_birth_info_dict["gender"],
             "format": "json",
         }
-        
+
         result = handle_analyze_bazi_element(args)
         data = json.loads(result)
-        
+
         # Check that all five elements are present in scores
         expected_elements = {"木", "火", "土", "金", "水"}
         actual_elements = set(data["scores"].keys())
-        
+
         assert expected_elements == actual_elements

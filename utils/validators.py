@@ -87,9 +87,7 @@ def validate_time_index_strict(time_index: Any) -> None:
         ValidationError: 时辰序号无效
     """
     if not validate_time_index(time_index):
-        raise ValidationError(
-            f"时辰序号无效: 值 '{time_index}' 不在有效范围内 (期望: 0-12 的整数)"
-        )
+        raise ValidationError(f"时辰序号无效: 值 '{time_index}' 不在有效范围内 (期望: 0-12 的整数)")
 
 
 def validate_gender(gender: str) -> bool:
@@ -117,8 +115,7 @@ def validate_gender_strict(gender: Any) -> None:
     """
     if not isinstance(gender, str) or gender not in SUPPORTED_GENDERS:
         raise ValidationError(
-            f"性别无效: 值 '{gender}' 不是有效的性别 "
-            f"(支持的值: {', '.join(SUPPORTED_GENDERS)})"
+            f"性别无效: 值 '{gender}' 不是有效的性别 " f"(支持的值: {', '.join(SUPPORTED_GENDERS)})"
         )
 
 
@@ -142,7 +139,7 @@ def validate_language(language: str) -> None:
 def validate_required_params(
     args: Dict[str, Any],
     required_params: List[str],
-    param_descriptions: Optional[Dict[str, str]] = None
+    param_descriptions: Optional[Dict[str, str]] = None,
 ) -> None:
     """
     验证必需参数是否存在
@@ -156,17 +153,12 @@ def validate_required_params(
         ValidationError: 缺少必需参数
     """
     missing_params = [p for p in required_params if p not in args or args[p] is None]
-    
+
     if missing_params:
         if param_descriptions:
             missing_details = [
-                f"  - {p}: {param_descriptions.get(p, '必需参数')}"
-                for p in missing_params
+                f"  - {p}: {param_descriptions.get(p, '必需参数')}" for p in missing_params
             ]
-            raise ValidationError(
-                f"缺少必需参数:\n" + "\n".join(missing_details)
-            )
+            raise ValidationError(f"缺少必需参数:\n" + "\n".join(missing_details))
         else:
-            raise ValidationError(
-                f"缺少必需参数: {', '.join(missing_params)}"
-            )
+            raise ValidationError(f"缺少必需参数: {', '.join(missing_params)}")

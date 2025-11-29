@@ -21,7 +21,7 @@ class TestProtocolHandlerInitialize:
         """Initialize should return the protocol version."""
         request = {"params": {"clientInfo": {"name": "test-client"}}}
         response = handler.handle_initialize(request, request_id=1)
-        
+
         assert "result" in response
         assert "protocolVersion" in response["result"]
         assert response["result"]["protocolVersion"] == "2024-11-05"
@@ -30,7 +30,7 @@ class TestProtocolHandlerInitialize:
         """Initialize should return server info."""
         request = {"params": {}}
         response = handler.handle_initialize(request, request_id=1)
-        
+
         assert "serverInfo" in response["result"]
         assert "name" in response["result"]["serverInfo"]
         assert "version" in response["result"]["serverInfo"]
@@ -39,7 +39,7 @@ class TestProtocolHandlerInitialize:
         """Initialize should return server capabilities."""
         request = {"params": {}}
         response = handler.handle_initialize(request, request_id=1)
-        
+
         assert "capabilities" in response["result"]
         capabilities = response["result"]["capabilities"]
         assert "tools" in capabilities
@@ -50,7 +50,7 @@ class TestProtocolHandlerInitialize:
         """Initialize response should include the request ID."""
         request = {"params": {}}
         response = handler.handle_initialize(request, request_id=42)
-        
+
         assert response["id"] == 42
 
 
@@ -64,11 +64,9 @@ class TestProtocolHandlerToolsList:
 
     def test_tools_list_returns_tools_array(self, handler):
         """tools/list should return an array of tools."""
-        tool_definitions = [
-            {"name": "test_tool", "description": "A test tool"}
-        ]
+        tool_definitions = [{"name": "test_tool", "description": "A test tool"}]
         response = handler.handle_tools_list(request_id=1, tool_definitions=tool_definitions)
-        
+
         assert "result" in response
         assert "tools" in response["result"]
         assert isinstance(response["result"]["tools"], list)
@@ -77,10 +75,10 @@ class TestProtocolHandlerToolsList:
         """tools/list should include the provided tool definitions."""
         tool_definitions = [
             {"name": "tool1", "description": "Tool 1"},
-            {"name": "tool2", "description": "Tool 2"}
+            {"name": "tool2", "description": "Tool 2"},
         ]
         response = handler.handle_tools_list(request_id=1, tool_definitions=tool_definitions)
-        
+
         assert len(response["result"]["tools"]) == 2
         assert response["result"]["tools"][0]["name"] == "tool1"
         assert response["result"]["tools"][1]["name"] == "tool2"
@@ -88,7 +86,7 @@ class TestProtocolHandlerToolsList:
     def test_tools_list_includes_request_id(self, handler):
         """tools/list response should include the request ID."""
         response = handler.handle_tools_list(request_id=99, tool_definitions=[])
-        
+
         assert response["id"] == 99
 
 
@@ -103,7 +101,7 @@ class TestProtocolHandlerPromptsList:
     def test_prompts_list_returns_prompts_array(self, handler):
         """prompts/list should return an array of prompts."""
         response = handler.handle_prompts_list(request_id=1)
-        
+
         assert "result" in response
         assert "prompts" in response["result"]
         assert isinstance(response["result"]["prompts"], list)
@@ -111,7 +109,7 @@ class TestProtocolHandlerPromptsList:
     def test_prompts_list_includes_request_id(self, handler):
         """prompts/list response should include the request ID."""
         response = handler.handle_prompts_list(request_id=77)
-        
+
         assert response["id"] == 77
 
 
@@ -126,7 +124,7 @@ class TestProtocolHandlerResourcesList:
     def test_resources_list_returns_resources_array(self, handler):
         """resources/list should return an array of resources."""
         response = handler.handle_resources_list(request_id=1)
-        
+
         assert "result" in response
         assert "resources" in response["result"]
         assert isinstance(response["result"]["resources"], list)
@@ -134,10 +132,10 @@ class TestProtocolHandlerResourcesList:
     def test_resources_list_contains_expected_resources(self, handler):
         """resources/list should contain the expected resource URIs."""
         response = handler.handle_resources_list(request_id=1)
-        
+
         resources = response["result"]["resources"]
         resource_uris = [r["uri"] for r in resources]
-        
+
         # Check for some expected resources
         assert "mingli://configuration" in resource_uris
         assert "mingli://heavenly-stems" in resource_uris
@@ -146,13 +144,13 @@ class TestProtocolHandlerResourcesList:
     def test_resources_list_includes_request_id(self, handler):
         """resources/list response should include the request ID."""
         response = handler.handle_resources_list(request_id=55)
-        
+
         assert response["id"] == 55
 
     def test_resources_have_required_fields(self, handler):
         """Each resource should have uri, name, and description."""
         response = handler.handle_resources_list(request_id=1)
-        
+
         for resource in response["result"]["resources"]:
             assert "uri" in resource
             assert "name" in resource
@@ -171,7 +169,7 @@ class TestProtocolHandlerPromptsGet:
         """prompts/get should return error when name is missing."""
         request = {"params": {}}
         response = handler.handle_prompts_get(request, request_id=1)
-        
+
         assert "error" in response
         assert "name is required" in response["error"]["message"]
 
@@ -179,7 +177,7 @@ class TestProtocolHandlerPromptsGet:
         """prompts/get should reject path traversal attempts."""
         request = {"params": {"name": "../etc/passwd"}}
         response = handler.handle_prompts_get(request, request_id=1)
-        
+
         assert "error" in response
         assert "Invalid prompt" in response["error"]["message"]
 
@@ -187,7 +185,7 @@ class TestProtocolHandlerPromptsGet:
         """prompts/get should reject names starting with dot."""
         request = {"params": {"name": ".hidden"}}
         response = handler.handle_prompts_get(request, request_id=1)
-        
+
         assert "error" in response
 
 
@@ -203,7 +201,7 @@ class TestProtocolHandlerResourcesGet:
         """resources/get should return error when URI is missing."""
         request = {"params": {}}
         response = handler.handle_resources_get(request, request_id=1)
-        
+
         assert "error" in response
         assert "URI is required" in response["error"]["message"]
 
@@ -211,7 +209,7 @@ class TestProtocolHandlerResourcesGet:
         """resources/get should return error for unknown URIs."""
         request = {"params": {"uri": "mingli://unknown-resource"}}
         response = handler.handle_resources_get(request, request_id=1)
-        
+
         assert "error" in response
         assert "not found" in response["error"]["message"]
 
@@ -219,6 +217,6 @@ class TestProtocolHandlerResourcesGet:
         """resources/get should return content for valid URIs."""
         request = {"params": {"uri": "mingli://configuration"}}
         response = handler.handle_resources_get(request, request_id=1)
-        
+
         assert "result" in response
         assert "contents" in response["result"]
