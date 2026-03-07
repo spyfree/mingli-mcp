@@ -2,6 +2,12 @@
   "name": "mingli-mcp-container",
   "main": "cloudflare/container-worker.mjs",
   "compatibility_date": "2026-03-07",
+  "routes": [
+    {
+      "pattern": "mcp.lee.locker",
+      "custom_domain": true
+    }
+  ],
   "containers": [
     {
       "class_name": "MingliContainer",
