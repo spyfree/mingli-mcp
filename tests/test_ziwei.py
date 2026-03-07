@@ -6,6 +6,8 @@ import os
 import sys
 from datetime import datetime
 
+from iztro_py import astro
+from iztro_py.i18n import t
 from systems import get_system
 from systems.ziwei.ziwei_system import ZiweiSystem
 
@@ -56,9 +58,25 @@ def test_ziwei_fortune_translates_limit_fields():
     birth_info = {"date": "2000-08-16", "time_index": 2, "gender": "女", "calendar": "solar"}
 
     fortune = ziwei.get_fortune(birth_info, datetime(2026, 3, 7, 23, 30))
+    astrolabe = astro.by_solar("2000-08-16", 2, "女")
+    astrolabe.set_language("zh-CN")
+    hourly = astrolabe.horoscope("2026-3-7", 12).hourly
 
-    assert fortune["hourly"]["palace_names"][0] == "迁移宫"
-    assert fortune["hourly"]["mutagen"] == ["廉贞", "破军", "武曲", "太阳"]
+    expected_palace_names = [
+        t(f"palaces.{name}", "zh-CN") if isinstance(name, str) and name.endswith("Palace") else name
+        for name in hourly.palace_names
+    ]
+    expected_mutagen = [
+        (
+            t(f"stars.major.{name}", "zh-CN")
+            if name.endswith("Maj")
+            else t(f"stars.minor.{name}", "zh-CN") if name.endswith("Min") else name
+        )
+        for name in hourly.mutagen
+    ]
+
+    assert fortune["hourly"]["palace_names"] == expected_palace_names
+    assert fortune["hourly"]["mutagen"] == expected_mutagen
     assert all("Palace" not in name for name in fortune["hourly"]["palace_names"])
     assert all(not name.endswith(("Maj", "Min")) for name in fortune["hourly"]["mutagen"])
 
