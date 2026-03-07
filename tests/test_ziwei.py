@@ -7,6 +7,7 @@ import sys
 from datetime import datetime
 
 from systems import get_system
+from systems.ziwei.ziwei_system import ZiweiSystem
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -47,6 +48,33 @@ def test_ziwei_fortune():
         print(f"流年: {fortune['yearly']['heavenly_stem']}{fortune['yearly']['earthly_branch']}")
 
     print("\n✅ 运势测试通过")
+
+
+def test_ziwei_fortune_translates_limit_fields():
+    """运势输出不应泄漏 iztro-py 的内部英文 ID。"""
+    ziwei = get_system("ziwei")
+    birth_info = {"date": "2000-08-16", "time_index": 2, "gender": "女", "calendar": "solar"}
+
+    fortune = ziwei.get_fortune(birth_info, datetime(2026, 3, 7, 23, 30))
+
+    assert fortune["hourly"]["palace_names"][0] == "迁移宫"
+    assert fortune["hourly"]["mutagen"] == ["贪狼", "太阴", "右弼", "天机"]
+    assert all("Palace" not in name for name in fortune["hourly"]["palace_names"])
+    assert all(not name.endswith(("Maj", "Min")) for name in fortune["hourly"]["mutagen"])
+
+
+def test_convert_datetime_for_horoscope_uses_zi_hour_split():
+    """23点应映射到晚子时(12)，0点应映射到早子时(0)。"""
+    ziwei = ZiweiSystem()
+
+    assert ziwei._convert_datetime_for_horoscope(datetime(2026, 3, 7, 23, 30)) == (
+        "2026-3-7",
+        12,
+    )
+    assert ziwei._convert_datetime_for_horoscope(datetime(2026, 3, 8, 0, 30)) == (
+        "2026-3-8",
+        0,
+    )
 
 
 def test_ziwei_palace():

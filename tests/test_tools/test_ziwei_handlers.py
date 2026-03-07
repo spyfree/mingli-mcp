@@ -231,3 +231,18 @@ class TestAnalyzeZiweiPalace:
             data = json.loads(result)
 
             assert data["palace_name"] == palace
+
+    def test_accepts_legacy_palace_alias(self, sample_birth_info_dict):
+        """旧版不带'宫'的输入应继续可用。"""
+        args = {
+            "birth_date": sample_birth_info_dict["date"],
+            "time_index": sample_birth_info_dict["time_index"],
+            "gender": sample_birth_info_dict["gender"],
+            "palace_name": "仆役",
+            "format": "json",
+        }
+
+        result = handle_analyze_ziwei_palace(args)
+        data = json.loads(result)
+
+        assert data["palace_name"] == "交友宫"

@@ -17,12 +17,14 @@ logger = logging.getLogger(__name__)
 
 try:
     from iztro_py import astro
+    from iztro_py.utils.helpers import hour_to_time_index
 
     IZTRO_AVAILABLE = True
 except ImportError:
     logger.warning("iztro-py not installed, ZiweiSystem will not work")
     IZTRO_AVAILABLE = False
     astro = None  # type: ignore
+    hour_to_time_index = None  # type: ignore
 
 
 class ZiweiSystem(BaseFortuneSystem):
@@ -44,20 +46,47 @@ class ZiweiSystem(BaseFortuneSystem):
         "父母宫",
     ]
 
-    # 中英文宫位名称映射（iztro-py 使用英文名称）
-    PALACE_NAME_MAP = {
-        "命宫": "soulPalace",
-        "兄弟": "siblingsPalace",
-        "夫妻": "spousePalace",
-        "子女": "childrenPalace",
-        "财帛": "wealthPalace",
-        "疾厄": "healthPalace",
-        "迁移": "surfacePalace",
-        "仆役": "friendsPalace",
-        "官禄": "careerPalace",
-        "田宅": "propertyPalace",
-        "福德": "spiritPalace",
-        "父母": "parentsPalace",
+    PALACE_ALIASES = {
+        "命": "命宫",
+        "命宫": "命宫",
+        "兄弟": "兄弟宫",
+        "兄弟宫": "兄弟宫",
+        "夫妻": "夫妻宫",
+        "夫妻宫": "夫妻宫",
+        "子女": "子女宫",
+        "子女宫": "子女宫",
+        "财帛": "财帛宫",
+        "财帛宫": "财帛宫",
+        "疾厄": "疾厄宫",
+        "疾厄宫": "疾厄宫",
+        "迁移": "迁移宫",
+        "迁移宫": "迁移宫",
+        "交友": "交友宫",
+        "交友宫": "交友宫",
+        "仆役": "交友宫",
+        "仆役宫": "交友宫",
+        "奴仆": "交友宫",
+        "奴仆宫": "交友宫",
+        "官禄": "官禄宫",
+        "官禄宫": "官禄宫",
+        "田宅": "田宅宫",
+        "田宅宫": "田宅宫",
+        "福德": "福德宫",
+        "福德宫": "福德宫",
+        "父母": "父母宫",
+        "父母宫": "父母宫",
+        "soulPalace": "命宫",
+        "siblingsPalace": "兄弟宫",
+        "spousePalace": "夫妻宫",
+        "childrenPalace": "子女宫",
+        "wealthPalace": "财帛宫",
+        "healthPalace": "疾厄宫",
+        "surfacePalace": "迁移宫",
+        "friendsPalace": "交友宫",
+        "careerPalace": "官禄宫",
+        "propertyPalace": "田宅宫",
+        "spiritPalace": "福德宫",
+        "parentsPalace": "父母宫",
     }
 
     def __init__(self):
@@ -88,15 +117,24 @@ class ZiweiSystem(BaseFortuneSystem):
         Returns:
             (date_str, hour_index) 元组
             - date_str: "YYYY-M-D" 格式（月和日不补零）
-            - hour_index: 时辰索引 0-11（每个时辰2小时）
+            - hour_index: 时辰索引 0-12（兼容早/晚子时）
         """
         # 格式化日期字符串，去掉月份和日期的前导零
         date_str = f"{dt.year}-{dt.month}-{dt.day}"
 
-        # 计算时辰索引（0-11，每个时辰2小时）
-        hour_index = dt.hour // 2
+        # 与 iztro-py 保持一致：23 点是晚子时(12)，0 点是早子时(0)
+        hour_index = hour_to_time_index(dt.hour)
 
         return date_str, hour_index
+
+    def _normalize_palace_name(self, palace_name: str) -> str:
+        """兼容旧版宫位名称和内部英文宫位 ID。"""
+        normalized = palace_name.strip()
+        if normalized in self.PALACE_ALIASES:
+            return self.PALACE_ALIASES[normalized]
+        if not normalized.endswith("宫") and f"{normalized}宫" in self.PALACES:
+            return f"{normalized}宫"
+        return normalized
 
     def get_chart(self, birth_info: Dict[str, Any], language: str = "zh-CN") -> Dict[str, Any]:
         """
@@ -194,7 +232,7 @@ class ZiweiSystem(BaseFortuneSystem):
             horoscope = astrolabe.horoscope(date_str, hour_index)
 
             # 格式化输出
-            return self.formatter.format_fortune(horoscope, query_date)
+            return self.formatter.format_fortune(horoscope, query_date, language)
 
         except ValidationError:
             raise
@@ -219,6 +257,7 @@ class ZiweiSystem(BaseFortuneSystem):
         Returns:
             宫位详细分析
         """
+        palace_name = self._normalize_palace_name(palace_name)
         if palace_name not in self.PALACES:
             raise ValidationError(
                 f"无效的宫位名称: {palace_name}. 有效宫位: {', '.join(self.PALACES)}"

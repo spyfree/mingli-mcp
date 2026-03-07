@@ -7,6 +7,8 @@
 from datetime import datetime
 from typing import Any, Dict, List
 
+from iztro_py.i18n import t
+
 
 class ZiweiFormatter:
     """紫微斗数格式化器（使用 iztro-py 0.3.0+ 的国际化功能）"""
@@ -97,7 +99,9 @@ class ZiweiFormatter:
 
         return md
 
-    def format_fortune(self, horoscope, query_date: datetime) -> Dict[str, Any]:
+    def format_fortune(
+        self, horoscope, query_date: datetime, language: str = "zh-CN"
+    ) -> Dict[str, Any]:
         """
         格式化运势数据
 
@@ -116,23 +120,23 @@ class ZiweiFormatter:
 
         # 大限
         if hasattr(horoscope, "decadal"):
-            result["decadal"] = self._format_limit(horoscope.decadal, "大限")
+            result["decadal"] = self._format_limit(horoscope.decadal, "大限", language)
 
         # 流年
         if hasattr(horoscope, "yearly"):
-            result["yearly"] = self._format_limit(horoscope.yearly, "流年")
+            result["yearly"] = self._format_limit(horoscope.yearly, "流年", language)
 
         # 流月
         if hasattr(horoscope, "monthly"):
-            result["monthly"] = self._format_limit(horoscope.monthly, "流月")
+            result["monthly"] = self._format_limit(horoscope.monthly, "流月", language)
 
         # 流日
         if hasattr(horoscope, "daily"):
-            result["daily"] = self._format_limit(horoscope.daily, "流日")
+            result["daily"] = self._format_limit(horoscope.daily, "流日", language)
 
         # 流时
         if hasattr(horoscope, "hourly"):
-            result["hourly"] = self._format_limit(horoscope.hourly, "流时")
+            result["hourly"] = self._format_limit(horoscope.hourly, "流时", language)
 
         return result
 
@@ -328,7 +332,23 @@ class ZiweiFormatter:
             }
         return {}
 
-    def _format_limit(self, limit, name: str) -> Dict[str, Any]:
+    def _translate_palace_name(self, palace_name: str, language: str) -> str:
+        """将运限中的内部宫位 ID 翻译为用户可读文本。"""
+        if isinstance(palace_name, str) and palace_name.endswith("Palace"):
+            return t(f"palaces.{palace_name}", language)
+        return palace_name
+
+    def _translate_star_name(self, star_name: str, language: str) -> str:
+        """将内部星曜 ID 翻译为用户可读文本。"""
+        if not isinstance(star_name, str):
+            return star_name
+        if star_name.endswith("Maj"):
+            return t(f"stars.major.{star_name}", language)
+        if star_name.endswith("Min"):
+            return t(f"stars.minor.{star_name}", language)
+        return star_name
+
+    def _format_limit(self, limit, name: str, language: str) -> Dict[str, Any]:
         """格式化运限数据（运势对象没有 translate 方法，使用映射表）"""
         # HoroscopeItem 没有 translate 方法，使用映射表翻译
         heavenly_stem = self.HEAVENLY_STEMS.get(limit.heavenly_stem, limit.heavenly_stem)
@@ -339,11 +359,16 @@ class ZiweiFormatter:
             "index": limit.index,
             "heavenly_stem": heavenly_stem,
             "earthly_branch": earthly_branch,
-            "palace_names": limit.palace_names,
+            "palace_names": [
+                self._translate_palace_name(palace_name, language)
+                for palace_name in limit.palace_names
+            ],
         }
 
         if hasattr(limit, "mutagen"):
-            result["mutagen"] = limit.mutagen
+            result["mutagen"] = [
+                self._translate_star_name(star_name, language) for star_name in limit.mutagen
+            ]
 
         if hasattr(limit, "age"):
             age = limit.age

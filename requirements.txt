@@ -2,7 +2,7 @@
 # mcp>=0.9.0  # 暂时注释，实际使用stdio实现
 
 # 紫微斗数库
-py-iztro>=0.1.5
+iztro-py>=0.3.4
 
 # 八字系统依赖
 lunar_python>=1.4.7

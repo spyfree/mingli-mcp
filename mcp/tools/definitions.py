@@ -191,7 +191,7 @@ def get_analyze_ziwei_palace_definition() -> Dict[str, Any]:
                         "福德宫",
                         "父母宫",
                     ],
-                    "description": "要分析的宫位名称",
+                    "description": "要分析的宫位名称。服务端也兼容旧写法，如'财帛'、'官禄'、'仆役/奴仆'",
                 },
                 "calendar": {
                     "type": "string",
