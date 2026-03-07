@@ -15,6 +15,15 @@
   "bugs": {
     "url": "https://github.com/spyfree/mingli-mcp/issues"
   },
+  "scripts": {
+    "cf:whoami": "wrangler whoami",
+    "cf:deploy": "wrangler deploy",
+    "cf:containers:list": "wrangler containers list"
+  },
+  "devDependencies": {
+    "@cloudflare/containers": "^0.1.1",
+    "wrangler": "^4.50.0"
+  },
   "keywords": [
     "mcp",
     "ziwei",

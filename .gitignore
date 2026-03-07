@@ -34,6 +34,10 @@ env/
 *~
 .DS_Store
 
+# Node / Wrangler
+node_modules/
+.wrangler/
+
 # Environment
 .env
 .env.local

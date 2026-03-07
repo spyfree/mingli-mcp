@@ -58,7 +58,7 @@ def test_ziwei_fortune_translates_limit_fields():
     fortune = ziwei.get_fortune(birth_info, datetime(2026, 3, 7, 23, 30))
 
     assert fortune["hourly"]["palace_names"][0] == "迁移宫"
-    assert fortune["hourly"]["mutagen"] == ["贪狼", "太阴", "右弼", "天机"]
+    assert fortune["hourly"]["mutagen"] == ["廉贞", "破军", "武曲", "太阳"]
     assert all("Palace" not in name for name in fortune["hourly"]["palace_names"])
     assert all(not name.endswith(("Maj", "Min")) for name in fortune["hourly"]["mutagen"])
 

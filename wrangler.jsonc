@@ -1,0 +1,27 @@
+{
+  "name": "mingli-mcp-container",
+  "main": "cloudflare/container-worker.mjs",
+  "compatibility_date": "2026-03-07",
+  "containers": [
+    {
+      "class_name": "MingliContainer",
+      "image": "./Dockerfile",
+      "instance_type": "basic",
+      "max_instances": 1
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "MINGLI_CONTAINER",
+        "class_name": "MingliContainer"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["MingliContainer"]
+    }
+  ]
+}
