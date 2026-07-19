@@ -16,6 +16,17 @@
       "max_instances": 1
     }
   ],
+  "vars": {
+    // 每个license每日tools/call上限（软限制）
+    "MCP_DAILY_QUOTA": "200"
+  },
+  // 与 mingli-paipan (Pages) 共享的license存储：校验售出的 ML- 格式 key
+  "kv_namespaces": [
+    {
+      "binding": "LICENSES",
+      "id": "32eaf27eecf4412dae5e39fb68710e79"
+    }
+  ],
   "durable_objects": {
     "bindings": [
       {
