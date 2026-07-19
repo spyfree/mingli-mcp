@@ -1,0 +1,8 @@
+{
+  "title": "Mingli MCP Server",
+  "description": "No input required — this Actor runs as a Standby MCP server. Connect via the /mcp endpoint.",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {},
+  "required": []
+}

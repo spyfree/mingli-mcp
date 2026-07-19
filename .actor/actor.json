@@ -1,0 +1,13 @@
+{
+  "actorSpecification": 1,
+  "name": "mingli-mcp",
+  "title": "Mingli MCP Server (紫微斗数 / 八字)",
+  "description": "Ziwei Doushu & Bazi fortune-telling MCP server: charts with 12 palaces and stars, decadal/yearly/monthly/daily fortunes, palace analysis and five-element balance. Stateless Streamable HTTP MCP endpoint at /mcp.",
+  "version": "1.1",
+  "buildTag": "latest",
+  "usesStandbyMode": true,
+  "webServerMcpPath": "/mcp",
+  "minMemoryMbytes": 256,
+  "dockerfile": "./Dockerfile",
+  "input": "./input_schema.json"
+}
