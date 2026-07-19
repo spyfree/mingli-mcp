@@ -35,11 +35,42 @@ export class MingliContainer extends Container {
 const LICENSE_RE = /^ML(-[A-Z0-9]{4}){4}$/;
 const MCP_PRODUCT_KEY = "mcp_access";
 const QUOTA_TTL_SECONDS = 2 * 24 * 60 * 60;
+const PURCHASE_URL = "https://lee.locker/mcp";
+
+// 免费方法：握手、能力发现和静态资源零算力成本，放行以便
+// Smithery 等目录/网关能连接和展示工具列表——真正的排盘计算
+// (tools/call) 才需要license，错误信息里带购买链接当导流。
+const FREE_METHODS = new Set([
+  "initialize",
+  "ping",
+  "tools/list",
+  "prompts/list",
+  "prompts/get",
+  "resources/list",
+  "resources/read",
+  "resources/get",
+  "resources/templates/list",
+]);
 
 function jsonError(status, code, message) {
   return new Response(
-    JSON.stringify({ jsonrpc: "2.0", error: { code, message }, id: null }),
+    JSON.stringify(
+      {
+        jsonrpc: "2.0",
+        error: { code, message, data: { purchaseUrl: PURCHASE_URL } },
+        id: null,
+      },
+    ),
     { status, headers: { "Content-Type": "application/json" } },
+  );
+}
+
+function licenseRequiredError(detail) {
+  return jsonError(
+    401,
+    -32001,
+    `${detail} Get a license key at ${PURCHASE_URL} — $6.99 one-time, 200 tool calls/day. ` +
+      `需要 License Key，请前往 ${PURCHASE_URL} 购买（$6.99 买断，每日200次调用）。`,
   );
 }
 
@@ -55,9 +86,27 @@ async function authorizeMcpRequest(request, env) {
   // 主密钥直通（容器内部会再校验一次）
   if (masterKey && token === masterKey) return null;
 
+  const bodyText = await request.text();
+  let method = null;
+  try {
+    method = JSON.parse(bodyText)?.method ?? null;
+  } catch {
+    // 坏JSON照样转发，容器会回 -32700
+  }
+  const isFreeMethod =
+    typeof method === "string" &&
+    (FREE_METHODS.has(method) || method.startsWith("notifications/"));
+
+  const rewriteAndForward = () => {
+    const headers = new Headers(request.headers);
+    if (masterKey) headers.set("Authorization", `Bearer ${masterKey}`);
+    return new Request(request.url, { method: "POST", headers, body: bodyText });
+  };
+
   const key = token.toUpperCase();
   if (!LICENSE_RE.test(key)) {
-    return jsonError(401, -32001, "Missing or invalid license key");
+    if (isFreeMethod) return rewriteAndForward();
+    return licenseRequiredError("This tool requires a license key.");
   }
   if (!env.LICENSES) {
     return jsonError(500, -32603, "License store unavailable");
@@ -65,7 +114,8 @@ async function authorizeMcpRequest(request, env) {
 
   const stored = await env.LICENSES.get(`license:${key}`, { cacheTtl: 60 });
   if (!stored) {
-    return jsonError(401, -32001, "Unknown license key");
+    if (isFreeMethod) return rewriteAndForward();
+    return licenseRequiredError("Unknown license key.");
   }
 
   let record;
@@ -75,18 +125,13 @@ async function authorizeMcpRequest(request, env) {
     return jsonError(500, -32603, "Corrupt license record");
   }
   if (record.status !== "active" || record.productKey !== MCP_PRODUCT_KEY) {
-    return jsonError(403, -32001, "License is not valid for MCP access");
+    if (isFreeMethod) return rewriteAndForward();
+    return licenseRequiredError("This license key is not valid for MCP access.");
   }
 
   // 每日配额：只对 tools/call 计数，initialize/tools/list 等不消耗。
   // KV 计数非原子，属软限制，防滥用足够。
-  const bodyText = await request.text();
-  let isToolCall = false;
-  try {
-    isToolCall = JSON.parse(bodyText)?.method === "tools/call";
-  } catch {
-    // 坏JSON照样转发，容器会回 -32700
-  }
+  const isToolCall = method === "tools/call";
 
   if (isToolCall) {
     const day = new Date().toISOString().slice(0, 10);
@@ -101,9 +146,7 @@ async function authorizeMcpRequest(request, env) {
     });
   }
 
-  const headers = new Headers(request.headers);
-  if (masterKey) headers.set("Authorization", `Bearer ${masterKey}`);
-  return new Request(request.url, { method: "POST", headers, body: bodyText });
+  return rewriteAndForward();
 }
 
 export default {
