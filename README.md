@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/spyfree-mingli-mcp-badge.png)](https://mseep.ai/app/spyfree-mingli-mcp)
+
 # 命理MCP服务 (Mingli MCP Server)
 
 一个支持多种命理系统（紫微斗数、八字、占星等）的 Model Context Protocol (MCP) 服务器，专为 AI 工具（如 Cursor IDE）设计。
