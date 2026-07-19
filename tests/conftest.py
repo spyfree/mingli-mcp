@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 import pytest
 
-from core.birth_info import BirthInfo
+from mingli_mcp.core.birth_info import BirthInfo
 
 # ============================================================================
 # Birth Info Fixtures

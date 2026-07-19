@@ -13,9 +13,9 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from systems import clear_cache, get_system, list_systems  # noqa: E402
-from utils.metrics import get_metrics, record_request  # noqa: E402
-from utils.rate_limiter import RateLimiter  # noqa: E402
+from mingli_mcp.systems import clear_cache, get_system, list_systems  # noqa: E402
+from mingli_mcp.utils.metrics import get_metrics, record_request  # noqa: E402
+from mingli_mcp.utils.rate_limiter import RateLimiter  # noqa: E402
 
 
 def demo_system_cache():
@@ -168,7 +168,7 @@ def demo_exception_handling():
     print("演示4: 异常处理")
     print("=" * 60)
 
-    from core.exceptions import SystemNotFoundError, ValidationError
+    from mingli_mcp.core.exceptions import SystemNotFoundError, ValidationError
 
     # 1. ValidationError 示例
     print("\n1. 参数验证错误:")

@@ -12,9 +12,9 @@ Requirements: 3.1, 3.2, 3.3, 3.4
 
 import pytest
 
-from core.birth_info import BirthInfo
-from core.exceptions import DateRangeError, ValidationError
-from utils.validators import (
+from mingli_mcp.core.birth_info import BirthInfo
+from mingli_mcp.core.exceptions import DateRangeError, ValidationError
+from mingli_mcp.utils.validators import (
     validate_date,
     validate_date_range,
     validate_time_index,

@@ -17,7 +17,8 @@ services:
       - RATE_LIMIT_WINDOW=${RATE_LIMIT_WINDOW:-60}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      # 基础镜像是python:3.11-slim，没有curl，用python探活
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health', timeout=5)"]
       interval: 30s
       timeout: 10s
       retries: 3

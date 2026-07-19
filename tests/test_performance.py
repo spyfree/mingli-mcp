@@ -5,7 +5,7 @@
 
 import time
 
-from utils.performance import PerformanceMetrics, PerformanceTimer, log_performance
+from mingli_mcp.utils.performance import PerformanceMetrics, PerformanceTimer, log_performance
 
 
 class TestPerformanceTimer:

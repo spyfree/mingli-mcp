@@ -7,8 +7,8 @@ This package provides modular components for the MCP server:
 - tools: Tool definitions and handlers
 """
 
-from mcp.protocol import ProtocolHandler
-from mcp.server import MingliMCPServer
-from mcp.tools import ToolRegistry
+from mingli_mcp.mcp_server.protocol import ProtocolHandler
+from mingli_mcp.mcp_server.server import MingliMCPServer
+from mingli_mcp.mcp_server.tools import ToolRegistry
 
 __all__ = ["MingliMCPServer", "ProtocolHandler", "ToolRegistry"]

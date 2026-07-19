@@ -5,7 +5,7 @@
 
 import pytest
 
-from core.exceptions import ValidationError
+from mingli_mcp.core.exceptions import ValidationError
 
 
 class TestBoundaryConditions:
@@ -13,7 +13,7 @@ class TestBoundaryConditions:
 
     def test_time_index_boundaries(self):
         """测试时辰边界值"""
-        from utils.validators import validate_time_index
+        from mingli_mcp.utils.validators import validate_time_index
 
         # 边界值
         assert validate_time_index(0) is True  # 早子时
@@ -25,7 +25,7 @@ class TestBoundaryConditions:
 
     def test_date_boundaries(self):
         """测试日期边界值"""
-        from utils.validators import validate_date_range
+        from mingli_mcp.utils.validators import validate_date_range
 
         # 边界值（不应抛出异常）
         validate_date_range("1900-01-01")  # 最小年份
@@ -40,7 +40,7 @@ class TestBoundaryConditions:
 
     def test_leap_year_dates(self):
         """测试闰年日期"""
-        from utils.validators import validate_date
+        from mingli_mcp.utils.validators import validate_date
 
         # 闰年2月29日
         assert validate_date("2000-02-29") is True
@@ -52,14 +52,14 @@ class TestBoundaryConditions:
 
     def test_empty_inputs(self):
         """测试空输入"""
-        from utils.validators import validate_date, validate_gender
+        from mingli_mcp.utils.validators import validate_date, validate_gender
 
         assert validate_date("") is False
         assert validate_gender("") is False
 
     def test_special_characters(self):
         """测试特殊字符输入"""
-        from utils.validators import validate_date
+        from mingli_mcp.utils.validators import validate_date
 
         assert validate_date("2000-08-16; DROP TABLE") is False
         assert validate_date("../../etc/passwd") is False
@@ -67,7 +67,7 @@ class TestBoundaryConditions:
 
     def test_unicode_inputs(self):
         """测试Unicode输入"""
-        from utils.validators import validate_gender
+        from mingli_mcp.utils.validators import validate_gender
 
         # 有效中文
         assert validate_gender("男") is True
@@ -83,8 +83,8 @@ class TestBirthInfoValidation:
 
     def test_missing_required_fields(self):
         """测试缺少必需字段"""
-        from core.base_system import BaseFortuneSystem
-        from core.exceptions import ValidationError
+        from mingli_mcp.core.base_system import BaseFortuneSystem
+        from mingli_mcp.core.exceptions import ValidationError
 
         # 创建模拟系统
         class MockSystem(BaseFortuneSystem):
@@ -122,8 +122,8 @@ class TestBirthInfoValidation:
 
     def test_invalid_field_values(self):
         """测试无效字段值"""
-        from core.base_system import BaseFortuneSystem
-        from core.exceptions import ValidationError
+        from mingli_mcp.core.base_system import BaseFortuneSystem
+        from mingli_mcp.core.exceptions import ValidationError
 
         class MockSystem(BaseFortuneSystem):
             def get_system_name(self):

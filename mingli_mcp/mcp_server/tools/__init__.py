@@ -6,13 +6,13 @@ This package contains tool definitions and handlers for the MCP server.
 
 from typing import Any, Callable, Dict, List, Optional
 
-from mcp.tools.bazi_handlers import (
+from mingli_mcp.mcp_server.tools.bazi_handlers import (
     handle_analyze_bazi_element,
     handle_get_bazi_chart,
     handle_get_bazi_fortune,
 )
-from mcp.tools.definitions import get_all_tool_definitions
-from mcp.tools.ziwei_handlers import (
+from mingli_mcp.mcp_server.tools.definitions import get_all_tool_definitions
+from mingli_mcp.mcp_server.tools.ziwei_handlers import (
     handle_analyze_ziwei_palace,
     handle_get_ziwei_chart,
     handle_get_ziwei_fortune,
@@ -59,7 +59,7 @@ class ToolRegistry:
 
     def _handle_list_systems(self, args: Dict[str, Any]) -> str:
         """工具：列出所有命理系统"""
-        from systems import get_system, list_systems
+        from mingli_mcp.systems import get_system, list_systems
 
         systems = list_systems()
         detailed = bool(args.get("detailed", False))

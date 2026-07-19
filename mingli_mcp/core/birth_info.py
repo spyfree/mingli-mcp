@@ -170,7 +170,7 @@ class BirthInfo:
             return self.time_index
 
         # 延迟导入避免循环依赖
-        from utils.solar_time import adjust_time_index_for_solar_time
+        from mingli_mcp.utils.solar_time import adjust_time_index_for_solar_time
 
         # 获取出生时刻
         if self.birth_hour is not None and self.birth_minute is not None:
@@ -240,7 +240,7 @@ class BirthInfo:
             return None
 
         # 延迟导入
-        from utils.solar_time import (
+        from mingli_mcp.utils.solar_time import (
             beijing_to_solar_time,
             calculate_solar_time_offset,
         )

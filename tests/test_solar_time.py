@@ -7,8 +7,8 @@ from datetime import datetime
 
 import pytest
 
-from core.birth_info import BirthInfo
-from utils.solar_time import (
+from mingli_mcp.core.birth_info import BirthInfo
+from mingli_mcp.utils.solar_time import (
     adjust_time_index_for_solar_time,
     beijing_to_solar_time,
     calculate_solar_time_offset,

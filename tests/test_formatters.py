@@ -14,9 +14,9 @@ from typing import Any, Dict
 
 import pytest
 
-from systems.bazi.formatter import BaziFormatter
-from systems.ziwei.formatter import ZiweiFormatter
-from utils.formatters import format_error_response, format_success_response
+from mingli_mcp.systems.bazi.formatter import BaziFormatter
+from mingli_mcp.systems.ziwei.formatter import ZiweiFormatter
+from mingli_mcp.utils.formatters import format_error_response, format_success_response
 
 # ============================================================================
 # JSON-RPC Response Formatting Tests (utils/formatters.py)

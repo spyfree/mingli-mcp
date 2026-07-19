@@ -11,8 +11,8 @@ from datetime import date
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
-from core.birth_info import BirthInfo
-from utils.validators import MAX_YEAR, MIN_YEAR
+from mingli_mcp.core.birth_info import BirthInfo
+from mingli_mcp.utils.validators import MAX_YEAR, MIN_YEAR
 
 # ============================================================================
 # Hypothesis Strategies for BirthInfo Fields

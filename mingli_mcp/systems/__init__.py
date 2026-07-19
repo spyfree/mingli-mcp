@@ -2,10 +2,11 @@
 命理系统实现模块
 """
 
+import logging
 from typing import Dict, Type
 
-from core.base_system import BaseFortuneSystem
-from core.exceptions import SystemNotFoundError
+from mingli_mcp.core.base_system import BaseFortuneSystem
+from mingli_mcp.core.exceptions import SystemNotFoundError
 
 # 系统注册表
 _SYSTEMS: Dict[str, Type[BaseFortuneSystem]] = {}
@@ -88,26 +89,29 @@ def list_systems() -> list:
 
 
 # 自动导入并注册所有系统
+# 注册失败不阻断启动，但必须留下日志，避免系统"静默消失"难以排查
+_logger = logging.getLogger(__name__)
+
 try:
     from .ziwei import ZiweiSystem
 
     register_system("ziwei", ZiweiSystem)
-except ImportError:
-    pass
+except ImportError as e:
+    _logger.warning(f"Ziwei system unavailable: {e}")
 
 try:
     from .bazi import BaziSystem
 
     register_system("bazi", BaziSystem)
-except ImportError:
-    pass
+except ImportError as e:
+    _logger.warning(f"Bazi system unavailable: {e}")
 
 try:
     from .astrology import AstrologySystem
 
     register_system("astrology", AstrologySystem)
-except ImportError:
-    pass
+except ImportError as e:
+    _logger.warning(f"Astrology system unavailable: {e}")
 
 
 __all__ = ["register_system", "get_system", "clear_cache", "list_systems"]

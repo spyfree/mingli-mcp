@@ -42,7 +42,7 @@ black --check .
 black .
 
 # 格式化特定文件
-black mingli_mcp.py
+black mingli_mcp
 ```
 
 ## 📦 导入排序
@@ -68,13 +68,13 @@ flake8 .
 flake8 . --count --statistics
 
 # 检查特定文件
-flake8 mingli_mcp.py
+flake8 mingli_mcp
 
 # 运行mypy类型检查
 mypy .
 
 # 运行pylint
-pylint mingli_mcp.py
+pylint mingli_mcp
 ```
 
 ## 🔧 一键质量检查
@@ -104,13 +104,13 @@ twine upload dist/*
 
 ```bash
 # 运行服务器（stdio模式）
-python mingli_mcp.py
+python -m mingli_mcp
 
 # 运行服务器（HTTP模式）
-TRANSPORT_TYPE=http HTTP_PORT=8080 python mingli_mcp.py
+TRANSPORT_TYPE=http HTTP_PORT=8080 python -m mingli_mcp
 
 # 查看日志（调试级别）
-LOG_LEVEL=DEBUG python mingli_mcp.py
+LOG_LEVEL=DEBUG python -m mingli_mcp
 ```
 
 ## 🧹 清理

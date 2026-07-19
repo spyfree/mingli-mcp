@@ -131,7 +131,7 @@ class BaseFortuneSystem(ABC):
             DateRangeError: 日期超出支持范围
         """
         # 延迟导入避免循环依赖
-        from utils.validators import validate_date_range
+        from mingli_mcp.utils.validators import validate_date_range
 
         required_fields = ["date", "time_index", "gender"]
         for field in required_fields:
@@ -160,7 +160,7 @@ class BaseFortuneSystem(ABC):
             LanguageNotSupportedError: 语言不支持
         """
         # 延迟导入避免循环依赖
-        from utils.validators import validate_language as _validate_language
+        from mingli_mcp.utils.validators import validate_language as _validate_language
 
         _validate_language(language)
 
@@ -230,7 +230,7 @@ class BaseFortuneSystem(ABC):
             return birth_info["time_index"]
 
         # 导入真太阳时计算函数
-        from utils.solar_time import adjust_time_index_for_solar_time
+        from mingli_mcp.utils.solar_time import adjust_time_index_for_solar_time
 
         # 获取出生时刻
         birth_hour = birth_info.get("birth_hour")

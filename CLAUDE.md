@@ -12,10 +12,10 @@ source venv/bin/activate
 pip install -e ".[dev]"
 
 # Run the server (stdio mode for MCP)
-python mingli_mcp.py
+python -m mingli_mcp
 
 # Run HTTP transport (for Docker/server deployments)
-TRANSPORT_TYPE=http HTTP_PORT=8080 python mingli_mcp.py
+TRANSPORT_TYPE=http HTTP_PORT=8080 python -m mingli_mcp
 ```
 
 ## Common Development Commands
@@ -75,11 +75,7 @@ twine upload dist/*
 ### Development Workflow
 ```bash
 # Debug with logging
-LOG_LEVEL=DEBUG python mingli_mcp.py
-
-# Test individual fortune systems
-python -m systems.ziwei.ziwei_system
-python -m systems.bazi.bazi_system
+LOG_LEVEL=DEBUG python -m mingli_mcp
 ```
 
 ## Code Architecture
@@ -90,63 +86,68 @@ This is a **Model Context Protocol (MCP) server** for Chinese fortune telling sy
 
 ```
 ziwei_mcp/
-├── mingli_mcp.py              # Main MCP server entry point (mingli_mcp.py:1)
-├── config.py                  # Configuration management (config.py:1)
-├── pyproject.toml            # Project metadata and dependencies (pyproject.toml:1)
+├── pyproject.toml                 # Project metadata and dependencies
+├── mingli_mcp/                    # The installable package (single top-level namespace)
+│   ├── __init__.py               # Package version (__version__)
+│   ├── cli.py                    # Console entry point (mingli-mcp / python -m mingli_mcp)
+│   ├── config.py                 # Configuration management
+│   │
+│   ├── mcp_server/               # MCP protocol implementation
+│   │   ├── server.py             # MingliMCPServer: request routing
+│   │   ├── protocol.py           # ProtocolHandler: initialize/prompts/resources, version negotiation
+│   │   ├── resources.py          # Resource contents
+│   │   └── tools/                # Tool definitions and handlers
+│   │
+│   ├── core/                      # Abstract base layer
+│   │   ├── base_system.py        # BaseFortuneSystem abstract class
+│   │   ├── birth_info.py         # BirthInfo data model
+│   │   └── chart_result.py       # ChartResult data model
+│   │
+│   ├── systems/                   # Fortune system implementations
+│   │   ├── __init__.py           # System registry
+│   │   ├── ziwei/                # Ziwei Doushu system (iztro-py based)
+│   │   ├── bazi/                 # BaZi (Four Pillars) system
+│   │   └── astrology/            # Western astrology (stub)
+│   │
+│   ├── transports/                # Communication transports
+│   │   ├── stdio_transport.py    # stdio transport (default for MCP)
+│   │   └── http_transport.py     # Streamable HTTP transport (stateless JSON mode)
+│   │
+│   ├── utils/                     # Validators, formatters, rate limiter, etc.
+│   └── prompts/                   # Prompt templates (shipped with the package)
 │
-├── core/                      # Abstract base layer
-│   ├── base_system.py        # BaseFortuneSystem abstract class (core/base_system.py:14)
-│   ├── birth_info.py         # BirthInfo data model
-│   └── chart_result.py       # ChartResult data model
-│
-├── systems/                   # Fortune system implementations
-│   ├── __init__.py           # System registry (systems/__init__.py:1)
-│   ├── ziwei/                # Ziwei Doushu system
-│   │   ├── ziwei_system.py   # ZiweiSystem implementation
-│   │   └── formatter.py      # Ziwei result formatting
-│   ├── bazi/                 # BaZi (Four Pillars) system
-│   │   ├── bazi_system.py    # BaziSystem implementation
-│   │   └── formatter.py      # BaZi result formatting
-│   └── astrology/            # Western astrology (stub)
-│
-├── transports/                # Communication transports
-│   ├── base_transport.py     # Transport base class
-│   ├── stdio_transport.py    # stdio transport (default for MCP)
-│   └── http_transport.py     # HTTP transport (optional, needs uvicorn)
-│
-├── utils/                     # Utilities
-│   ├── validators.py         # Parameter validation
-│   ├── formatters.py         # Response formatting
-│   ├── rate_limiter.py       # Rate limiting
-│   └── metrics.py            # Metrics collection
-│
-└── tests/                     # Unit tests
-    ├── test_ziwei.py         # Ziwei system tests
-    └── test_bazi.py          # BaZi system tests
+├── cloudflare/                    # Cloudflare Containers worker
+│   └── container-worker.mjs
+├── wrangler.jsonc                 # Cloudflare deployment config (mcp.lee.locker)
+└── tests/                         # Unit tests
 ```
+
+**Important**: everything lives under the single `mingli_mcp` package namespace.
+Never add top-level modules/packages named `mcp`, `core`, `utils`, etc. — the PyPI
+wheel would collide with other distributions (notably the official `mcp` SDK).
 
 ### Key Components
 
-**1. MingliMCPServer** (mingli_mcp.py:31)
+**1. MingliMCPServer** (mingli_mcp/mcp_server/server.py)
    - Main server class handling MCP protocol
    - Manages transport layer initialization
    - Handles JSON-RPC requests (initialize, tools/list, tools/call)
    - Routes tool calls to appropriate systems
 
-**2. BaseFortuneSystem** (core/base_system.py:14)
+**2. BaseFortuneSystem** (mingli_mcp/core/base_system.py)
    - Abstract base class for all fortune systems
    - Defines interface: `get_chart()`, `get_fortune()`, `analyze_palace()`
    - Provides `validate_birth_info()` for common validation
 
-**3. System Registry** (systems/__init__.py:17)
+**3. System Registry** (mingli_mcp/systems/__init__.py)
    - `register_system(name, system_class)` - Register new systems
    - `get_system(name)` - Get system instance (cached)
    - `list_systems()` - List all registered systems
    - Auto-registers ziwei and bazi systems on import
 
-**4. Transport Layer** (transports/)
+**4. Transport Layer** (mingli_mcp/transports/)
    - **StdioTransport**: Default for MCP integration
-   - **HttpTransport**: Optional HTTP server (requires fastapi+uvicorn)
+   - **HttpTransport**: Streamable HTTP (stateless, JSON response mode; requires fastapi+uvicorn)
    - Configured via `TRANSPORT_TYPE` env var
 
 ### Adding New Fortune Systems
@@ -155,8 +156,8 @@ The codebase uses a **plugin architecture**. To add a new system:
 
 **Step 1**: Create system class
 ```python
-# systems/new_system/new_system.py
-from core.base_system import BaseFortuneSystem
+# mingli_mcp/systems/new_system/new_system.py
+from mingli_mcp.core.base_system import BaseFortuneSystem
 
 class NewSystem(BaseFortuneSystem):
     def get_system_name(self) -> str:
@@ -169,24 +170,26 @@ class NewSystem(BaseFortuneSystem):
 
 **Step 2**: Register system
 ```python
-# systems/__init__.py
+# mingli_mcp/systems/__init__.py
 from .new_system import NewSystem
 register_system("new_system", NewSystem)
 ```
 
-**Step 3**: Add MCP tool (mingli_mcp.py:140)
-- Add tool definition to `_handle_tools_list()`
-- Implement handler method `_tool_new_system_method()`
+**Step 3**: Add MCP tool (mingli_mcp/mcp_server/tools/)
+- Add tool schema to `definitions.py` (`get_all_tool_definitions()`)
+- Implement a handler and register it in `ToolRegistry._register_default_tools()` (`tools/__init__.py`)
 
 ## Configuration
 
-**Key Environment Variables** (config.py):
+**Key Environment Variables** (mingli_mcp/config.py):
 - `LOG_LEVEL`: Logging level (DEBUG, INFO, WARNING, ERROR)
 - `TRANSPORT_TYPE`: "stdio" (default) or "http"
-- `HTTP_HOST`: HTTP server host (default: "localhost")
+- `HTTP_HOST`: HTTP server host (default: "0.0.0.0")
 - `HTTP_PORT`: HTTP server port (default: 8080)
+- `HTTP_API_KEY`: Optional Bearer token for the HTTP endpoint (empty = auth disabled)
+- `ENABLE_RATE_LIMIT` / `RATE_LIMIT_REQUESTS` / `RATE_LIMIT_WINDOW`: HTTP rate limiting (default: true / 100 / 60s)
+- `CORS_ORIGINS` / `CORS_ALLOW_CREDENTIALS`: CORS + Origin validation allowlist
 - `MCP_SERVER_NAME`: Server name (default: "ziwei_mcp")
-- `MCP_SERVER_VERSION`: Server version
 
 **Config Source Priority**:
 1. Environment variables
@@ -254,12 +257,19 @@ docker-compose up -d
 **Source Installation**:
 ```bash
 pip install -e ".[dev]"
-python mingli_mcp.py
+python -m mingli_mcp
+```
+
+**Cloudflare Containers** (wrangler.jsonc + cloudflare/container-worker.mjs):
+```bash
+npx wrangler deploy
+# Deployed at https://mcp.lee.locker/mcp
+# Optional auth: npx wrangler secret put HTTP_API_KEY
 ```
 
 ## Available MCP Tools
 
-Defined in `mingli_mcp.py:140-410`:
+Defined in `mingli_mcp/mcp_server/tools/definitions.py`:
 
 1. **get_ziwei_chart**: Get Ziwei chart with 12 palaces, stars, transformations
 2. **get_ziwei_fortune**: Get Ziwei fortune (decadal, yearly, monthly, daily)
@@ -271,15 +281,20 @@ Defined in `mingli_mcp.py:140-410`:
 
 ## Important Files
 
-- **mingli_mcp.py**: Main entry point, handles MCP protocol
-- **config.py**: Configuration management
+- **mingli_mcp/cli.py**: Main entry point (console script `mingli-mcp`)
+- **mingli_mcp/mcp_server/server.py**: MCP request routing
+- **mingli_mcp/config.py**: Configuration management
 - **DEV_COMMANDS.md**: Quick reference for development commands
 - **README.md**: User documentation and API reference
 - **pyproject.toml**: Python project configuration
 
 ## Development Notes
 
-**MCP Protocol Version**: 2024-11-05 (mingli_mcp.py:35)
+**MCP Protocol Versions**: negotiated per client, latest supported is 2025-11-25
+(see `SUPPORTED_PROTOCOL_VERSIONS` in mingli_mcp/mcp_server/protocol.py). The HTTP
+transport is stateless Streamable HTTP in pure-JSON response mode: notifications
+get 202 Accepted, Origin headers are validated (403 on mismatch), and the
+MCP-Protocol-Version header is validated (400 on unsupported versions).
 
 **Input Validation**:
 - Uses `validate_birth_info()` in BaseFortuneSystem

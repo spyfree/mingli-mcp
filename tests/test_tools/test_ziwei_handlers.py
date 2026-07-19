@@ -9,8 +9,8 @@ import json
 
 import pytest
 
-from core.exceptions import ValidationError
-from mcp.tools.ziwei_handlers import (
+from mingli_mcp.core.exceptions import ValidationError
+from mingli_mcp.mcp_server.tools.ziwei_handlers import (
     handle_analyze_ziwei_palace,
     handle_get_ziwei_chart,
     handle_get_ziwei_fortune,

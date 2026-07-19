@@ -8,10 +8,10 @@ import json
 from datetime import datetime
 from typing import Any, Dict, List
 
-from systems import get_system
-from systems.ziwei.formatter import ZiweiFormatter
-from utils.performance import PerformanceTimer, log_performance
-from utils.validators import (
+from mingli_mcp.systems import get_system
+from mingli_mcp.systems.ziwei.formatter import ZiweiFormatter
+from mingli_mcp.utils.performance import PerformanceTimer, log_performance
+from mingli_mcp.utils.validators import (
     validate_date_range,
     validate_gender_strict,
     validate_language,
@@ -66,13 +66,20 @@ def _validate_common_params(
 
 def _build_birth_info(args: Dict[str, Any], date_key: str = "date") -> Dict[str, Any]:
     """构建生辰信息字典"""
-    return {
+    birth_info = {
         "date": args[date_key],
         "time_index": args["time_index"],
         "gender": args["gender"],
         "calendar": args.get("calendar", "solar"),
         "is_leap_month": args.get("is_leap_month", False),
     }
+
+    # 真太阳时修正相关的可选参数需要透传给排盘系统
+    for key in ("longitude", "latitude", "use_solar_time", "birth_hour", "birth_minute"):
+        if args.get(key) is not None:
+            birth_info[key] = args[key]
+
+    return birth_info
 
 
 def _format_response(data: Any, output_format: str) -> str:
@@ -120,6 +127,7 @@ def handle_get_ziwei_fortune(args: Dict[str, Any]) -> str:
 
         query_date_str = args.get("query_date")
         if query_date_str:
+            validate_date_range(query_date_str)
             query_date = datetime.strptime(query_date_str, "%Y-%m-%d")
         else:
             query_date = datetime.now()

@@ -9,8 +9,8 @@ import json
 
 import pytest
 
-from core.exceptions import ValidationError
-from mcp.tools.bazi_handlers import (
+from mingli_mcp.core.exceptions import ValidationError
+from mingli_mcp.mcp_server.tools.bazi_handlers import (
     handle_analyze_bazi_element,
     handle_get_bazi_chart,
     handle_get_bazi_fortune,

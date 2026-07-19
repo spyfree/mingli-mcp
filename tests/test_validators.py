@@ -5,8 +5,8 @@
 
 import pytest
 
-from core.exceptions import DateRangeError, LanguageNotSupportedError, ValidationError
-from utils.validators import (
+from mingli_mcp.core.exceptions import DateRangeError, LanguageNotSupportedError, ValidationError
+from mingli_mcp.utils.validators import (
     validate_date,
     validate_date_range,
     validate_gender,

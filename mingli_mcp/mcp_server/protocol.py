@@ -8,27 +8,48 @@ MCP protocol methods like initialize, tools/list, prompts/list, etc.
 from pathlib import Path
 from typing import Any, Dict, List
 
-from config import config
-from utils.formatters import format_error_response, format_success_response
+from mingli_mcp.config import config
+from mingli_mcp.utils.formatters import format_error_response, format_success_response
 
 logger = config.get_logger(__name__)
+
+# 服务器支持的MCP协议版本（从新到旧）
+# 版本协商规则见 https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle
+LATEST_PROTOCOL_VERSION = "2025-11-25"
+SUPPORTED_PROTOCOL_VERSIONS = [
+    "2025-11-25",
+    "2025-06-18",
+    "2025-03-26",
+    "2024-11-05",
+]
+
+RESOURCE_MIME_TYPE = "text/markdown"
 
 
 class ProtocolHandler:
     """Handles MCP protocol methods"""
 
-    PROTOCOL_VERSION = "2024-11-05"
+    LATEST_PROTOCOL_VERSION = LATEST_PROTOCOL_VERSION
+    SUPPORTED_PROTOCOL_VERSIONS = SUPPORTED_PROTOCOL_VERSIONS
 
     def handle_initialize(self, request: Dict[str, Any], request_id: Any) -> Dict[str, Any]:
-        """处理初始化请求"""
-        client_info = request.get("params", {})
-        logger.info(f"Client info: {client_info}")
+        """处理初始化请求（含协议版本协商）"""
+        params = request.get("params", {})
+        logger.info(f"Client info: {params.get('clientInfo', params)}")
+
+        # 版本协商：客户端请求的版本受支持则回显；否则回复服务器支持的最新版本
+        client_version = params.get("protocolVersion")
+        if client_version in SUPPORTED_PROTOCOL_VERSIONS:
+            negotiated_version = client_version
+        else:
+            negotiated_version = LATEST_PROTOCOL_VERSION
 
         return format_success_response(
             {
-                "protocolVersion": self.PROTOCOL_VERSION,
+                "protocolVersion": negotiated_version,
                 "serverInfo": {
                     "name": config.MCP_SERVER_NAME,
+                    "title": "命理 MCP Server",
                     "version": config.MCP_SERVER_VERSION,
                 },
                 "capabilities": {
@@ -55,7 +76,7 @@ class ProtocolHandler:
         prompts = []
 
         if prompts_dir.exists():
-            for filename in os.listdir(prompts_dir):
+            for filename in sorted(os.listdir(prompts_dir)):
                 if filename.endswith(".md"):
                     filepath = prompts_dir / filename
                     with open(filepath, "r", encoding="utf-8") as f:
@@ -166,11 +187,14 @@ class ProtocolHandler:
             },
         ]
 
+        for resource in resources:
+            resource["mimeType"] = RESOURCE_MIME_TYPE
+
         return format_success_response({"resources": resources}, request_id)
 
-    def handle_resources_get(self, request: Dict[str, Any], request_id: Any) -> Dict[str, Any]:
-        """处理获取资源请求"""
-        from mcp.resources import get_resource_content
+    def handle_resources_read(self, request: Dict[str, Any], request_id: Any) -> Dict[str, Any]:
+        """处理读取资源请求（标准方法名为 resources/read）"""
+        from mingli_mcp.mcp_server.resources import get_resource_content
 
         params = request.get("params", {})
         uri = params.get("uri")
@@ -186,10 +210,14 @@ class ProtocolHandler:
             {
                 "contents": [
                     {
-                        "type": "text",
+                        "uri": uri,
+                        "mimeType": RESOURCE_MIME_TYPE,
                         "text": content,
                     }
                 ]
             },
             request_id,
         )
+
+    # 兼容旧的非标准方法名 resources/get
+    handle_resources_get = handle_resources_read

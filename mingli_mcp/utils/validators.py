@@ -5,7 +5,7 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from core.exceptions import DateRangeError, LanguageNotSupportedError, ValidationError
+from mingli_mcp.core.exceptions import DateRangeError, LanguageNotSupportedError, ValidationError
 
 # 支持的日期范围（农历库限制）
 MIN_YEAR = 1900

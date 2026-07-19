@@ -13,6 +13,12 @@ from .base_transport import BaseTransport
 
 logger = logging.getLogger(__name__)
 
+PARSE_ERROR_RESPONSE = {
+    "jsonrpc": "2.0",
+    "error": {"code": -32700, "message": "Parse error"},
+    "id": None,
+}
+
 
 class StdioTransport(BaseTransport):
     """标准输入输出传输层"""
@@ -22,18 +28,35 @@ class StdioTransport(BaseTransport):
         self.running = False
 
     def start(self) -> None:
-        """启动stdio传输层，开始处理消息循环"""
+        """启动stdio传输层，开始处理消息循环
+
+        解析失败的行会返回-32700 Parse error并继续处理后续消息，
+        只有stdin EOF才会结束循环。
+        """
         self.running = True
         logger.info("Stdio transport started")
 
         try:
             while self.running:
-                message = self.receive_message()
-                if message is None:
+                line = sys.stdin.readline()
+                if not line:
+                    logger.info("Received EOF on stdin")
                     break
 
+                line = line.strip()
+                if not line:
+                    continue
+
+                try:
+                    message = json.loads(line)
+                except json.JSONDecodeError as e:
+                    logger.error(f"JSON decode error: {e}")
+                    self.send_message(dict(PARSE_ERROR_RESPONSE))
+                    continue
+
+                logger.debug(f"Received message: {line[:200]}...")
                 response = self.handle_message(message)
-                if response:
+                if response is not None:
                     self.send_message(response)
         except KeyboardInterrupt:
             logger.info("Received keyboard interrupt")
@@ -67,7 +90,7 @@ class StdioTransport(BaseTransport):
         从stdin接收JSON-RPC消息
 
         Returns:
-            接收到的消息字典，如果到达EOF返回None
+            接收到的消息字典，如果到达EOF或解析失败返回None
         """
         try:
             line = sys.stdin.readline()

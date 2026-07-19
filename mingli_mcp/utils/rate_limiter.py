@@ -4,6 +4,7 @@
 实现基于滑动窗口的请求限流，防止API滥用
 """
 
+import threading
 import time
 from collections import defaultdict, deque
 from datetime import datetime, timedelta
@@ -38,6 +39,9 @@ class RateLimiter:
         # 上次清理时间
         self.last_cleanup = time.time()
 
+        # 请求处理可能在线程池中并发执行，需要加锁保护
+        self._lock = threading.Lock()
+
     def is_allowed(self, client_id: str) -> bool:
         """
         检查请求是否允许
@@ -51,20 +55,21 @@ class RateLimiter:
         now = datetime.now()
         cutoff_time = now - self.window
 
-        # 定期清理过期数据
-        self._periodic_cleanup()
+        with self._lock:
+            # 定期清理过期数据
+            self._periodic_cleanup()
 
-        # 清理该客户端的过期请求
-        while self.requests[client_id] and self.requests[client_id][0] < cutoff_time:
-            self.requests[client_id].popleft()
+            # 清理该客户端的过期请求
+            while self.requests[client_id] and self.requests[client_id][0] < cutoff_time:
+                self.requests[client_id].popleft()
 
-        # 检查是否超出限制
-        if len(self.requests[client_id]) >= self.max_requests:
-            return False
+            # 检查是否超出限制
+            if len(self.requests[client_id]) >= self.max_requests:
+                return False
 
-        # 记录本次请求
-        self.requests[client_id].append(now)
-        return True
+            # 记录本次请求
+            self.requests[client_id].append(now)
+            return True
 
     def get_remaining(self, client_id: str) -> int:
         """
@@ -79,12 +84,13 @@ class RateLimiter:
         now = datetime.now()
         cutoff_time = now - self.window
 
-        # 清理过期请求
-        while self.requests[client_id] and self.requests[client_id][0] < cutoff_time:
-            self.requests[client_id].popleft()
+        with self._lock:
+            # 清理过期请求
+            while self.requests[client_id] and self.requests[client_id][0] < cutoff_time:
+                self.requests[client_id].popleft()
 
-        used = len(self.requests[client_id])
-        return max(0, self.max_requests - used)
+            used = len(self.requests[client_id])
+            return max(0, self.max_requests - used)
 
     def get_reset_time(self, client_id: str) -> Optional[datetime]:
         """
@@ -96,12 +102,13 @@ class RateLimiter:
         Returns:
             重置时间，如果没有限流返回None
         """
-        if not self.requests[client_id]:
-            return None
+        with self._lock:
+            if not self.requests[client_id]:
+                return None
 
-        # 最早的请求时间 + 窗口时间 = 重置时间
-        oldest_request = self.requests[client_id][0]
-        return oldest_request + self.window
+            # 最早的请求时间 + 窗口时间 = 重置时间
+            oldest_request = self.requests[client_id][0]
+            return oldest_request + self.window
 
     def _periodic_cleanup(self):
         """定期清理所有客户端的过期请求"""
@@ -137,10 +144,11 @@ class RateLimiter:
         Args:
             client_id: 客户端标识，如果为None则重置所有客户端
         """
-        if client_id is None:
-            self.requests.clear()
-        elif client_id in self.requests:
-            del self.requests[client_id]
+        with self._lock:
+            if client_id is None:
+                self.requests.clear()
+            elif client_id in self.requests:
+                del self.requests[client_id]
 
     def get_stats(self) -> Dict:
         """
@@ -152,17 +160,18 @@ class RateLimiter:
         now = datetime.now()
         cutoff_time = now - self.window
 
-        total_clients = len(self.requests)
-        total_requests = 0
-        limited_clients = 0
+        with self._lock:
+            total_clients = len(self.requests)
+            total_requests = 0
+            limited_clients = 0
 
-        for request_queue in self.requests.values():
-            # 清理过期请求后计数
-            active_requests = sum(1 for req_time in request_queue if req_time >= cutoff_time)
-            total_requests += active_requests
+            for request_queue in self.requests.values():
+                # 清理过期请求后计数
+                active_requests = sum(1 for req_time in request_queue if req_time >= cutoff_time)
+                total_requests += active_requests
 
-            if active_requests >= self.max_requests:
-                limited_clients += 1
+                if active_requests >= self.max_requests:
+                    limited_clients += 1
 
         return {
             "total_clients": total_clients,

@@ -7,7 +7,7 @@ Requirements: 2.1
 
 import pytest
 
-from mcp.protocol import ProtocolHandler
+from mingli_mcp.mcp_server.protocol import ProtocolHandler
 
 
 class TestProtocolHandlerInitialize:
@@ -18,14 +18,29 @@ class TestProtocolHandlerInitialize:
         """Create a ProtocolHandler instance."""
         return ProtocolHandler()
 
-    def test_initialize_returns_protocol_version(self, handler):
-        """Initialize should return the protocol version."""
+    def test_initialize_returns_latest_version_by_default(self, handler):
+        """Initialize should return the latest supported protocol version
+        when the client does not request a specific one."""
         request = {"params": {"clientInfo": {"name": "test-client"}}}
         response = handler.handle_initialize(request, request_id=1)
 
         assert "result" in response
-        assert "protocolVersion" in response["result"]
+        assert response["result"]["protocolVersion"] == ProtocolHandler.LATEST_PROTOCOL_VERSION
+
+    def test_initialize_echoes_supported_client_version(self, handler):
+        """Initialize should echo the client's requested version if supported."""
+        request = {"params": {"protocolVersion": "2024-11-05"}}
+        response = handler.handle_initialize(request, request_id=1)
+
         assert response["result"]["protocolVersion"] == "2024-11-05"
+
+    def test_initialize_falls_back_for_unsupported_version(self, handler):
+        """Initialize should fall back to the latest supported version
+        when the client requests an unsupported one."""
+        request = {"params": {"protocolVersion": "1999-01-01"}}
+        response = handler.handle_initialize(request, request_id=1)
+
+        assert response["result"]["protocolVersion"] == ProtocolHandler.LATEST_PROTOCOL_VERSION
 
     def test_initialize_returns_server_info(self, handler):
         """Initialize should return server info."""
@@ -190,34 +205,58 @@ class TestProtocolHandlerPromptsGet:
         assert "error" in response
 
 
-class TestProtocolHandlerResourcesGet:
-    """Tests for resources/get protocol method."""
+class TestProtocolHandlerResourcesRead:
+    """Tests for resources/read protocol method."""
 
     @pytest.fixture
     def handler(self):
         """Create a ProtocolHandler instance."""
         return ProtocolHandler()
 
-    def test_resources_get_requires_uri(self, handler):
-        """resources/get should return error when URI is missing."""
+    def test_resources_read_requires_uri(self, handler):
+        """resources/read should return error when URI is missing."""
         request = {"params": {}}
-        response = handler.handle_resources_get(request, request_id=1)
+        response = handler.handle_resources_read(request, request_id=1)
 
         assert "error" in response
         assert "URI is required" in response["error"]["message"]
 
-    def test_resources_get_returns_error_for_unknown_uri(self, handler):
-        """resources/get should return error for unknown URIs."""
+    def test_resources_read_returns_error_for_unknown_uri(self, handler):
+        """resources/read should return error for unknown URIs."""
         request = {"params": {"uri": "mingli://unknown-resource"}}
-        response = handler.handle_resources_get(request, request_id=1)
+        response = handler.handle_resources_read(request, request_id=1)
 
         assert "error" in response
         assert "not found" in response["error"]["message"]
 
-    def test_resources_get_returns_content_for_valid_uri(self, handler):
-        """resources/get should return content for valid URIs."""
+    def test_resources_read_returns_content_for_valid_uri(self, handler):
+        """resources/read should return content for valid URIs."""
+        request = {"params": {"uri": "mingli://configuration"}}
+        response = handler.handle_resources_read(request, request_id=1)
+
+        assert "result" in response
+        assert "contents" in response["result"]
+
+    def test_resources_read_contents_include_uri_and_mime_type(self, handler):
+        """Each content item must carry uri and mimeType per the MCP spec."""
+        request = {"params": {"uri": "mingli://configuration"}}
+        response = handler.handle_resources_read(request, request_id=1)
+
+        content = response["result"]["contents"][0]
+        assert content["uri"] == "mingli://configuration"
+        assert content["mimeType"] == "text/markdown"
+        assert content["text"]
+
+    def test_resources_get_alias_still_works(self, handler):
+        """Legacy resources/get handler name should remain as an alias."""
         request = {"params": {"uri": "mingli://configuration"}}
         response = handler.handle_resources_get(request, request_id=1)
 
         assert "result" in response
-        assert "contents" in response["result"]
+
+    def test_resources_list_entries_include_mime_type(self, handler):
+        """resources/list entries should declare their mimeType."""
+        response = handler.handle_resources_list(request_id=1)
+
+        for resource in response["result"]["resources"]:
+            assert resource["mimeType"] == "text/markdown"

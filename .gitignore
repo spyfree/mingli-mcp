@@ -77,3 +77,6 @@ cloudflare_workers/
 CLOUDFLARE_WORKERS_TEST_RESULTS.md
 CLOUDFLARE_DEPLOY.md
 CLOUDFLARE_EXPLAINED.md
+
+# Hypothesis property-testing cache
+.hypothesis/

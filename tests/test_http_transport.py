@@ -16,7 +16,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 @pytest.fixture
 def http_transport():
     """创建HTTP传输层fixture"""
-    from transports.http_transport import HttpTransport
+    from mingli_mcp.transports.http_transport import HttpTransport
 
     transport = HttpTransport(host="127.0.0.1", port=8080, api_key="test-api-key")
 
@@ -112,16 +112,103 @@ class TestHttpTransport:
         assert "total_clients" in data
 
     def test_invalid_json(self, client):
-        """测试无效JSON"""
+        """测试无效JSON返回-32700 Parse error"""
         response = client.post(
             "/mcp",
-            data="invalid json",
+            content="invalid json",
             headers={
                 "Authorization": "Bearer test-api-key",
                 "Content-Type": "application/json",
             },
         )
-        assert response.status_code == 500  # 内部错误
+        assert response.status_code == 400
+        assert response.json()["error"]["code"] == -32700
+
+    def test_notification_returns_202_without_body(self, http_transport):
+        """notification消息应返回202 Accepted且无body（MCP Streamable HTTP规范）"""
+
+        def notification_handler(message):
+            return None  # 服务器对notification不产生响应
+
+        http_transport.set_message_handler(notification_handler)
+        client = TestClient(http_transport.app)
+
+        response = client.post(
+            "/mcp",
+            json={"jsonrpc": "2.0", "method": "notifications/initialized"},
+            headers={"Authorization": "Bearer test-api-key"},
+        )
+        assert response.status_code == 202
+        assert response.content == b""
+
+    def test_invalid_origin_rejected_with_403(self, client):
+        """非法Origin必须返回403（MCP规范，防DNS rebinding）"""
+        response = client.post(
+            "/mcp",
+            json={"jsonrpc": "2.0", "id": 1, "method": "tools/list"},
+            headers={
+                "Authorization": "Bearer test-api-key",
+                "Origin": "https://evil.example.com",
+            },
+        )
+        assert response.status_code == 403
+
+    def test_allowed_origin_accepted(self, client):
+        """允许列表内的Origin应放行"""
+        response = client.post(
+            "/mcp",
+            json={"jsonrpc": "2.0", "id": 1, "method": "tools/list"},
+            headers={
+                "Authorization": "Bearer test-api-key",
+                "Origin": "http://localhost:3000",
+            },
+        )
+        assert response.status_code == 200
+
+    def test_unsupported_protocol_version_rejected_with_400(self):
+        """不支持的MCP-Protocol-Version头必须返回400"""
+        from mingli_mcp.transports.http_transport import HttpTransport
+
+        transport = HttpTransport(
+            host="127.0.0.1",
+            port=8080,
+            supported_protocol_versions=["2025-11-25", "2024-11-05"],
+        )
+        transport.set_message_handler(lambda m: {"jsonrpc": "2.0", "id": m.get("id"), "result": {}})
+        client = TestClient(transport.app)
+
+        response = client.post(
+            "/mcp",
+            json={"jsonrpc": "2.0", "id": 1, "method": "tools/list"},
+            headers={"MCP-Protocol-Version": "1900-01-01"},
+        )
+        assert response.status_code == 400
+
+        response = client.post(
+            "/mcp",
+            json={"jsonrpc": "2.0", "id": 1, "method": "tools/list"},
+            headers={"MCP-Protocol-Version": "2025-11-25"},
+        )
+        assert response.status_code == 200
+
+    def test_rate_limit_uses_cf_connecting_ip(self, http_transport):
+        """限流应优先使用CF-Connecting-IP作为客户端标识"""
+        from unittest.mock import patch
+
+        client = TestClient(http_transport.app)
+
+        with patch.object(
+            http_transport.rate_limiter, "is_allowed", return_value=True
+        ) as mock_allowed:
+            client.post(
+                "/mcp",
+                json={"jsonrpc": "2.0", "id": 1, "method": "tools/list"},
+                headers={
+                    "Authorization": "Bearer test-api-key",
+                    "CF-Connecting-IP": "203.0.113.7",
+                },
+            )
+            mock_allowed.assert_called_once_with("203.0.113.7")
 
     def test_cors_headers(self, client):
         """测试CORS头"""

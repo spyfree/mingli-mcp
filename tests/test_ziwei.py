@@ -9,8 +9,8 @@ from datetime import datetime
 from iztro_py import astro
 from iztro_py.i18n import t
 
-from systems import get_system
-from systems.ziwei.ziwei_system import ZiweiSystem
+from mingli_mcp.systems import get_system
+from mingli_mcp.systems.ziwei.ziwei_system import ZiweiSystem
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

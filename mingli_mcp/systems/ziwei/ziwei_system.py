@@ -8,8 +8,8 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from core.base_system import BaseFortuneSystem
-from core.exceptions import DependencyError, SystemError, ValidationError
+from mingli_mcp.core.base_system import BaseFortuneSystem
+from mingli_mcp.core.exceptions import DependencyError, SystemError, ValidationError
 
 from .formatter import ZiweiFormatter
 

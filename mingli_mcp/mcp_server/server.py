@@ -5,19 +5,19 @@ This module contains the main MingliMCPServer class that coordinates
 protocol handling, tool execution, and transport management.
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
-from config import config
-from core.exceptions import (
+from mingli_mcp.config import config
+from mingli_mcp.core.exceptions import (
     SystemError,
     SystemNotFoundError,
     ToolCallError,
     ValidationError,
 )
-from mcp.protocol import ProtocolHandler
-from mcp.tools import ToolRegistry
-from transports import StdioTransport
-from utils.formatters import format_error_response
+from mingli_mcp.mcp_server.protocol import SUPPORTED_PROTOCOL_VERSIONS, ProtocolHandler
+from mingli_mcp.mcp_server.tools import ToolRegistry
+from mingli_mcp.transports import StdioTransport
+from mingli_mcp.utils.formatters import format_error_response, format_success_response
 
 logger = config.get_logger(__name__)
 
@@ -33,7 +33,7 @@ class MingliMCPServer:
 
     def _initialize_transport(self):
         """初始化传输层"""
-        from transports import HTTP_TRANSPORT_AVAILABLE
+        from mingli_mcp.transports import HTTP_TRANSPORT_AVAILABLE
 
         transport_type = config.TRANSPORT_TYPE.lower()
 
@@ -47,10 +47,17 @@ class MingliMCPServer:
                     "or\n"
                     "  pip install mingli-mcp (which includes all dependencies)"
                 )
-            from transports import HttpTransport
+            from mingli_mcp.transports import HttpTransport
 
             self.transport = HttpTransport(
-                host=config.HTTP_HOST, port=config.HTTP_PORT, api_key=config.HTTP_API_KEY
+                host=config.HTTP_HOST,
+                port=config.HTTP_PORT,
+                api_key=config.HTTP_API_KEY,
+                enable_rate_limit=config.ENABLE_RATE_LIMIT,
+                rate_limit_requests=config.RATE_LIMIT_REQUESTS,
+                rate_limit_window=config.RATE_LIMIT_WINDOW,
+                cors_allow_credentials=config.CORS_ALLOW_CREDENTIALS,
+                supported_protocol_versions=SUPPORTED_PROTOCOL_VERSIONS,
             )
         else:
             raise ValueError(f"Unsupported transport type: {transport_type}")
@@ -60,13 +67,13 @@ class MingliMCPServer:
 
     def start(self):
         """启动MCP服务器"""
-        from systems import list_systems
+        from mingli_mcp.systems import list_systems
 
         logger.info(f"Starting {config.MCP_SERVER_NAME} v{config.MCP_SERVER_VERSION}")
         logger.info(f"Available systems: {', '.join(list_systems())}")
         self.transport.start()
 
-    def handle_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
+    def handle_request(self, request: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
         处理MCP请求
 
@@ -74,17 +81,25 @@ class MingliMCPServer:
             request: JSON-RPC请求
 
         Returns:
-            JSON-RPC响应
+            JSON-RPC响应；对于notification（无id的消息）返回None
         """
         method = request.get("method")
         request_id = request.get("id")
+        # JSON-RPC规范：没有id成员的消息是notification，不能对其发送响应
+        is_notification = "id" not in request
 
         try:
             # Protocol methods
             if method == "initialize":
                 return self.protocol_handler.handle_initialize(request, request_id)
+            elif method == "ping":
+                return format_success_response({}, request_id)
             elif method == "notifications/initialized":
                 logger.info("Received initialized notification")
+                return None
+            elif is_notification:
+                # 其他notification（如notifications/cancelled）：接受但不响应
+                logger.debug(f"Ignoring notification: {method}")
                 return None
             elif method == "tools/list":
                 return self.protocol_handler.handle_tools_list(
@@ -98,23 +113,28 @@ class MingliMCPServer:
                 return self.protocol_handler.handle_prompts_get(request, request_id)
             elif method == "resources/list":
                 return self.protocol_handler.handle_resources_list(request_id)
-            elif method == "resources/get":
-                return self.protocol_handler.handle_resources_get(request, request_id)
+            elif method in ("resources/read", "resources/get"):
+                # resources/read 是MCP标准方法名；resources/get 为历史兼容
+                return self.protocol_handler.handle_resources_read(request, request_id)
+            elif method == "resources/templates/list":
+                return format_success_response({"resourceTemplates": []}, request_id)
             else:
                 logger.warning(f"Unknown method: {method}")
                 return format_error_response(-32601, f"Method not found: {method}", request_id)
 
         except (ValidationError, SystemNotFoundError) as e:
             logger.error(f"Request validation error for {method}: {e}")
+            if is_notification:
+                return None
             return format_error_response(-32602, str(e), request_id)
         except Exception as e:
             logger.exception(f"Unexpected error handling request: {method}")
+            if is_notification:
+                return None
             return format_error_response(-32603, f"Internal error: {str(e)}", request_id)
 
     def _handle_tools_call(self, request: Dict[str, Any], request_id: Any) -> Dict[str, Any]:
         """处理工具调用请求"""
-        from utils.formatters import format_success_response
-
         params = request.get("params", {})
         tool_name = params.get("name")
         arguments = params.get("arguments", {})

@@ -1,5 +1,37 @@
 # 更新日志
 
+## [1.1.0] - 2026-07-19
+
+### 重大变更 ⚠️
+
+- **包结构重构**: 所有代码收进单一 `mingli_mcp` 包命名空间。此前 wheel 会向 site-packages 安装顶层的 `mcp`、`core`、`utils`、`systems`、`transports`、`config`，与官方 MCP Python SDK（PyPI `mcp` 包）及其他包冲突；现在 wheel 只含 `mingli_mcp/`，已验证可与官方 `mcp` SDK 共存安装
+- **入口变更**: 源码运行方式从 `python mingli_mcp.py` 改为 `python -m mingli_mcp`；`mingli-mcp` 控制台脚本和 uvx 用法不变
+
+### MCP 协议合规（对齐 2025-11-25 规范）
+
+- **协议版本协商**: `initialize` 按客户端请求的 `protocolVersion` 协商（支持 2024-11-05 ~ 2025-11-25），不再硬编码 2024-11-05
+- **resources/read**: 支持标准方法名（原实现只支持非标准的 `resources/get`，标准客户端无法读取资源）；响应补全 `uri`、`mimeType` 字段；保留 `resources/get` 兼容
+- **notification 语义**: 对无 `id` 的消息（notification）不再发送任何响应；HTTP 端点按规范返回 202 Accepted 无 body（此前返回带 body 的 204，违反 HTTP 规范）
+- **Origin 校验**: HTTP 端点校验 `Origin` 头，非法来源返回 403（规范强制要求，防 DNS rebinding）
+- **MCP-Protocol-Version 头校验**: 不支持的版本返回 400
+- **ping**: 支持 `ping` 方法；`resources/templates/list` 返回空列表而非 Method not found
+
+### Bug 修复
+
+- **真太阳时参数生效**: `longitude`/`latitude`/`use_solar_time`/`birth_hour`/`birth_minute` 此前在 MCP handler 中被静默丢弃，修正后真正传入排盘系统；并补充到 `get_ziwei_fortune`、`analyze_ziwei_palace` 的参数 schema
+- **stdio 健壮性**: 一行坏 JSON 不再导致服务器退出，改为返回 -32700 Parse error 并继续处理
+- **限流真实生效**: Cloudflare 部署下按 `CF-Connecting-IP`/`X-Forwarded-For` 分桶（此前所有外部用户共享代理 IP 的一个桶）；`ENABLE_RATE_LIMIT`/`RATE_LIMIT_*` 环境变量真正被读取；`RateLimiter` 线程安全
+- **事件循环不再被阻塞**: 排盘计算移入线程池执行，长计算期间 `/health` 保持可用
+- **prompts 随包发布**: prompts 目录移入包内，pip/uvx 安装后 `prompts/list` 不再为空
+- **query_date 校验**: 非法日期返回 -32602 参数错误而非 -32603 内部错误
+- **版本号统一**: 包版本单一来源（`mingli_mcp.__version__`），HTTP 根路径不再显示过期的 1.0.0
+- **docker-compose 健康检查**: 改用 python 探活（slim 镜像无 curl）
+- **系统注册失败可见**: `systems` 注册的 ImportError 记录 warning 而非静默吞掉
+
+### 依赖
+
+- `iztro-py` 升级到 `>=0.4.0`
+
 ## [1.0.16] - 2026-03-07
 
 ### Bug 修复

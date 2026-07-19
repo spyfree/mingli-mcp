@@ -13,8 +13,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from transports.base_transport import BaseTransport
-from transports.stdio_transport import StdioTransport
+from mingli_mcp.transports.base_transport import BaseTransport
+from mingli_mcp.transports.stdio_transport import StdioTransport
 
 
 class TestStdioTransportBasics:
@@ -264,6 +264,47 @@ class TestStartStop:
         assert len(messages_received) == 2
         assert messages_received[0]["method"] == "test1"
         assert messages_received[1]["method"] == "test2"
+
+    def test_start_continues_after_invalid_json(self):
+        """A malformed line must produce a -32700 response and NOT kill the loop."""
+        transport = StdioTransport()
+        messages_received = []
+
+        def handler(msg):
+            messages_received.append(msg)
+            return {"jsonrpc": "2.0", "id": msg.get("id"), "result": "ok"}
+
+        transport.set_message_handler(handler)
+
+        valid_msg = {"jsonrpc": "2.0", "id": 1, "method": "test"}
+        input_data = "not valid json\n" + json.dumps(valid_msg) + "\n"
+
+        with patch.object(sys, "stdin", io.StringIO(input_data)):
+            with patch.object(sys, "stdout", new_callable=io.StringIO) as mock_stdout:
+                transport.start()
+
+        # 坏行之后的消息仍然被处理
+        assert len(messages_received) == 1
+        assert messages_received[0]["id"] == 1
+
+        # 第一条输出是-32700 Parse error
+        lines = [line for line in mock_stdout.getvalue().split("\n") if line.strip()]
+        first_response = json.loads(lines[0])
+        assert first_response["error"]["code"] == -32700
+
+    def test_start_does_not_respond_to_notifications(self):
+        """When the handler returns None (notification), nothing is written to stdout."""
+        transport = StdioTransport()
+        transport.set_message_handler(lambda msg: None)
+
+        notification = {"jsonrpc": "2.0", "method": "notifications/initialized"}
+        input_data = json.dumps(notification) + "\n"
+
+        with patch.object(sys, "stdin", io.StringIO(input_data)):
+            with patch.object(sys, "stdout", new_callable=io.StringIO) as mock_stdout:
+                transport.start()
+
+        assert mock_stdout.getvalue() == ""
 
     def test_start_handles_keyboard_interrupt(self):
         """Test that start() handles KeyboardInterrupt gracefully."""

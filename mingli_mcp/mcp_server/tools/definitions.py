@@ -6,6 +6,39 @@ This module contains all tool schema definitions for the MCP server.
 
 from typing import Any, Dict, List
 
+# 真太阳时修正相关的可选参数（紫微各工具共享）
+_SOLAR_TIME_PROPERTIES: Dict[str, Any] = {
+    "longitude": {
+        "type": "number",
+        "description": "出生地经度，用于真太阳时修正",
+        "minimum": -180,
+        "maximum": 180,
+    },
+    "latitude": {
+        "type": "number",
+        "description": "出生地纬度",
+        "minimum": -90,
+        "maximum": 90,
+    },
+    "use_solar_time": {
+        "type": "boolean",
+        "default": False,
+        "description": "是否启用真太阳时修正",
+    },
+    "birth_hour": {
+        "type": "integer",
+        "description": "精确出生小时（0-23）",
+        "minimum": 0,
+        "maximum": 23,
+    },
+    "birth_minute": {
+        "type": "integer",
+        "description": "精确出生分钟（0-59）",
+        "minimum": 0,
+        "maximum": 59,
+    },
+}
+
 
 def get_ziwei_chart_definition() -> Dict[str, Any]:
     """Get definition for get_ziwei_chart tool"""
@@ -56,35 +89,7 @@ def get_ziwei_chart_definition() -> Dict[str, Any]:
                     "enum": ["zh-CN", "zh-TW", "en-US", "ja-JP", "ko-KR", "vi-VN"],
                     "default": "zh-CN",
                 },
-                "longitude": {
-                    "type": "number",
-                    "description": "出生地经度，用于真太阳时修正",
-                    "minimum": -180,
-                    "maximum": 180,
-                },
-                "latitude": {
-                    "type": "number",
-                    "description": "出生地纬度",
-                    "minimum": -90,
-                    "maximum": 90,
-                },
-                "use_solar_time": {
-                    "type": "boolean",
-                    "default": False,
-                    "description": "是否启用真太阳时修正",
-                },
-                "birth_hour": {
-                    "type": "integer",
-                    "description": "精确出生小时（0-23）",
-                    "minimum": 0,
-                    "maximum": 23,
-                },
-                "birth_minute": {
-                    "type": "integer",
-                    "description": "精确出生分钟（0-59）",
-                    "minimum": 0,
-                    "maximum": 59,
-                },
+                **_SOLAR_TIME_PROPERTIES,
             },
             "required": ["date", "time_index", "gender"],
         },
@@ -142,6 +147,7 @@ def get_ziwei_fortune_definition() -> Dict[str, Any]:
                     "enum": ["zh-CN", "zh-TW", "en-US", "ja-JP", "ko-KR", "vi-VN"],
                     "default": "zh-CN",
                 },
+                **_SOLAR_TIME_PROPERTIES,
             },
             "required": ["birth_date", "time_index", "gender"],
         },
@@ -212,6 +218,7 @@ def get_analyze_ziwei_palace_definition() -> Dict[str, Any]:
                     "enum": ["zh-CN", "zh-TW", "en-US", "ja-JP", "ko-KR", "vi-VN"],
                     "default": "zh-CN",
                 },
+                **_SOLAR_TIME_PROPERTIES,
             },
             "required": ["birth_date", "time_index", "gender", "palace_name"],
         },

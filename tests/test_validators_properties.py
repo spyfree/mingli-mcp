@@ -11,8 +11,8 @@ from datetime import date
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
-from core.exceptions import DateRangeError, ValidationError
-from utils.validators import (
+from mingli_mcp.core.exceptions import DateRangeError, ValidationError
+from mingli_mcp.utils.validators import (
     MAX_YEAR,
     MIN_YEAR,
     validate_date,

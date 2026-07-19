@@ -11,7 +11,7 @@ from datetime import datetime
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from utils.solar_time import (
+from mingli_mcp.utils.solar_time import (
     BEIJING_LONGITUDE,
     MINUTES_PER_DEGREE,
     adjust_time_index_for_solar_time,

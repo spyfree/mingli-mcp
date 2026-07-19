@@ -7,6 +7,8 @@ import os
 
 from dotenv import load_dotenv
 
+from mingli_mcp import __version__
+
 # 加载环境变量
 load_dotenv()
 
@@ -47,7 +49,7 @@ class Config:
 
     # MCP服务配置
     MCP_SERVER_NAME: str = os.getenv("MCP_SERVER_NAME", "ziwei_mcp")
-    MCP_SERVER_VERSION: str = "1.0.16"
+    MCP_SERVER_VERSION: str = __version__
 
     # 默认语言
     DEFAULT_LANGUAGE: str = os.getenv("DEFAULT_LANGUAGE", "zh-CN")
@@ -69,6 +71,11 @@ class Config:
     HTTP_HOST: str = os.getenv("HTTP_HOST", "0.0.0.0")
     HTTP_PORT: int = int(os.getenv("HTTP_PORT", "8080"))
     HTTP_API_KEY: str = os.getenv("HTTP_API_KEY", "")
+
+    # 限流配置（仅HTTP模式生效）
+    ENABLE_RATE_LIMIT: bool = os.getenv("ENABLE_RATE_LIMIT", "true").lower() == "true"
+    RATE_LIMIT_REQUESTS: int = int(os.getenv("RATE_LIMIT_REQUESTS", "100"))
+    RATE_LIMIT_WINDOW: int = int(os.getenv("RATE_LIMIT_WINDOW", "60"))
 
     # CORS配置（安全性）
     # 默认只允许本地访问，生产环境应明确指定允许的域名

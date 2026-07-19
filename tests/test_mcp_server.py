@@ -9,9 +9,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from mcp.protocol import ProtocolHandler
-from mcp.server import MingliMCPServer
-from mcp.tools import ToolRegistry
+from mingli_mcp.mcp_server.protocol import ProtocolHandler
+from mingli_mcp.mcp_server.server import MingliMCPServer
+from mingli_mcp.mcp_server.tools import ToolRegistry
 
 
 class TestMingliMCPServerInitialization:
@@ -107,6 +107,51 @@ class TestMingliMCPServerRequestRouting:
 
         response = server.handle_request(request)
         assert response is None
+
+    def test_ignores_unknown_notifications(self, server):
+        """Server must never respond to a notification (message without id)."""
+        request = {"method": "notifications/cancelled", "params": {"requestId": 1}}
+
+        response = server.handle_request(request)
+        assert response is None
+
+    def test_responds_to_ping(self, server):
+        """Server should answer ping with an empty result."""
+        request = {"method": "ping", "id": 7}
+
+        response = server.handle_request(request)
+        assert response["result"] == {}
+        assert response["id"] == 7
+
+    def test_routes_resources_read_request(self, server):
+        """Server should route the standard resources/read method."""
+        request = {
+            "method": "resources/read",
+            "id": 8,
+            "params": {"uri": "mingli://configuration"},
+        }
+
+        response = server.handle_request(request)
+        assert "result" in response
+        assert response["result"]["contents"][0]["uri"] == "mingli://configuration"
+
+    def test_routes_legacy_resources_get_request(self, server):
+        """Server should keep accepting the legacy resources/get method."""
+        request = {
+            "method": "resources/get",
+            "id": 9,
+            "params": {"uri": "mingli://configuration"},
+        }
+
+        response = server.handle_request(request)
+        assert "result" in response
+
+    def test_resources_templates_list_returns_empty(self, server):
+        """resources/templates/list should return an empty list, not an error."""
+        request = {"method": "resources/templates/list", "id": 10}
+
+        response = server.handle_request(request)
+        assert response["result"] == {"resourceTemplates": []}
 
 
 class TestMingliMCPServerToolsCall:

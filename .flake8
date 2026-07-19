@@ -1,6 +1,6 @@
 [flake8]
 max-line-length = 100
-exclude = 
+exclude =
     .git,
     __pycache__,
     venv,
@@ -9,11 +9,17 @@ exclude =
     dist,
     *.egg-info,
     .pytest_cache,
-    .mypy_cache
+    .mypy_cache,
+    .hypothesis,
+    .wrangler,
+    node_modules,
+    # vendored third-party bazi library
+    mingli_mcp/systems/bazi/lib
 # E203: whitespace before ':' (conflicts with black)
 # W503: line break before binary operator (conflicts with black)
 # E501: line too long (handled by black)
-ignore = E203,W503,E501
+# E226: missing whitespace around arithmetic operator (off by default in pycodestyle)
+ignore = E203,W503,E501,E226
 per-file-ignores =
     __init__.py:F401
     tests/*:F401,F811
