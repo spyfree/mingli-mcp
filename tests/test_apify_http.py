@@ -127,6 +127,7 @@ def test_non_tool_request_does_not_create_a_charge(monkeypatch):
 
 def test_apify_console_can_execute_openapi_example_on_trailing_slash(monkeypatch):
     """The Apify Endpoints Swagger UI should be allowed to call its relative root path."""
+
     async def charge(_event_name):
         return FakeChargeResult(charged_count=1)
 

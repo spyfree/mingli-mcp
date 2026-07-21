@@ -3,7 +3,6 @@
 import json
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 ACTOR_DIR = ROOT / ".actor"
 
@@ -49,9 +48,9 @@ def test_store_readme_is_long_form_and_does_not_add_a_second_h1():
 def test_openapi_schema_documents_mcp_examples_relative_to_standby_base():
     """The Store Standby tab should expose valid JSON-RPC examples."""
     schema = _load_json("web_server_openapi.json")
-    examples = schema["paths"]["/"]["post"]["requestBody"]["content"][
-        "application/json"
-    ]["examples"]
+    examples = schema["paths"]["/"]["post"]["requestBody"]["content"]["application/json"][
+        "examples"
+    ]
 
     assert schema["openapi"] == "3.0.3"
     assert set(schema["paths"]) == {"/"}
