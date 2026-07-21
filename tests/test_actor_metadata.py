@@ -46,15 +46,16 @@ def test_store_readme_is_long_form_and_does_not_add_a_second_h1():
     assert "## Pricing" in readme
 
 
-def test_openapi_schema_documents_health_and_mcp_examples():
-    """The Store Standby tab should expose real endpoints and valid JSON-RPC examples."""
+def test_openapi_schema_documents_mcp_examples_relative_to_standby_base():
+    """The Store Standby tab should expose valid JSON-RPC examples."""
     schema = _load_json("web_server_openapi.json")
-    examples = schema["paths"]["/mcp"]["post"]["requestBody"]["content"][
+    examples = schema["paths"]["/"]["post"]["requestBody"]["content"][
         "application/json"
     ]["examples"]
 
     assert schema["openapi"] == "3.0.3"
-    assert "/health" in schema["paths"]
+    assert set(schema["paths"]) == {"/"}
+    assert "/mcp Standby base URL" in schema["paths"]["/"]["post"]["description"]
     assert examples["listTools"]["value"]["method"] == "tools/list"
     assert examples["baziChart"]["value"]["params"]["name"] == "get_bazi_chart"
     assert "YOUR_APIFY_TOKEN" not in json.dumps(schema)

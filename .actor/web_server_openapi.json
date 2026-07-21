@@ -5,44 +5,11 @@
     "version": "1.1.0",
     "description": "Streamable HTTP MCP server for Zi Wei Dou Shu and Bazi chart calculations. Discovery requests are free; each successful tools/call creates one tool-call billing event."
   },
-  "servers": [
-    {
-      "url": "https://spyfree--mingli-mcp.apify.actor"
-    }
-  ],
   "paths": {
-    "/health": {
-      "get": {
-        "summary": "Check server health",
-        "operationId": "getHealth",
-        "responses": {
-          "200": {
-            "description": "Server is healthy",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": { "type": "string", "example": "healthy" },
-                    "transport": { "type": "string", "example": "http" },
-                    "systems": {
-                      "type": "array",
-                      "items": { "type": "string" },
-                      "example": ["ziwei", "bazi"]
-                    },
-                    "rate_limiting": { "type": "boolean" }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/mcp": {
+    "/": {
       "post": {
         "summary": "Send a JSON-RPC request to the MCP server",
-        "description": "Use tools/list to discover tools or tools/call to run one. A successful tools/call creates one billable tool-call event.",
+        "description": "This path is relative to the Actor's /mcp Standby base URL. Use tools/list to discover tools or tools/call to run one. A successful tools/call creates one billable tool-call event.",
         "operationId": "postMcpRequest",
         "security": [
           { "bearerAuth": [] }
