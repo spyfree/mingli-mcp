@@ -12,9 +12,10 @@ MCP Streamable HTTP规范要点（2025-11-25）：
 - 不支持SSE的服务器对GET返回405（FastAPI自动处理）
 """
 
+import inspect
 import logging
 import secrets
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Union, cast
 from urllib.parse import urlparse
 
 import uvicorn
@@ -29,6 +30,11 @@ from mingli_mcp.utils.rate_limiter import RateLimiter
 from .base_transport import BaseTransport
 
 logger = logging.getLogger(__name__)
+
+MessageResponse = Optional[Dict[str, Any]]
+SyncMessageHandler = Callable[[Dict[str, Any]], MessageResponse]
+AsyncMessageHandler = Callable[[Dict[str, Any]], Awaitable[MessageResponse]]
+MessageHandler = Union[SyncMessageHandler, AsyncMessageHandler]
 
 
 class HttpTransport(BaseTransport):
@@ -65,7 +71,7 @@ class HttpTransport(BaseTransport):
         self.api_key = api_key
         self.enable_rate_limit = enable_rate_limit
         self.supported_protocol_versions = supported_protocol_versions
-        self.message_handler = None  # 初始化消息处理器
+        self.message_handler: Optional[MessageHandler] = None
 
         # 初始化限流器
         if self.enable_rate_limit:
@@ -287,7 +293,12 @@ class HttpTransport(BaseTransport):
                     raise HTTPException(status_code=500, detail="Message handler not set")
 
                 # 排盘计算是同步阻塞操作，放入线程池避免卡住事件循环
-                response = await run_in_threadpool(self.message_handler, data)
+                if inspect.iscoroutinefunction(self.message_handler):
+                    async_handler = cast(AsyncMessageHandler, self.message_handler)
+                    response = await async_handler(data)
+                else:
+                    sync_handler = cast(SyncMessageHandler, self.message_handler)
+                    response = await run_in_threadpool(sync_handler, data)
 
                 # notification/response消息：规范要求返回202 Accepted且无body
                 if response is None:
@@ -334,7 +345,7 @@ class HttpTransport(BaseTransport):
         """
         pass
 
-    def set_message_handler(self, handler: Callable[[Dict[str, Any]], Dict[str, Any]]):
+    def set_message_handler(self, handler: MessageHandler) -> None:
         """设置消息处理器"""
         self.message_handler = handler
         logger.debug("Message handler set for HTTP transport")

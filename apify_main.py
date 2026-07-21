@@ -12,19 +12,26 @@ and the server simply serves HTTP on ACTOR_WEB_SERVER_PORT / HTTP_PORT.
 import asyncio
 import logging
 import os
+from collections.abc import Awaitable, Callable
+from typing import Any, Optional
 
 # 必须在导入 mingli_mcp 之前设置：config 在 import 时读取环境变量
 os.environ.setdefault("TRANSPORT_TYPE", "http")
-os.environ["HTTP_PORT"] = (
+actor_http_port = (
     os.getenv("ACTOR_WEB_SERVER_PORT")
     or os.getenv("ACTOR_STANDBY_PORT")
     or os.getenv("HTTP_PORT", "8080")
+    or "8080"
 )
+os.environ["HTTP_PORT"] = actor_http_port
 
 import uvicorn  # noqa: E402
+from fastapi import FastAPI  # noqa: E402
+from starlette.concurrency import run_in_threadpool  # noqa: E402
 
 from mingli_mcp.config import config  # noqa: E402
 from mingli_mcp.mcp_server import MingliMCPServer  # noqa: E402
+from mingli_mcp.utils.formatters import format_error_response  # noqa: E402
 
 logger = logging.getLogger("apify_main")
 
@@ -38,38 +45,55 @@ except ImportError:
 
 # 事件名需与 Apify Console 里 Pay-per-event 定价配置的事件一致
 CHARGE_EVENT = "tool-call"
+ChargeFunction = Callable[[str], Awaitable[Any]]
 
 
-def _make_charging_handler(server: MingliMCPServer, loop: asyncio.AbstractEventLoop):
+def _make_charging_handler(server: MingliMCPServer, charge: ChargeFunction):
     """包装MCP消息处理器：每次成功的tools/call计费一个PPE事件"""
     original = server.handle_request
 
-    def handler(message):
-        response = original(message)
-        try:
-            if (
-                APIFY_AVAILABLE
-                and isinstance(message, dict)
-                and message.get("method") == "tools/call"
-                and isinstance(response, dict)
-                and "error" not in response
-            ):
-                # handler跑在uvicorn线程池里，把异步计费调度回事件循环（尽力而为）
-                asyncio.run_coroutine_threadsafe(Actor.charge(CHARGE_EVENT), loop)
-        except Exception:
-            logger.exception("Failed to charge PPE event")
+    async def handler(message):
+        response = await run_in_threadpool(original, message)
+        if (
+            isinstance(message, dict)
+            and message.get("method") == "tools/call"
+            and isinstance(response, dict)
+            and "error" not in response
+        ):
+            try:
+                charge_result = await charge(CHARGE_EVENT)
+            except Exception:
+                logger.exception("Failed to charge PPE event")
+                return format_error_response(
+                    -32603, "Unable to charge for tool call", message.get("id")
+                )
+            if getattr(charge_result, "charged_count", 0) != 1:
+                limit_reached = getattr(charge_result, "event_charge_limit_reached", False)
+                error_message = (
+                    "Tool call charge limit reached"
+                    if limit_reached
+                    else "Tool call could not be charged"
+                )
+                logger.warning(error_message)
+                return format_error_response(-32001, error_message, message.get("id"))
         return response
 
     return handler
 
 
-async def serve() -> None:
+def create_app(charge: Optional[ChargeFunction] = None) -> FastAPI:
+    """Create the Apify Standby HTTP application."""
     server = MingliMCPServer()
-    loop = asyncio.get_running_loop()
-    server.transport.set_message_handler(_make_charging_handler(server, loop))
+    if charge is None and APIFY_AVAILABLE:
+        charge = Actor.charge
+    if charge is not None:
+        server.transport.set_message_handler(_make_charging_handler(server, charge))
+    return server.transport.app
 
+
+async def serve() -> None:
     uv_config = uvicorn.Config(
-        server.transport.app, host="0.0.0.0", port=config.HTTP_PORT, log_level="info"
+        create_app(), host="0.0.0.0", port=config.HTTP_PORT, log_level="info"
     )
     await uvicorn.Server(uv_config).serve()
 
