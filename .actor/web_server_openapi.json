@@ -124,7 +124,10 @@
         "required": ["jsonrpc"],
         "properties": {
           "jsonrpc": { "type": "string", "enum": ["2.0"] },
-          "id": { "oneOf": [{ "type": "integer" }, { "type": "string" }, { "type": "null" }] },
+          "id": {
+            "nullable": true,
+            "oneOf": [{ "type": "integer" }, { "type": "string" }]
+          },
           "result": { "type": "object", "additionalProperties": true },
           "error": {
             "type": "object",

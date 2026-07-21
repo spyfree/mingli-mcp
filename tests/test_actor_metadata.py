@@ -58,6 +58,7 @@ def test_openapi_schema_documents_health_and_mcp_examples():
     assert examples["listTools"]["value"]["method"] == "tools/list"
     assert examples["baziChart"]["value"]["params"]["name"] == "get_bazi_chart"
     assert "YOUR_APIFY_TOKEN" not in json.dumps(schema)
+    assert '"type": "null"' not in json.dumps(schema)
 
 
 def test_all_birth_chart_tools_expose_solar_time_inputs():
