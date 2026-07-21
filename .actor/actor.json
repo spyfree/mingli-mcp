@@ -8,6 +8,7 @@
   "usesStandbyMode": true,
   "webServerMcpPath": "/mcp",
   "minMemoryMbytes": 256,
+  "maxMemoryMbytes": 256,
   "dockerfile": "./Dockerfile",
   "input": "./input_schema.json"
 }
