@@ -598,6 +598,20 @@ export DEFAULT_LANGUAGE=zh-CN
 python -m mingli_mcp
 ```
 
+### Apify 托管与计费
+
+Apify Actor 以 Standby 模式对外提供 `POST /mcp`。在 Console 中使用
+Pay-per-event 定价时，事件名必须配置为 `tool-call`。
+
+- 只有成功的 MCP `tools/call` 请求会产生一次计费事件。
+- `tools/list` 等发现请求以及执行失败的工具请求不计费。
+- 平台未能确认计费时，服务不会返回工具结果：额度已用尽或无法计费返回
+  MCP 错误 `-32001`，计费 API 异常返回 `-32603`。
+- Apify 入口未安装 SDK 时会直接启动失败，避免意外绕过计费。本地开发请使用项目原有入口。
+
+Cloudflare 和 Apify 的部署配置可以同时保留在公开仓库中。不要提交 `.env`、
+API token 或其他密钥；Apify 账户配置和支付信息应仅保存在平台 Console 中。
+
 ## 📝 依赖说明
 
 - **iztro-py**: 紫微斗数核心库（纯 Python 实现，性能比 py-iztro 提升 10 倍）

@@ -5,15 +5,14 @@ Reuses the existing HTTP transport (stateless Streamable HTTP at /mcp) and
 charges one pay-per-event unit per successful tools/call so the Actor can be
 monetized with Apify's pay-per-event pricing model.
 
-Also runs outside Apify (no `apify` SDK installed): charging becomes a no-op
-and the server simply serves HTTP on ACTOR_WEB_SERVER_PORT / HTTP_PORT.
+The entrypoint fails closed when the `apify` SDK is unavailable so paid tool
+results cannot be returned without a confirmed charge.
 """
 
 import asyncio
 import logging
 import os
-from collections.abc import Awaitable, Callable
-from typing import Any, Optional
+from typing import Awaitable, Callable, Optional, Protocol
 
 # 必须在导入 mingli_mcp 之前设置：config 在 import 时读取环境变量
 os.environ.setdefault("TRANSPORT_TYPE", "http")
@@ -45,7 +44,16 @@ except ImportError:
 
 # 事件名需与 Apify Console 里 Pay-per-event 定价配置的事件一致
 CHARGE_EVENT = "tool-call"
-ChargeFunction = Callable[[str], Awaitable[Any]]
+
+
+class ChargeResult(Protocol):
+    """Fields consumed from an Apify pay-per-event charge response."""
+
+    charged_count: int
+    event_charge_limit_reached: bool
+
+
+ChargeFunction = Callable[[str], Awaitable[ChargeResult]]
 
 
 def _make_charging_handler(server: MingliMCPServer, charge: ChargeFunction):
@@ -84,10 +92,11 @@ def _make_charging_handler(server: MingliMCPServer, charge: ChargeFunction):
 def create_app(charge: Optional[ChargeFunction] = None) -> FastAPI:
     """Create the Apify Standby HTTP application."""
     server = MingliMCPServer()
-    if charge is None and APIFY_AVAILABLE:
+    if charge is None:
+        if not APIFY_AVAILABLE:
+            raise RuntimeError("Apify SDK is required for pay-per-event charging")
         charge = Actor.charge
-    if charge is not None:
-        server.transport.set_message_handler(_make_charging_handler(server, charge))
+    server.transport.set_message_handler(_make_charging_handler(server, charge))
     return server.transport.app
 
 
@@ -99,11 +108,9 @@ async def serve() -> None:
 
 
 async def main() -> None:
-    if APIFY_AVAILABLE:
-        async with Actor:
-            await serve()
-    else:
-        logger.warning("apify SDK not installed; running without pay-per-event charging")
+    if not APIFY_AVAILABLE:
+        raise RuntimeError("Apify SDK is required for pay-per-event charging")
+    async with Actor:
         await serve()
 
 
