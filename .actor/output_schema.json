@@ -1,0 +1,6 @@
+{
+  "actorOutputSchemaVersion": 1,
+  "title": "Mingli MCP Standby output",
+  "description": "This Standby Actor returns results through the /mcp endpoint and does not persist results to a default dataset or key-value store.",
+  "properties": {}
+}

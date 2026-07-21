@@ -1,6 +1,6 @@
 {
-  "title": "Mingli MCP Server",
-  "description": "No input required — this Actor runs as a Standby MCP server. Connect via the /mcp endpoint.",
+  "title": "Zi Wei Dou Shu & BaZi Chinese Astrology MCP",
+  "description": "No Actor input is required. Connect an MCP client to the Standby /mcp endpoint to calculate Zi Wei Dou Shu (Purple Star Astrology) or Bazi (Four Pillars) charts.",
   "type": "object",
   "schemaVersion": 1,
   "properties": {},

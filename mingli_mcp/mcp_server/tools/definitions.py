@@ -296,6 +296,7 @@ def get_bazi_chart_definition() -> Dict[str, Any]:
                     "enum": ["zh-CN", "zh-TW", "en-US", "ja-JP", "ko-KR", "vi-VN"],
                     "default": "zh-CN",
                 },
+                **_SOLAR_TIME_PROPERTIES,
             },
             "required": ["date", "time_index", "gender"],
         },
@@ -306,7 +307,7 @@ def get_bazi_fortune_definition() -> Dict[str, Any]:
     """Get definition for get_bazi_fortune tool"""
     return {
         "name": "get_bazi_fortune",
-        "description": "获取八字运势信息，包含大运、流年等详情",
+        "description": "获取八字运势信息，包含简化十年年龄段标记、流年干支等详情（非完整大运干支推演）",
         "annotations": {
             "readOnlyHint": True,
             "destructiveHint": False,
@@ -352,6 +353,7 @@ def get_bazi_fortune_definition() -> Dict[str, Any]:
                     "enum": ["zh-CN", "zh-TW", "en-US", "ja-JP", "ko-KR", "vi-VN"],
                     "default": "zh-CN",
                 },
+                **_SOLAR_TIME_PROPERTIES,
             },
             "required": ["birth_date", "time_index", "gender"],
         },
@@ -404,6 +406,7 @@ def get_analyze_bazi_element_definition() -> Dict[str, Any]:
                     "enum": ["zh-CN", "zh-TW", "en-US", "ja-JP", "ko-KR", "vi-VN"],
                     "default": "zh-CN",
                 },
+                **_SOLAR_TIME_PROPERTIES,
             },
             "required": ["birth_date", "time_index", "gender"],
         },

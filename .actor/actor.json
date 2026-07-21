@@ -1,8 +1,8 @@
 {
   "actorSpecification": 1,
   "name": "mingli-mcp",
-  "title": "Mingli MCP Server (紫微斗数 / 八字)",
-  "description": "Ziwei Doushu & Bazi fortune-telling MCP server: charts with 12 palaces and stars, decadal/yearly/monthly/daily fortunes, palace analysis and five-element balance. Stateless Streamable HTTP MCP endpoint at /mcp.",
+  "title": "Zi Wei Dou Shu & BaZi Chinese Astrology MCP",
+  "description": "Chinese astrology MCP server and API for Zi Wei Dou Shu (Purple Star Astrology) and BaZi (Four Pillars): birth charts, 12 palaces, stars, Ten Gods, five elements, fortune periods, and palace analysis.",
   "version": "1.1",
   "buildTag": "latest",
   "usesStandbyMode": true,
@@ -10,5 +10,8 @@
   "minMemoryMbytes": 256,
   "maxMemoryMbytes": 256,
   "dockerfile": "./Dockerfile",
-  "input": "./input_schema.json"
+  "readme": "./README.md",
+  "input": "./input_schema.json",
+  "output": "./output_schema.json",
+  "webServerSchema": "./web_server_openapi.json"
 }

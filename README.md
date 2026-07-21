@@ -1,6 +1,64 @@
-# 命理MCP服务 (Mingli MCP Server)
+# Chinese Astrology MCP Server — Zi Wei Dou Shu & BaZi
 
-一个支持多种命理系统（紫微斗数、八字、占星等）的 Model Context Protocol (MCP) 服务器，专为 AI 工具（如 Cursor IDE）设计。
+Mingli MCP is a deterministic Chinese astrology server for AI agents and MCP clients. It
+generates Zi Wei Dou Shu (紫微斗数 / Purple Star Astrology) and Bazi (八字 / Four Pillars
+of Destiny) charts from structured birth data, including the 12 palaces, stars, Four
+Pillars, Ten Gods, five elements, fortune periods, and date-based analysis.
+
+**中文简介：** 一个面向 AI 工具的开源命理 MCP 服务，支持紫微斗数排盘、八字排盘、
+宫位与五行分析，以及大限、流年、流月、流日和流时查询。
+
+## Apify hosted endpoint
+
+The hosted Actor runs as a 256 MB Standby MCP server. It can be connected to Claude,
+Cursor, VS Code, custom agents, or any client that supports remote Streamable HTTP MCP.
+Until the Actor is published in Apify Store, the endpoint is available only to users
+who have been granted access.
+
+- MCP endpoint: `https://spyfree--mingli-mcp.apify.actor/mcp`
+- Authentication: `Authorization: Bearer YOUR_APIFY_TOKEN`
+- Billing: tool discovery is free; each successful `tools/call` is one `tool-call` event
+- Detailed setup and copy-ready examples: [Apify MCP guide](docs/APIFY_MCP_GUIDE.md)
+
+```json
+{
+  "mcpServers": {
+    "mingli": {
+      "url": "https://spyfree--mingli-mcp.apify.actor/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_APIFY_TOKEN"
+      }
+    }
+  }
+}
+```
+
+Example questions for an AI client:
+
+- “Generate my Zi Wei Dou Shu birth chart for 1990-01-01, 午时, male.”
+- “排一个 1992-08-16 辰时出生的女命八字，并分析五行强弱。”
+- “分析这个紫微命盘的财帛宫，并说明主要星曜配置。”
+- “Compare the five-element balance of these two Bazi charts.”
+
+> This project provides deterministic calendar and chart calculations for cultural,
+> educational, and entertainment use. It is not medical, legal, financial, or other
+> professional advice.
+
+## What this Chinese astrology MCP can do
+
+| MCP tool | Result |
+| --- | --- |
+| `get_ziwei_chart` | Zi Wei Dou Shu birth chart with 12 palaces and stars |
+| `get_ziwei_fortune` | Decadal, yearly, monthly, daily, and hourly fortune periods |
+| `analyze_ziwei_palace` | Focused analysis of one Zi Wei palace |
+| `get_bazi_chart` | Bazi Four Pillars, Ten Gods, hidden stems, and five elements |
+| `get_bazi_fortune` | Simplified 10-year age period plus annual stem/branch |
+| `analyze_bazi_element` | Five-element strength, balance, and missing elements |
+| `list_fortune_systems` | Machine-readable discovery of supported systems |
+
+Unlike a generic LLM response, the tools first calculate a structured chart from
+calendar inputs and then return consistent JSON or Markdown. The same schemas can be
+used in chat, an automated workflow, or a custom Chinese astrology application.
 
 ## ✨ 特性
 
@@ -9,7 +67,7 @@
   - ✅ 紫微斗数（已实现）
   - ✅ 八字（已实现）⭐ **新增**
   - 🔄 西方占星（预留接口）
-- ✅ **多语言支持**: 支持6种语言输出 ⭐ **新增**
+- ✅ **多语言支持**: 紫微斗数宫位与星曜术语支持6种语言；八字核心标签目前以中文为主
   - 🇨🇳 简体中文 (zh-CN)
   - 🇹🇼 繁体中文 (zh-TW)
   - 🇺🇸 English (en-US)
@@ -26,17 +84,17 @@
 - ✅ **宫位分析**: 深度分析特定宫位的星曜配置
 - ✅ **多种历法**: 支持阳历和农历输入
 - ✅ **格式化输出**: JSON和Markdown两种输出格式
-- ⭐ **真太阳时**: 支持全球200+城市的精确时辰修正 **新功能**
+- ⭐ **真太阳时**: 支持按出生地经度和精确时间修正 **新功能**
 
 ### 🎴 八字功能 ⭐ **新增**
 - ✅ **四柱排盘**: 年月日时四柱、天干地支详细信息
 - ✅ **十神分析**: 比肩、劫财、食神、伤官、偏财、正财、七杀、正官、偏印、正印
 - ✅ **五行分析**: 金木水火土分数、百分比、平衡度
 - ✅ **地支藏干**: 详细的地支藏干信息
-- ✅ **运势查询**: 大运、流年分析
+- ✅ **运势查询**: 简化十年年龄段标记、流年干支分析
 - ✅ **缺失分析**: 自动识别五行缺失并给出建议
 - ✅ **多种历法**: 支持阳历和农历输入
-- ⭐ **真太阳时**: 支持全球200+城市的精确时辰修正 **新功能**
+- ⭐ **真太阳时**: 支持按出生地经度和精确时间修正 **新功能**
 
 ---
 
@@ -65,7 +123,12 @@
    - 紫微斗数、八字示例
    - 高级模式（批量处理、错误处理）
 
-5. **[故障排查指南](docs/TROUBLESHOOTING.md)** - 16个常见问题解决方案
+5. **[Apify MCP 使用指南](docs/APIFY_MCP_GUIDE.md)** - 托管版接入与示例
+   - Claude、Cursor 与通用 MCP 客户端配置
+   - `curl` / JSON-RPC 调用示例
+   - 计费、隐私与常见问题
+
+6. **[故障排查指南](docs/TROUBLESHOOTING.md)** - 16个常见问题解决方案
    - 安装问题
    - 配置问题
    - 运行时错误
@@ -175,7 +238,7 @@
 
 **输出包含**:
 - 当前年龄
-- 大运信息（年龄范围、干支）
+- 简化十年年龄段信息（非完整大运干支推演）
 - 流年信息（年份、干支、生肖）
 - 本命八字
 
@@ -200,6 +263,7 @@
 ## 🚀 快速开始
 
 ### 在线体验
+- **Apify 托管 MCP**: `https://spyfree--mingli-mcp.apify.actor/mcp`（需要 Apify token）
 - **Smithery 部署**: [https://server.smithery.ai/@spyfree/mingli-mcp/mcp](https://server.smithery.ai/@spyfree/mingli-mcp/mcp)
 - 添加到 Cursor: [![Install MCP Server](https://img.shields.io/badge/Cursor-Add+MCP+Server-blue?logo=cursor)](https://cursor.com/install-mcp?name=mingli&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyJtaW5nbGktbWNwIl19)
 - 添加到 Claude Code: `claude mcp add mingli -- uvx mingli-mcp`
@@ -445,7 +509,7 @@ class WebSocketTransport(BaseTransport):
 **八字示例**：
 - "帮我算八字：1985年3月15日，卯时，女性"  
 - "分析一下她的五行缺什么"
-- "看看她今年的大运"
+- "看看她今年所处的十年年龄段和流年干支"
 - "什么五行的颜色适合她"
 
 **农历支持**：

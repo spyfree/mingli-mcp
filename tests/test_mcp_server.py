@@ -175,6 +175,20 @@ class TestMingliMCPServerToolsCall:
         assert "result" in response
         assert "content" in response["result"]
 
+    def test_system_discovery_lists_only_implemented_capabilities(self, server):
+        """Discovery must not advertise placeholders or hide implemented fortune tools."""
+        request = {
+            "method": "tools/call",
+            "id": 11,
+            "params": {"name": "list_fortune_systems", "arguments": {}},
+        }
+
+        text = server.handle_request(request)["result"]["content"][0]["text"]
+
+        assert "## astrology" not in text
+        assert "加载失败" not in text
+        assert text.count("fortune: ✅") == 2
+
     def test_returns_error_for_unknown_tool(self, server):
         """Server should return error for unknown tools."""
         request = {

@@ -492,6 +492,16 @@ class BaziSystem(BaseFortuneSystem):
         else:
             return "五行不平衡"
 
+    def get_capabilities(self) -> Dict[str, bool]:
+        """Return the capabilities implemented by the Bazi system."""
+        return {
+            "chart": True,
+            "fortune": True,
+            "element_analysis": True,
+            "palace_analysis": False,
+            "compatibility": False,
+        }
+
     def analyze_palace(
         self, birth_info: Dict[str, Any], palace_name: str, language: str = "zh-CN"
     ) -> Dict[str, Any]:

@@ -9,6 +9,7 @@ These documents are included in the repository and available on GitHub:
 - **[USER_GUIDE.md](USER_GUIDE.md)** - 完整用户指南
 - **[TRUE_SOLAR_TIME.md](TRUE_SOLAR_TIME.md)** ⭐ 真太阳时使用指南（精确时辰修正）
 - **[API_EXAMPLES.md](API_EXAMPLES.md)** - API使用示例与代码参考
+- **[APIFY_MCP_GUIDE.md](APIFY_MCP_GUIDE.md)** - Apify 托管 MCP 接入、计费与调用示例
 - **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - 故障排查指南
 
 ### 📖 General Documentation

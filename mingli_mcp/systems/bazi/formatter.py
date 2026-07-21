@@ -112,8 +112,8 @@ class BaziFormatter:
 - **当前年龄**: {data['age']}岁
 - **日主**: {data['day_master']}
 
-## 大运
-- **当前大运**: {data['da_yun']['description']}
+## 简化大运年龄段（非完整干支推演）
+- **当前年龄段**: {data['da_yun']['description']}
 - **年龄范围**: {data['da_yun']['age_range']}
 
 ## 流年

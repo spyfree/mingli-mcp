@@ -106,12 +106,4 @@ try:
 except ImportError as e:
     _logger.warning(f"Bazi system unavailable: {e}")
 
-try:
-    from .astrology import AstrologySystem
-
-    register_system("astrology", AstrologySystem)
-except ImportError as e:
-    _logger.warning(f"Astrology system unavailable: {e}")
-
-
 __all__ = ["register_system", "get_system", "clear_cache", "list_systems"]
