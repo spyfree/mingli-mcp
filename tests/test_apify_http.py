@@ -125,6 +125,22 @@ def test_non_tool_request_does_not_create_a_charge(monkeypatch):
     assert charged_events == []
 
 
+def test_apify_console_can_execute_openapi_example_on_trailing_slash(monkeypatch):
+    """The Apify Endpoints Swagger UI should be allowed to call its relative root path."""
+    async def charge(_event_name):
+        return FakeChargeResult(charged_count=1)
+
+    response = _create_client(monkeypatch, charge).post(
+        "/mcp/",
+        headers={"Origin": "https://console.apify.com"},
+        json={"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
+    )
+
+    assert response.status_code == 200
+    assert "result" in response.json()
+    assert response.headers["access-control-allow-origin"] == "https://console.apify.com"
+
+
 def test_failed_tool_call_does_not_create_a_charge(monkeypatch):
     """Invalid or failed tool calls remain errors and must not be billed."""
     charged_events = []

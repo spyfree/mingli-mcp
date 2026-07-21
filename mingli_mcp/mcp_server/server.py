@@ -5,7 +5,7 @@ This module contains the main MingliMCPServer class that coordinates
 protocol handling, tool execution, and transport management.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from mingli_mcp.config import config
 from mingli_mcp.core.exceptions import (
@@ -25,7 +25,8 @@ logger = config.get_logger(__name__)
 class MingliMCPServer:
     """命理MCP服务器"""
 
-    def __init__(self):
+    def __init__(self, http_cors_origins: Optional[List[str]] = None):
+        self.http_cors_origins = http_cors_origins
         self.transport = None
         self.protocol_handler = ProtocolHandler()
         self.tool_registry = ToolRegistry()
@@ -56,6 +57,7 @@ class MingliMCPServer:
                 enable_rate_limit=config.ENABLE_RATE_LIMIT,
                 rate_limit_requests=config.RATE_LIMIT_REQUESTS,
                 rate_limit_window=config.RATE_LIMIT_WINDOW,
+                cors_origins=self.http_cors_origins,
                 cors_allow_credentials=config.CORS_ALLOW_CREDENTIALS,
                 supported_protocol_versions=SUPPORTED_PROTOCOL_VERSIONS,
             )

@@ -233,6 +233,7 @@ class HttpTransport(BaseTransport):
             return self.rate_limiter.get_stats()
 
         @self.app.post("/mcp")
+        @self.app.post("/mcp/", include_in_schema=False)
         async def handle_mcp(request: Request):
             """处理MCP请求（Streamable HTTP的MCP端点，纯JSON响应模式）"""
             # Origin校验（MCP规范：非法Origin必须返回403）

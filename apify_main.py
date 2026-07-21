@@ -44,6 +44,7 @@ except ImportError:
 
 # 事件名需与 Apify Console 里 Pay-per-event 定价配置的事件一致
 CHARGE_EVENT = "tool-call"
+APIFY_BROWSER_ORIGINS = ["https://console.apify.com", "https://apify.com"]
 
 
 class ChargeResult(Protocol):
@@ -91,7 +92,7 @@ def _make_charging_handler(server: MingliMCPServer, charge: ChargeFunction):
 
 def create_app(charge: Optional[ChargeFunction] = None) -> FastAPI:
     """Create the Apify Standby HTTP application."""
-    server = MingliMCPServer()
+    server = MingliMCPServer(http_cors_origins=APIFY_BROWSER_ORIGINS)
     if charge is None:
         if not APIFY_AVAILABLE:
             raise RuntimeError("Apify SDK is required for pay-per-event charging")
