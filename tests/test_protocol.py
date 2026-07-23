@@ -8,6 +8,7 @@ Requirements: 2.1
 import pytest
 
 from mingli_mcp.mcp_server.protocol import ProtocolHandler
+from mingli_mcp.mcp_server.tools.definitions import get_all_tool_definitions
 
 
 class TestProtocolHandlerInitialize:
@@ -69,6 +70,16 @@ class TestProtocolHandlerInitialize:
 
         assert response["id"] == 42
 
+    def test_initialize_gives_client_user_centered_instructions(self, handler):
+        """Server instructions should help an AI collect inputs and label results clearly."""
+        response = handler.handle_initialize({"params": {}}, request_id=1)
+        instructions = response["result"]["instructions"]
+
+        assert "出生日期" in instructions
+        assert "本命生肖" in instructions
+        assert "流年生肖" in instructions
+        assert "LOG_LEVEL" not in instructions
+
 
 class TestProtocolHandlerToolsList:
     """Tests for tools/list protocol method."""
@@ -104,6 +115,21 @@ class TestProtocolHandlerToolsList:
         response = handler.handle_tools_list(request_id=99, tool_definitions=[])
 
         assert response["id"] == 99
+
+    def test_all_tools_expose_safe_model_hints_and_closed_schemas(self, handler):
+        """Mainstream clients should receive complete, conservative tool metadata."""
+        tools = get_all_tool_definitions()
+        response = handler.handle_tools_list(request_id=1, tool_definitions=tools)
+
+        for tool in response["result"]["tools"]:
+            assert tool["title"]
+            assert tool["inputSchema"]["additionalProperties"] is False
+            assert tool["annotations"] == {
+                "readOnlyHint": True,
+                "destructiveHint": False,
+                "idempotentHint": True,
+                "openWorldHint": False,
+            }
 
 
 class TestProtocolHandlerPromptsList:

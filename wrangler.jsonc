@@ -2,6 +2,7 @@
   "name": "mingli-mcp-container",
   "main": "cloudflare/container-worker.mjs",
   "compatibility_date": "2026-03-07",
+  "compatibility_flags": ["global_fetch_strictly_public"],
   "routes": [
     {
       "pattern": "mcp.lee.locker",
@@ -24,6 +25,12 @@
   "kv_namespaces": [
     {
       "binding": "LICENSES",
+      "id": "32eaf27eecf4412dae5e39fb68710e79"
+    },
+    {
+      // OAuth provider records are namespaced by client:/grant:/token: keys. Reusing the
+      // existing namespace keeps this P0 deployable without migrating paid licenses.
+      "binding": "OAUTH_KV",
       "id": "32eaf27eecf4412dae5e39fb68710e79"
     }
   ],

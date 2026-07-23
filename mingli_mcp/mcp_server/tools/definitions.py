@@ -39,6 +39,16 @@ _SOLAR_TIME_PROPERTIES: Dict[str, Any] = {
     },
 }
 
+_TOOL_TITLES = {
+    "get_ziwei_chart": "紫微斗数本命排盘",
+    "get_ziwei_fortune": "紫微斗数运势",
+    "analyze_ziwei_palace": "紫微斗数宫位分析",
+    "list_fortune_systems": "查看可用命理系统",
+    "get_bazi_chart": "八字四柱排盘",
+    "get_bazi_fortune": "八字流年运势",
+    "analyze_bazi_element": "八字五行分析",
+}
+
 
 def get_ziwei_chart_definition() -> Dict[str, Any]:
     """Get definition for get_ziwei_chart tool"""
@@ -426,7 +436,7 @@ def get_analyze_bazi_element_definition() -> Dict[str, Any]:
 
 def get_all_tool_definitions() -> List[Dict[str, Any]]:
     """Get all tool definitions"""
-    return [
+    tools = [
         get_ziwei_chart_definition(),
         get_ziwei_fortune_definition(),
         get_analyze_ziwei_palace_definition(),
@@ -435,3 +445,8 @@ def get_all_tool_definitions() -> List[Dict[str, Any]]:
         get_bazi_fortune_definition(),
         get_analyze_bazi_element_definition(),
     ]
+    for tool in tools:
+        tool["title"] = _TOOL_TITLES[tool["name"]]
+        tool["annotations"]["openWorldHint"] = False
+        tool["inputSchema"]["additionalProperties"] = False
+    return tools

@@ -78,3 +78,14 @@ def test_all_birth_chart_tools_expose_solar_time_inputs():
     for name in birth_tools:
         properties = tools[name]["inputSchema"]["properties"]
         assert {"longitude", "use_solar_time", "birth_hour", "birth_minute"} <= properties.keys()
+
+
+def test_distribution_metadata_versions_match_runtime():
+    """Public package manifests should not advertise stale server versions."""
+    import mingli_mcp
+
+    package = _load_json("../package.json")
+    server = _load_json("../server.json")
+
+    assert package["version"] == mingli_mcp.__version__
+    assert server["version"] == mingli_mcp.__version__

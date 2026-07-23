@@ -57,7 +57,15 @@ class ProtocolHandler:
                     "prompts": {},
                     "resources": {},
                 },
-                "instructions": "命理MCP服务提供紫微斗数、八字等中国传统命理系统的分析工具。所有配置都是可选的，服务器可以在没有任何配置的情况下运行。可通过环境变量自定义行为（LOG_LEVEL, TRANSPORT_TYPE, DEFAULT_LANGUAGE等），详见文档。",
+                "instructions": (
+                    "这是专业的紫微斗数与八字排盘工具。调用排盘前，先向用户确认出生日期、"
+                    "出生时辰、性别，以及日期是阳历还是农历；信息不完整时应先追问，不要猜测。"
+                    "涉及年份时，必须清楚区分并标注“本命生肖”（出生年）与“流年生肖”"
+                    "（所查询年份），不得混为一谈。优先使用 markdown 输出并用通俗语言解释，"
+                    "同时把命理结果表述为传统文化参考，不作为医疗、法律或投资决策依据。"
+                    "Before calling a chart tool, confirm birth date, birth time, gender, and calendar type. "
+                    "Clearly distinguish birth-zodiac facts from query-year zodiac facts."
+                ),
             },
             request_id,
         )
