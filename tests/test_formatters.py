@@ -38,7 +38,7 @@ class TestFormatErrorResponse:
         assert response["id"] == 1
 
     def test_error_response_without_request_id(self):
-        """Error response omits id when request_id is None."""
+        """JSON-RPC 2.0 requires id to be present and null when undetectable."""
         response = format_error_response(
             error_code=-32700, error_message="Parse error", request_id=None
         )
@@ -46,7 +46,8 @@ class TestFormatErrorResponse:
         assert response["jsonrpc"] == "2.0"
         assert response["error"]["code"] == -32700
         assert response["error"]["message"] == "Parse error"
-        assert "id" not in response
+        assert "id" in response
+        assert response["id"] is None
 
     def test_error_response_with_string_request_id(self):
         """Error response handles string request_id."""
@@ -77,12 +78,13 @@ class TestFormatSuccessResponse:
         assert response["result"] == result
 
     def test_success_response_without_request_id(self):
-        """Success response omits id when request_id is None."""
+        """JSON-RPC 2.0 requires the id member to always be present."""
         response = format_success_response(result="ok", request_id=None)
 
         assert response["jsonrpc"] == "2.0"
         assert response["result"] == "ok"
-        assert "id" not in response
+        assert "id" in response
+        assert response["id"] is None
 
     def test_success_response_with_null_result(self):
         """Success response handles None result."""

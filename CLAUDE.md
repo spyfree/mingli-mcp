@@ -188,6 +188,10 @@ register_system("new_system", NewSystem)
 - `HTTP_PORT`: HTTP server port (default: 8080)
 - `HTTP_API_KEY`: Optional Bearer token for the HTTP endpoint (empty = auth disabled)
 - `ENABLE_RATE_LIMIT` / `RATE_LIMIT_REQUESTS` / `RATE_LIMIT_WINDOW`: HTTP rate limiting (default: true / 100 / 60s)
+- `TRUST_PROXY_HEADERS`: trust `CF-Connecting-IP` / `X-Forwarded-For` for rate-limit
+  bucketing (default: false). Only enable behind a trusted proxy — these headers are
+  client-controlled, so trusting them on a direct connection lets clients bypass the
+  rate limiter by rotating the header value.
 - `CORS_ORIGINS` / `CORS_ALLOW_CREDENTIALS`: CORS + Origin validation allowlist
 - `MCP_SERVER_NAME`: Server name (default: "ziwei_mcp")
 
@@ -227,12 +231,16 @@ chart = ziwei.get_chart(birth_info)
 ## Dependencies
 
 **Core** (pyproject.toml:28):
-- `iztro-py>=0.1.0`: Ziwei calculation library (pure Python, 10x faster than py-iztro)
+- `iztro-py>=0.4.0`: Ziwei calculation library (pure Python, 10x faster than py-iztro)
 - `lunar_python>=1.4.7`: Chinese calendar support
 - `bidict>=0.23.0`: Bidirectional mappings
 - `python-dateutil>=2.8.0`: Date parsing
-- `fastapi>=0.104.0`: HTTP transport (optional)
-- `uvicorn[standard]>=0.24.0`: ASGI server (optional)
+- `fastapi>=0.104.0`: HTTP transport
+- `uvicorn[standard]>=0.24.0`: ASGI server
+
+These two are currently **required** dependencies, so a plain `pip install mingli-mcp`
+already has HTTP support. The `[http]` extra exists as an alias so the
+`pip install mingli-mcp[http]` form used throughout the docs resolves.
 
 **Development** (pyproject.toml:41):
 - `pytest>=7.0.0`: Testing framework

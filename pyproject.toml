@@ -45,6 +45,12 @@ dependencies = [
     "uvicorn[standard]>=0.24.0",
 ]
 [project.optional-dependencies]
+# HTTP传输所需依赖。当前它们同时也是必需依赖，此extra保留是为了让
+# README / 错误提示里长期使用的 `pip install mingli-mcp[http]` 能真正解析成功。
+http = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+]
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",

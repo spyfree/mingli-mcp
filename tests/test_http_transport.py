@@ -191,11 +191,31 @@ class TestHttpTransport:
         )
         assert response.status_code == 200
 
-    def test_rate_limit_uses_cf_connecting_ip(self, http_transport):
-        """限流应优先使用CF-Connecting-IP作为客户端标识"""
+    def test_rate_limit_uses_cf_connecting_ip_when_proxy_trusted(self):
+        """信任代理时，限流应优先使用CF-Connecting-IP作为客户端标识"""
+        from unittest.mock import patch
+
+        from mingli_mcp.transports.http_transport import HttpTransport
+
+        transport = HttpTransport(host="127.0.0.1", port=8080, trust_proxy_headers=True)
+        transport.set_message_handler(lambda m: {"jsonrpc": "2.0", "id": m.get("id"), "result": {}})
+        client = TestClient(transport.app)
+
+        with patch.object(transport.rate_limiter, "is_allowed", return_value=True) as mock_allowed:
+            client.post(
+                "/mcp",
+                json={"jsonrpc": "2.0", "id": 1, "method": "tools/list"},
+                headers={"CF-Connecting-IP": "203.0.113.7"},
+            )
+            mock_allowed.assert_called_once_with("203.0.113.7")
+
+    def test_proxy_headers_ignored_by_default(self, http_transport):
+        """默认不信任代理头：否则轮换X-Forwarded-For即可绕过限流"""
         from unittest.mock import patch
 
         client = TestClient(http_transport.app)
+
+        assert http_transport.trust_proxy_headers is False
 
         with patch.object(
             http_transport.rate_limiter, "is_allowed", return_value=True
@@ -206,9 +226,53 @@ class TestHttpTransport:
                 headers={
                     "Authorization": "Bearer test-api-key",
                     "CF-Connecting-IP": "203.0.113.7",
+                    "X-Forwarded-For": "198.51.100.4",
                 },
             )
-            mock_allowed.assert_called_once_with("203.0.113.7")
+            # 客户端可控的头不能影响限流分桶
+            assert mock_allowed.call_args.args[0] not in ("203.0.113.7", "198.51.100.4")
+
+    def test_rate_limit_not_bypassable_by_rotating_forwarded_for(self):
+        """轮换X-Forwarded-For不应突破限流上限"""
+        from mingli_mcp.transports.http_transport import HttpTransport
+
+        transport = HttpTransport(
+            host="127.0.0.1",
+            port=8080,
+            enable_rate_limit=True,
+            rate_limit_requests=3,
+            rate_limit_window=60,
+        )
+        transport.set_message_handler(lambda m: {"jsonrpc": "2.0", "id": m.get("id"), "result": {}})
+        client = TestClient(transport.app)
+
+        body = {"jsonrpc": "2.0", "id": 1, "method": "tools/list"}
+        statuses = [
+            client.post("/mcp", json=body, headers={"X-Forwarded-For": f"9.9.9.{i}"}).status_code
+            for i in range(6)
+        ]
+
+        assert statuses[:3] == [200, 200, 200]
+        assert statuses[3:] == [429, 429, 429]
+
+    def test_stats_requires_api_key_to_be_configured(self):
+        """未配置API key时/stats不得公开限流器内部状态"""
+        from mingli_mcp.transports.http_transport import HttpTransport
+
+        transport = HttpTransport(host="127.0.0.1", port=8080, api_key="")
+        transport.set_message_handler(lambda m: {"jsonrpc": "2.0", "id": m.get("id"), "result": {}})
+        client = TestClient(transport.app)
+
+        assert client.get("/stats").status_code == 404
+
+    def test_stats_accessible_with_api_key(self, http_transport):
+        """配置了API key时，携带正确凭证可访问/stats"""
+        client = TestClient(http_transport.app)
+
+        assert client.get("/stats").status_code == 401
+        response = client.get("/stats", headers={"Authorization": "Bearer test-api-key"})
+        assert response.status_code == 200
+        assert "max_requests_per_window" in response.json()
 
     def test_cors_headers(self, client):
         """测试CORS头"""

@@ -84,6 +84,9 @@ class BaseTransport(ABC):
         Returns:
             处理结果消息
         """
+        # message可能是任意JSON值（数组/标量），不能假设它有.get
+        message_id = message.get("id") if isinstance(message, dict) else None
+
         if self.message_handler is None:
             logger.error("Message handler not set")
             return {
@@ -92,7 +95,7 @@ class BaseTransport(ABC):
                     "code": -32603,
                     "message": "Internal error: message handler not configured",
                 },
-                "id": message.get("id"),
+                "id": message_id,
             }
 
         try:
@@ -102,5 +105,5 @@ class BaseTransport(ABC):
             return {
                 "jsonrpc": "2.0",
                 "error": {"code": -32603, "message": f"Internal error: {str(e)}"},
-                "id": message.get("id"),
+                "id": message_id,
             }

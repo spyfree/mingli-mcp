@@ -77,6 +77,11 @@ class Config:
     RATE_LIMIT_REQUESTS: int = int(os.getenv("RATE_LIMIT_REQUESTS", "100"))
     RATE_LIMIT_WINDOW: int = int(os.getenv("RATE_LIMIT_WINDOW", "60"))
 
+    # 是否信任反向代理转发的客户端IP头（CF-Connecting-IP / X-Forwarded-For）
+    # 默认false：这些头由客户端可控，直连时信任它们会让限流被轮换头值绕过。
+    # 仅在服务确实跑在可信代理（如Cloudflare）后面时才设为true。
+    TRUST_PROXY_HEADERS: bool = os.getenv("TRUST_PROXY_HEADERS", "false").lower() == "true"
+
     # CORS配置（安全性）
     # 默认只允许本地访问，生产环境应明确指定允许的域名
     CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8080")

@@ -246,8 +246,13 @@ class BaziSystem(BaseFortuneSystem):
             )
 
             # 构建结果
+            # solar_date必须是真正的阳历日期：农历输入时birth_info["date"]是农历，
+            # 需要从lunar对象反查阳历，否则会把农历日期标成阳历。
+            solar_obj = lunar.getSolar()
             result = {
-                "solar_date": birth_info["date"],
+                "solar_date": (
+                    f"{solar_obj.getYear():04d}-{solar_obj.getMonth():02d}-{solar_obj.getDay():02d}"
+                ),
                 "lunar_date": lunar.toString(),
                 "gender": birth_info["gender"],
                 "pillars": {
@@ -302,10 +307,17 @@ class BaziSystem(BaseFortuneSystem):
             # 获取基本八字
             chart = self.get_chart(birth_info, language)
 
-            # 计算年龄
+            # 计算年龄（虚岁口径：按年份差，与传统命理习惯一致）
             birth_year = int(birth_info["date"].split("-")[0])
             current_year = query_date.year
             age = current_year - birth_year
+
+            # 查询日期早于出生年份时年龄为负，大运序号也会变成负数，
+            # 会输出"第0个大运""-10--1岁"这类无意义结果，直接拒绝
+            if age < 0:
+                raise ValidationError(
+                    f"查询日期不能早于出生日期: 查询年份 {current_year} 早于出生年份 {birth_year}"
+                )
 
             # 计算大运（简化版，每10年一个大运）
             da_yun_index = age // 10
@@ -414,7 +426,10 @@ class BaziSystem(BaseFortuneSystem):
             hour = 0  # 默认子时
 
         if birth_info.get("calendar", "solar") == "lunar":
-            # 农历
+            # 农历：lunar_python 用负月份表示闰月（如闰四月 = -4）
+            if birth_info.get("is_leap_month", False):
+                month = -abs(month)
+
             lunar = Lunar.fromYmd(year, month, day)
             # lunar_python 需要用Solar来设置时间
             solar = Solar.fromYmdHms(

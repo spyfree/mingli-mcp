@@ -81,11 +81,9 @@ def _build_birth_info(args: Dict[str, Any], date_key: str = "date") -> Dict[str,
     return birth_info
 
 
-def _format_response(data: Any, output_format: str) -> str:
-    """格式化响应数据"""
-    if output_format == "json":
-        return json.dumps(data, ensure_ascii=False, indent=2)
-    return data
+def _to_json(data: Any) -> str:
+    """序列化为JSON文本（MCP的content.text必须是字符串）"""
+    return json.dumps(data, ensure_ascii=False, indent=2)
 
 
 @log_performance
@@ -105,9 +103,9 @@ def handle_get_bazi_chart(args: Dict[str, Any]) -> str:
 
         output_format = args.get("format", "markdown")
         if output_format == "json":
-            return _format_response(chart, "json")
+            return _to_json(chart)
         else:
-            return _bazi_formatter.format_chart(chart, "markdown")
+            return _bazi_formatter.format_chart_markdown(chart)
 
 
 @log_performance
@@ -137,9 +135,9 @@ def handle_get_bazi_fortune(args: Dict[str, Any]) -> str:
 
         output_format = args.get("format", "markdown")
         if output_format == "json":
-            return _format_response(fortune, "json")
+            return _to_json(fortune)
         else:
-            return _bazi_formatter.format_fortune(fortune, "markdown")
+            return _bazi_formatter.format_fortune_markdown(fortune)
 
 
 @log_performance
@@ -161,6 +159,6 @@ def handle_analyze_bazi_element(args: Dict[str, Any]) -> str:
 
         output_format = args.get("format", "markdown")
         if output_format == "json":
-            return _format_response(analysis, "json")
+            return _to_json(analysis)
         else:
-            return _bazi_formatter.format_element_analysis(analysis, "markdown")
+            return _bazi_formatter.format_element_analysis_markdown(analysis)

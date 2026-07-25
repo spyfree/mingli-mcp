@@ -85,12 +85,17 @@ class RateLimiter:
         cutoff_time = now - self.window
 
         with self._lock:
-            # 清理过期请求
-            while self.requests[client_id] and self.requests[client_id][0] < cutoff_time:
-                self.requests[client_id].popleft()
+            # 只读查询不能用 self.requests[client_id]：defaultdict 会为未知客户端
+            # 建条目，导致每次查询都往表里塞垃圾键
+            queue = self.requests.get(client_id)
+            if queue is None:
+                return self.max_requests
 
-            used = len(self.requests[client_id])
-            return max(0, self.max_requests - used)
+            # 清理过期请求
+            while queue and queue[0] < cutoff_time:
+                queue.popleft()
+
+            return max(0, self.max_requests - len(queue))
 
     def get_reset_time(self, client_id: str) -> Optional[datetime]:
         """
@@ -103,11 +108,13 @@ class RateLimiter:
             重置时间，如果没有限流返回None
         """
         with self._lock:
-            if not self.requests[client_id]:
+            # 同 get_remaining：只读查询不得创建 defaultdict 条目
+            queue = self.requests.get(client_id)
+            if not queue:
                 return None
 
             # 最早的请求时间 + 窗口时间 = 重置时间
-            oldest_request = self.requests[client_id][0]
+            oldest_request: datetime = queue[0]
             return oldest_request + self.window
 
     def _periodic_cleanup(self):
@@ -137,7 +144,7 @@ class RateLimiter:
 
             self.last_cleanup = now_time
 
-    def reset(self, client_id: str = None):
+    def reset(self, client_id: Optional[str] = None):
         """
         重置限流计数
 

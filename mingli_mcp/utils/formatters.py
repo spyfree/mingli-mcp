@@ -14,17 +14,20 @@ def format_error_response(
     Args:
         error_code: 错误代码
         error_message: 错误消息
-        request_id: 请求ID
+        request_id: 请求ID；无法确定时（如Parse error/Invalid Request）传None
 
     Returns:
         JSON-RPC错误响应
+
+    Note:
+        JSON-RPC 2.0规范要求响应对象必须包含id成员；
+        无法从请求中确定id时必须为null，而不是省略该字段。
     """
-    response = {"jsonrpc": "2.0", "error": {"code": error_code, "message": error_message}}
-
-    if request_id is not None:
-        response["id"] = request_id
-
-    return response
+    return {
+        "jsonrpc": "2.0",
+        "error": {"code": error_code, "message": error_message},
+        "id": request_id,
+    }
 
 
 def format_success_response(result: Any, request_id: Optional[Any] = None) -> Dict[str, Any]:
@@ -37,10 +40,8 @@ def format_success_response(result: Any, request_id: Optional[Any] = None) -> Di
 
     Returns:
         JSON-RPC成功响应
+
+    Note:
+        JSON-RPC 2.0规范要求响应对象必须包含id成员（与请求id一致）。
     """
-    response = {"jsonrpc": "2.0", "result": result}
-
-    if request_id is not None:
-        response["id"] = request_id
-
-    return response
+    return {"jsonrpc": "2.0", "result": result, "id": request_id}

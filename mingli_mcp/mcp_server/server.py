@@ -16,7 +16,7 @@ from mingli_mcp.core.exceptions import (
 )
 from mingli_mcp.mcp_server.protocol import SUPPORTED_PROTOCOL_VERSIONS, ProtocolHandler
 from mingli_mcp.mcp_server.tools import ToolRegistry
-from mingli_mcp.transports import StdioTransport
+from mingli_mcp.transports import BaseTransport, StdioTransport
 from mingli_mcp.utils.formatters import format_error_response, format_success_response
 
 logger = config.get_logger(__name__)
@@ -27,7 +27,8 @@ class MingliMCPServer:
 
     def __init__(self, http_cors_origins: Optional[List[str]] = None):
         self.http_cors_origins = http_cors_origins
-        self.transport = None
+        # _initialize_transport 要么赋值，要么抛异常，因此这里不需要None初始值
+        self.transport: BaseTransport
         self.protocol_handler = ProtocolHandler()
         self.tool_registry = ToolRegistry()
         self._initialize_transport()
@@ -60,6 +61,7 @@ class MingliMCPServer:
                 cors_origins=self.http_cors_origins,
                 cors_allow_credentials=config.CORS_ALLOW_CREDENTIALS,
                 supported_protocol_versions=SUPPORTED_PROTOCOL_VERSIONS,
+                trust_proxy_headers=config.TRUST_PROXY_HEADERS,
             )
         else:
             raise ValueError(f"Unsupported transport type: {transport_type}")
@@ -85,10 +87,30 @@ class MingliMCPServer:
         Returns:
             JSON-RPC响应；对于notification（无id的消息）返回None
         """
+        # JSON-RPC规范：请求必须是对象。数组（批处理）和标量都是Invalid Request。
+        # 这里必须先挡住，否则下面的 request.get 会抛 AttributeError，
+        # 在stdio模式下会直接终结消息循环（整个会话挂死）。
+        if not isinstance(request, dict):
+            logger.warning(f"Received non-object JSON-RPC message: {type(request).__name__}")
+            return format_error_response(
+                -32600,
+                "Invalid Request: JSON-RPC message must be an object",
+                None,
+            )
+
         method = request.get("method")
         request_id = request.get("id")
         # JSON-RPC规范：没有id成员的消息是notification，不能对其发送响应
         is_notification = "id" not in request
+
+        # method必须是字符串，否则无法路由
+        if not isinstance(method, str):
+            logger.warning(f"Received JSON-RPC message with invalid method: {method!r}")
+            if is_notification:
+                return None
+            return format_error_response(
+                -32600, "Invalid Request: 'method' must be a string", request_id
+            )
 
         try:
             # Protocol methods

@@ -131,7 +131,13 @@ class BaseFortuneSystem(ABC):
             DateRangeError: 日期超出支持范围
         """
         # 延迟导入避免循环依赖
-        from mingli_mcp.utils.validators import validate_date_range
+        from mingli_mcp.utils.validators import (
+            validate_calendar_strict,
+            validate_date_range,
+            validate_gender_strict,
+            validate_solar_time_params,
+            validate_time_index_strict,
+        )
 
         required_fields = ["date", "time_index", "gender"]
         for field in required_fields:
@@ -141,13 +147,17 @@ class BaseFortuneSystem(ABC):
         # 验证日期格式和范围
         validate_date_range(birth_info["date"])
 
-        # 验证时辰
-        if not 0 <= birth_info["time_index"] <= 12:
-            raise ValidationError("时辰序号必须在0-12之间")
+        # 验证时辰（用strict版本，非法类型也会得到ValidationError而不是TypeError）
+        validate_time_index_strict(birth_info["time_index"])
 
         # 验证性别
-        if birth_info["gender"] not in ["男", "女"]:
-            raise ValidationError("性别必须是'男'或'女'")
+        validate_gender_strict(birth_info["gender"])
+
+        # 验证历法（缺省为solar；非法值不能被静默当作solar）
+        validate_calendar_strict(birth_info.get("calendar", "solar"))
+
+        # 验证真太阳时可选参数
+        validate_solar_time_params(birth_info)
 
     def validate_language(self, language: str) -> None:
         """
@@ -163,6 +173,23 @@ class BaseFortuneSystem(ABC):
         from mingli_mcp.utils.validators import validate_language as _validate_language
 
         _validate_language(language)
+
+    def analyze_element(self, birth_info: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        分析五行强弱
+
+        默认未实现；由支持五行分析的系统（如八字）覆盖。
+
+        Args:
+            birth_info: 生辰信息字典
+
+        Returns:
+            五行分析结果
+
+        Raises:
+            NotImplementedError: 该系统不支持五行分析
+        """
+        raise NotImplementedError(f"{self.get_system_name()}系统不支持五行分析")
 
     def get_supported_palaces(self) -> list:
         """
@@ -220,14 +247,18 @@ class BaseFortuneSystem(ABC):
             >>> system.apply_solar_time_correction(birth_info)
             5  # 真太阳时修正后变为巳时
         """
+        # 统一收敛为int：inputSchema声明的是integer，但"6"这类字符串
+        # 也能通过校验，直接透传给排盘库会出错
+        time_index = int(birth_info["time_index"])
+
         # 检查是否启用真太阳时
         if not birth_info.get("use_solar_time", False):
-            return birth_info["time_index"]
+            return time_index
 
         # 检查是否提供了经度
         longitude = birth_info.get("longitude")
         if longitude is None:
-            return birth_info["time_index"]
+            return time_index
 
         # 导入真太阳时计算函数
         from mingli_mcp.utils.solar_time import adjust_time_index_for_solar_time
@@ -238,7 +269,7 @@ class BaseFortuneSystem(ABC):
 
         # 如果没有提供具体时刻，使用时辰的中点时间
         if birth_hour is None or birth_minute is None:
-            birth_hour, birth_minute = self._get_time_index_midpoint(birth_info["time_index"])
+            birth_hour, birth_minute = self._get_time_index_midpoint(time_index)
 
         # 计算真太阳时修正后的时辰
         adjusted_index, _, _ = adjust_time_index_for_solar_time(birth_hour, birth_minute, longitude)
@@ -255,19 +286,7 @@ class BaseFortuneSystem(ABC):
         Returns:
             (小时, 分钟) 元组
         """
-        midpoints = [
-            (0, 0),  # 0 早子时
-            (2, 0),  # 1 丑时
-            (4, 0),  # 2 寅时
-            (6, 0),  # 3 卯时
-            (8, 0),  # 4 辰时
-            (10, 0),  # 5 巳时
-            (12, 0),  # 6 午时
-            (14, 0),  # 7 未时
-            (16, 0),  # 8 申时
-            (18, 0),  # 9 酉时
-            (20, 0),  # 10 戌时
-            (22, 0),  # 11 亥时
-            (0, 0),  # 12 晚子时
-        ]
-        return midpoints[time_index]
+        # 延迟导入避免循环依赖
+        from mingli_mcp.utils.solar_time import get_time_index_midpoint
+
+        return get_time_index_midpoint(time_index)

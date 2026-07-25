@@ -43,6 +43,22 @@ def _get_configuration_content() -> str:
 
 ### HTTP_HOST / HTTP_PORT / HTTP_API_KEY
 - HTTP模式配置选项
+- 未设置 HTTP_API_KEY 时不启用鉴权，同时 /stats 端点不对外提供
+
+### ENABLE_RATE_LIMIT / RATE_LIMIT_REQUESTS / RATE_LIMIT_WINDOW
+- **描述**: HTTP模式限流开关与窗口配置
+- **默认值**: true / 100 / 60（秒）
+
+### TRUST_PROXY_HEADERS
+- **描述**: 是否信任反向代理转发的客户端IP头（CF-Connecting-IP / X-Forwarded-For）用于限流
+- **可选值**: true, false
+- **默认值**: false
+- **说明**: 这些请求头由客户端可控。仅当服务确实运行在可信代理（如Cloudflare）
+  之后时才设为true；直连场景下开启会让限流被轮换请求头绕过。
+
+### CORS_ORIGINS / CORS_ALLOW_CREDENTIALS
+- **描述**: 允许的来源列表（逗号分隔）与是否允许携带凭证
+- **默认值**: http://localhost:3000,http://localhost:8080 / false
 
 ### DEFAULT_LANGUAGE
 - **描述**: 默认语言

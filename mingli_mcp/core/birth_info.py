@@ -124,22 +124,7 @@ class BirthInfo:
 
     def get_time_name(self) -> str:
         """获取时辰名称"""
-        time_names = [
-            "早子时",
-            "丑时",
-            "寅时",
-            "卯时",
-            "辰时",
-            "巳时",
-            "午时",
-            "未时",
-            "申时",
-            "酉时",
-            "戌时",
-            "亥时",
-            "晚子时",
-        ]
-        return time_names[self.time_index]
+        return self._get_time_name_by_index(self.time_index)
 
     def get_adjusted_time_index(self) -> int:
         """
@@ -197,23 +182,10 @@ class BirthInfo:
             >>> info._get_time_index_midpoint()
             (12, 0)  # 午时中点
         """
-        # 时辰中点映射（小时, 分钟）
-        midpoints = [
-            (0, 0),  # 0 早子时 (23:00-01:00) -> 00:00
-            (2, 0),  # 1 丑时 (01:00-03:00) -> 02:00
-            (4, 0),  # 2 寅时 (03:00-05:00) -> 04:00
-            (6, 0),  # 3 卯时 (05:00-07:00) -> 06:00
-            (8, 0),  # 4 辰时 (07:00-09:00) -> 08:00
-            (10, 0),  # 5 巳时 (09:00-11:00) -> 10:00
-            (12, 0),  # 6 午时 (11:00-13:00) -> 12:00
-            (14, 0),  # 7 未时 (13:00-15:00) -> 14:00
-            (16, 0),  # 8 申时 (15:00-17:00) -> 16:00
-            (18, 0),  # 9 酉时 (17:00-19:00) -> 18:00
-            (20, 0),  # 10 戌时 (19:00-21:00) -> 20:00
-            (22, 0),  # 11 亥时 (21:00-23:00) -> 22:00
-            (0, 0),  # 12 晚子时 (23:00-01:00) -> 00:00（次日）
-        ]
-        return midpoints[self.time_index]
+        # 延迟导入避免循环依赖
+        from mingli_mcp.utils.solar_time import get_time_index_midpoint
+
+        return get_time_index_midpoint(self.time_index)
 
     def get_solar_time_info(self) -> Optional[str]:
         """
@@ -243,6 +215,7 @@ class BirthInfo:
         from mingli_mcp.utils.solar_time import (
             beijing_to_solar_time,
             calculate_solar_time_offset,
+            format_longitude,
         )
 
         # 获取出生时刻
@@ -264,7 +237,7 @@ class BirthInfo:
         offset_str = f"+{offset}分钟" if offset > 0 else f"{offset}分钟"
 
         return f"""北京时间: {birth_datetime.strftime('%Y-%m-%d %H:%M')}
-出生地经度: {self.longitude}°E
+出生地经度: {format_longitude(self.longitude)}
 时差: {offset_str}
 真太阳时: {solar_datetime.strftime('%Y-%m-%d %H:%M')}
 修正前时辰: {self.get_time_name()} (序号: {self.time_index})
@@ -272,19 +245,7 @@ class BirthInfo:
 
     def _get_time_name_by_index(self, index: int) -> str:
         """根据时辰序号获取时辰名称"""
-        time_names = [
-            "早子时",
-            "丑时",
-            "寅时",
-            "卯时",
-            "辰时",
-            "巳时",
-            "午时",
-            "未时",
-            "申时",
-            "酉时",
-            "戌时",
-            "亥时",
-            "晚子时",
-        ]
-        return time_names[index]
+        # 延迟导入避免循环依赖
+        from mingli_mcp.utils.solar_time import get_time_index_name
+
+        return get_time_index_name(index)

@@ -17,6 +17,9 @@ SUPPORTED_LANGUAGES = ["zh-CN", "zh-TW", "en-US", "ja-JP", "ko-KR", "vi-VN"]
 # 支持的性别值
 SUPPORTED_GENDERS = ["男", "女"]
 
+# 支持的历法类型
+SUPPORTED_CALENDARS = ["solar", "lunar"]
+
 
 def validate_date(date_str: str) -> bool:
     """
@@ -117,6 +120,76 @@ def validate_gender_strict(gender: Any) -> None:
         raise ValidationError(
             f"性别无效: 值 '{gender}' 不是有效的性别 " f"(支持的值: {', '.join(SUPPORTED_GENDERS)})"
         )
+
+
+def validate_calendar_strict(calendar: Any) -> None:
+    """
+    严格验证历法类型，失败时抛出异常
+
+    Args:
+        calendar: 历法类型
+
+    Raises:
+        ValidationError: 历法类型无效
+
+    Note:
+        未验证的历法值会被静默当作阳历处理，导致排盘结果错误却不报错，
+        因此必须在服务端校验，不能只依赖客户端遵守inputSchema的enum。
+    """
+    if not isinstance(calendar, str) or calendar not in SUPPORTED_CALENDARS:
+        raise ValidationError(
+            f"历法类型无效: 值 '{calendar}' 不是有效的历法 "
+            f"(支持的值: {', '.join(SUPPORTED_CALENDARS)})"
+        )
+
+
+def validate_solar_time_params(birth_info: Dict[str, Any]) -> None:
+    """
+    验证真太阳时相关的可选参数
+
+    Args:
+        birth_info: 生辰信息字典
+
+    Raises:
+        ValidationError: 参数类型或范围无效
+
+    Note:
+        inputSchema声明了minimum/maximum，但MCP客户端不保证做校验，
+        因此服务端必须自行兜底，否则超范围经度会一路传到时间计算里。
+    """
+    numeric_ranges = {
+        "longitude": (-180.0, 180.0, "经度"),
+        "latitude": (-90.0, 90.0, "纬度"),
+    }
+    for key, (low, high, label) in numeric_ranges.items():
+        value = birth_info.get(key)
+        if value is None:
+            continue
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValidationError(f"{label}无效: 值 '{value}' 不是数字")
+        if not low <= float(value) <= high:
+            raise ValidationError(
+                f"{label}超出范围: 值 '{value}' 不在有效范围内 (期望: {low} 至 {high})"
+            )
+
+    integer_ranges = {
+        "birth_hour": (0, 23, "小时"),
+        "birth_minute": (0, 59, "分钟"),
+    }
+    for key, (low_i, high_i, label) in integer_ranges.items():
+        value = birth_info.get(key)
+        if value is None:
+            continue
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise ValidationError(f"{label}无效: 值 '{value}' 不是整数")
+        if not low_i <= value <= high_i:
+            raise ValidationError(
+                f"{label}超出范围: 值 '{value}' 不在有效范围内 (期望: {low_i}-{high_i})"
+            )
+
+    # 启用真太阳时必须有经度，否则修正会被静默跳过
+    if birth_info.get("use_solar_time", False) and birth_info.get("longitude") is None:
+        raise ValidationError("启用真太阳时（use_solar_time=true）时必须提供经度（longitude）")
 
 
 def validate_language(language: str) -> None:

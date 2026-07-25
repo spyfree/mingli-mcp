@@ -4,13 +4,15 @@
 用于将八字数据格式化为JSON和Markdown格式
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 
 class BaziFormatter:
     """八字格式化器"""
 
-    def format_chart(self, chart_data: Dict[str, Any], format_type: str = "json") -> str:
+    def format_chart(
+        self, chart_data: Dict[str, Any], format_type: str = "json"
+    ) -> Union[str, Dict[str, Any]]:
         """
         格式化八字排盘数据
 
@@ -19,14 +21,16 @@ class BaziFormatter:
             format_type: 格式类型 ('json' 或 'markdown')
 
         Returns:
-            格式化后的字符串
+            format_type="markdown" 时返回Markdown字符串，否则原样返回数据字典
         """
         if format_type == "markdown":
             return self._format_chart_markdown(chart_data)
         else:
             return chart_data
 
-    def format_fortune(self, fortune_data: Dict[str, Any], format_type: str = "json") -> str:
+    def format_fortune(
+        self, fortune_data: Dict[str, Any], format_type: str = "json"
+    ) -> Union[str, Dict[str, Any]]:
         """
         格式化运势数据
 
@@ -35,7 +39,7 @@ class BaziFormatter:
             format_type: 格式类型
 
         Returns:
-            格式化后的字符串
+            format_type="markdown" 时返回Markdown字符串，否则原样返回数据字典
         """
         if format_type == "markdown":
             return self._format_fortune_markdown(fortune_data)
@@ -44,7 +48,7 @@ class BaziFormatter:
 
     def format_element_analysis(
         self, analysis_data: Dict[str, Any], format_type: str = "json"
-    ) -> str:
+    ) -> Union[str, Dict[str, Any]]:
         """
         格式化五行分析数据
 
@@ -53,12 +57,26 @@ class BaziFormatter:
             format_type: 格式类型
 
         Returns:
-            格式化后的字符串
+            format_type="markdown" 时返回Markdown字符串，否则原样返回数据字典
         """
         if format_type == "markdown":
             return self._format_element_markdown(analysis_data)
         else:
             return analysis_data
+
+    # 显式返回str的Markdown入口（与ZiweiFormatter的命名保持一致）。
+    # 调用方需要str时用这些方法，避免拿到Union后还得自己收窄类型。
+    def format_chart_markdown(self, chart_data: Dict[str, Any]) -> str:
+        """将排盘数据格式化为Markdown"""
+        return self._format_chart_markdown(chart_data)
+
+    def format_fortune_markdown(self, fortune_data: Dict[str, Any]) -> str:
+        """将运势数据格式化为Markdown"""
+        return self._format_fortune_markdown(fortune_data)
+
+    def format_element_analysis_markdown(self, analysis_data: Dict[str, Any]) -> str:
+        """将五行分析数据格式化为Markdown"""
+        return self._format_element_markdown(analysis_data)
 
     def _format_chart_markdown(self, data: Dict[str, Any]) -> str:
         """格式化排盘为Markdown"""

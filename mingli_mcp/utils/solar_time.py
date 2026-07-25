@@ -16,13 +16,86 @@
 """
 
 from datetime import datetime, timedelta
-from typing import Tuple
+from typing import Dict, Optional, Tuple
 
 # 东八区（北京时间）的标准经度
 BEIJING_LONGITUDE = 120.0
 
 # 每度经度对应的时间差（分钟）
 MINUTES_PER_DEGREE = 4.0
+
+# 各时辰的中点时刻（小时, 分钟）
+# 未提供精确出生时刻时，用中点作为真太阳时修正的基准。
+# 注意：早子时是00:00~01:00，晚子时是23:00~24:00，两者中点不同，
+# 不能都写成00:00 —— 否则晚子时会被当成早子时来修正。
+TIME_INDEX_MIDPOINTS = (
+    (0, 30),  # 0  早子时 00:00~01:00
+    (2, 0),  # 1  丑时   01:00~03:00
+    (4, 0),  # 2  寅时   03:00~05:00
+    (6, 0),  # 3  卯时   05:00~07:00
+    (8, 0),  # 4  辰时   07:00~09:00
+    (10, 0),  # 5  巳时   09:00~11:00
+    (12, 0),  # 6  午时   11:00~13:00
+    (14, 0),  # 7  未时   13:00~15:00
+    (16, 0),  # 8  申时   15:00~17:00
+    (18, 0),  # 9  酉时   17:00~19:00
+    (20, 0),  # 10 戌时   19:00~21:00
+    (22, 0),  # 11 亥时   21:00~23:00
+    (23, 30),  # 12 晚子时 23:00~24:00
+)
+
+# 时辰序号到名称的映射
+TIME_INDEX_NAMES = (
+    "早子时",
+    "丑时",
+    "寅时",
+    "卯时",
+    "辰时",
+    "巳时",
+    "午时",
+    "未时",
+    "申时",
+    "酉时",
+    "戌时",
+    "亥时",
+    "晚子时",
+)
+
+
+def get_time_index_midpoint(time_index: int) -> Tuple[int, int]:
+    """
+    获取时辰的中点时刻
+
+    Args:
+        time_index: 时辰序号 (0-12)
+
+    Returns:
+        (小时, 分钟) 元组
+
+    Raises:
+        IndexError: 时辰序号超出0-12
+    """
+    if not 0 <= time_index < len(TIME_INDEX_MIDPOINTS):
+        raise IndexError(f"时辰序号超出范围: {time_index} (期望: 0-12)")
+    return TIME_INDEX_MIDPOINTS[time_index]
+
+
+def get_time_index_name(time_index: int) -> str:
+    """
+    获取时辰名称
+
+    Args:
+        time_index: 时辰序号 (0-12)
+
+    Returns:
+        时辰名称，如"午时"
+
+    Raises:
+        IndexError: 时辰序号超出0-12
+    """
+    if not 0 <= time_index < len(TIME_INDEX_NAMES):
+        raise IndexError(f"时辰序号超出范围: {time_index} (期望: 0-12)")
+    return TIME_INDEX_NAMES[time_index]
 
 
 def calculate_solar_time_offset(longitude: float) -> int:
@@ -149,7 +222,7 @@ def calculate_time_index(hour: int, minute: int) -> int:
     return (hour + 1) // 2
 
 
-def get_major_cities_longitude() -> dict:
+def get_major_cities_longitude() -> Dict[str, float]:
     """
     获取全球主要城市的经度数据
 
@@ -420,7 +493,32 @@ def get_longitude_by_city(city_name: str) -> float:
     return cities[city_name]
 
 
-def format_solar_time_info(beijing_time: datetime, longitude: float, city_name: str = None) -> str:
+def format_longitude(longitude: float) -> str:
+    """
+    格式化经度，带上东经/西经方向
+
+    Args:
+        longitude: 经度（东经为正，西经为负）
+
+    Returns:
+        如 "116.4°E"、"74.0°W"、"0.0°"
+
+    Examples:
+        >>> format_longitude(116.4)
+        '116.4°E'
+        >>> format_longitude(-74.0)
+        '74.0°W'
+    """
+    if longitude > 0:
+        return f"{longitude}°E"
+    if longitude < 0:
+        return f"{abs(longitude)}°W"
+    return f"{longitude}°"
+
+
+def format_solar_time_info(
+    beijing_time: datetime, longitude: float, city_name: Optional[str] = None
+) -> str:
     """
     格式化真太阳时信息（用于日志和调试）
 
@@ -447,31 +545,15 @@ def format_solar_time_info(beijing_time: datetime, longitude: float, city_name: 
         beijing_time.hour, beijing_time.minute, longitude
     )
 
-    # 时辰名称映射
-    time_names = {
-        0: "早子时",
-        1: "丑时",
-        2: "寅时",
-        3: "卯时",
-        4: "辰时",
-        5: "巳时",
-        6: "午时",
-        7: "未时",
-        8: "申时",
-        9: "酉时",
-        10: "戌时",
-        11: "亥时",
-        12: "晚子时",
-    }
-
-    location = f"{city_name} (经度: {longitude}°E)" if city_name else f"经度: {longitude}°E"
+    longitude_str = format_longitude(longitude)
+    location = f"{city_name} (经度: {longitude_str})" if city_name else f"经度: {longitude_str}"
     offset_str = f"+{offset}分钟" if offset > 0 else f"{offset}分钟"
 
     return f"""北京时间: {beijing_time.strftime('%Y-%m-%d %H:%M')}
 出生地: {location}
 时差: {offset_str}
 真太阳时: {solar_time.strftime('%Y-%m-%d %H:%M')}
-时辰: {time_names[time_index]} (序号: {time_index})"""
+时辰: {get_time_index_name(time_index)} (序号: {time_index})"""
 
 
 if __name__ == "__main__":

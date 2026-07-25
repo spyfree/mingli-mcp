@@ -30,6 +30,7 @@ from starlette.concurrency import run_in_threadpool  # noqa: E402
 
 from mingli_mcp.config import config  # noqa: E402
 from mingli_mcp.mcp_server import MingliMCPServer  # noqa: E402
+from mingli_mcp.transports.http_transport import HttpTransport  # noqa: E402
 from mingli_mcp.utils.formatters import format_error_response  # noqa: E402
 
 logger = logging.getLogger("apify_main")
@@ -97,8 +98,18 @@ def create_app(charge: Optional[ChargeFunction] = None) -> FastAPI:
         if not APIFY_AVAILABLE:
             raise RuntimeError("Apify SDK is required for pay-per-event charging")
         charge = Actor.charge
-    server.transport.set_message_handler(_make_charging_handler(server, charge))
-    return server.transport.app
+
+    # Standby 模式必须跑在HTTP传输上；若TRANSPORT_TYPE被覆盖成stdio，
+    # 这里要明确报错，而不是在访问.app时抛出难以定位的AttributeError
+    transport = server.transport
+    if not isinstance(transport, HttpTransport):
+        raise RuntimeError(
+            "Apify Standby mode requires the HTTP transport "
+            f"(TRANSPORT_TYPE=http), got: {type(transport).__name__}"
+        )
+
+    transport.set_message_handler(_make_charging_handler(server, charge))
+    return transport.app
 
 
 async def serve() -> None:

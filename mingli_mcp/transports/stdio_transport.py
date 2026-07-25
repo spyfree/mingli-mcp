@@ -55,7 +55,16 @@ class StdioTransport(BaseTransport):
                     continue
 
                 logger.debug(f"Received message: {line[:200]}...")
-                response = self.handle_message(message)
+                # 单条消息处理失败不能终结整个会话，否则客户端会永久挂起
+                try:
+                    response = self.handle_message(message)
+                except Exception as e:
+                    logger.exception("Error handling message, continuing loop")
+                    response = {
+                        "jsonrpc": "2.0",
+                        "error": {"code": -32603, "message": f"Internal error: {str(e)}"},
+                        "id": message.get("id") if isinstance(message, dict) else None,
+                    }
                 if response is not None:
                     self.send_message(response)
         except KeyboardInterrupt:
@@ -98,9 +107,14 @@ class StdioTransport(BaseTransport):
                 logger.info("Received EOF on stdin")
                 return None
 
+            # 跳过空行（用循环而非递归，避免大量空行时触发递归深度限制）
             line = line.strip()
-            if not line:
-                return self.receive_message()  # 跳过空行
+            while not line:
+                line = sys.stdin.readline()
+                if not line:
+                    logger.info("Received EOF on stdin")
+                    return None
+                line = line.strip()
 
             message = json.loads(line)
             logger.debug(f"Received message: {line[:200]}...")

@@ -7,13 +7,17 @@ MCP传输层抽象模块
 - websocket: WebSocket传输（用于实时应用）
 """
 
+from typing import Any, Optional
+
 from .base_transport import BaseTransport
 from .stdio_transport import StdioTransport
 
-# 延迟导入 HTTP 传输（需要 uvicorn 依赖）
+# 延迟导入 HTTP 传输（需要 fastapi / uvicorn 依赖）
+HttpTransport: Optional[Any]
 try:
-    from .http_transport import HttpTransport
+    from .http_transport import HttpTransport as _HttpTransport
 
+    HttpTransport = _HttpTransport
     HTTP_TRANSPORT_AVAILABLE = True
 except ImportError:
     HttpTransport = None

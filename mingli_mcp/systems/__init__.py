@@ -3,7 +3,7 @@
 """
 
 import logging
-from typing import Dict, Type
+from typing import Dict, Optional, Type
 
 from mingli_mcp.core.base_system import BaseFortuneSystem
 from mingli_mcp.core.exceptions import SystemNotFoundError
@@ -63,7 +63,7 @@ def get_system(name: str, cached: bool = True) -> BaseFortuneSystem:
     return instance
 
 
-def clear_cache(name: str = None):
+def clear_cache(name: Optional[str] = None):
     """
     清除系统实例缓存
 

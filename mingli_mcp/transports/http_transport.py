@@ -51,6 +51,7 @@ class HttpTransport(BaseTransport):
         cors_origins: Optional[List[str]] = None,
         cors_allow_credentials: bool = False,
         supported_protocol_versions: Optional[List[str]] = None,
+        trust_proxy_headers: Optional[bool] = None,
     ):
         """
         初始化HTTP传输
@@ -65,12 +66,16 @@ class HttpTransport(BaseTransport):
             cors_origins: 允许的CORS来源列表
             cors_allow_credentials: 是否允许携带凭证
             supported_protocol_versions: 支持的MCP协议版本列表（用于校验MCP-Protocol-Version头）
+            trust_proxy_headers: 是否信任代理转发的客户端IP头，默认读取配置
         """
         self.host = host
         self.port = port
         self.api_key = api_key
         self.enable_rate_limit = enable_rate_limit
         self.supported_protocol_versions = supported_protocol_versions
+        self.trust_proxy_headers = (
+            config.TRUST_PROXY_HEADERS if trust_proxy_headers is None else trust_proxy_headers
+        )
         self.message_handler: Optional[MessageHandler] = None
 
         # 初始化限流器
@@ -123,14 +128,19 @@ class HttpTransport(BaseTransport):
         """获取限流用的客户端标识
 
         部署在Cloudflare等反向代理后面时，request.client.host是代理地址，
-        优先使用CF-Connecting-IP / X-Forwarded-For还原真实客户端IP。
+        此时需要用CF-Connecting-IP / X-Forwarded-For还原真实客户端IP。
+
+        但这些头是客户端可写的：直连场景下如果无条件信任，攻击者只要每次
+        请求换一个X-Forwarded-For值，就能让每个请求都算作新客户端，
+        限流形同虚设。因此只在显式开启trust_proxy_headers时才采信。
         """
-        cf_ip = request.headers.get("CF-Connecting-IP")
-        if cf_ip:
-            return cf_ip
-        forwarded = request.headers.get("X-Forwarded-For")
-        if forwarded:
-            return forwarded.split(",")[0].strip()
+        if self.trust_proxy_headers:
+            cf_ip = request.headers.get("CF-Connecting-IP")
+            if cf_ip:
+                return cf_ip
+            forwarded = request.headers.get("X-Forwarded-For")
+            if forwarded:
+                return forwarded.split(",")[0].strip()
         return request.client.host if request.client else "unknown"
 
     def _check_origin(self, request: Request) -> Optional[JSONResponse]:
@@ -225,6 +235,15 @@ class HttpTransport(BaseTransport):
         @self.app.get("/stats")
         async def stats(request: Request):
             """获取限流器统计信息（需要API key）"""
+            # 未配置API key时_check_api_key直接放行，会把客户端数量等运行状态
+            # 暴露给任何人。没有凭证可校验时就不提供这个端点。
+            if not self.api_key:
+                logger.warning("Rejected /stats request: HTTP_API_KEY is not configured")
+                raise HTTPException(
+                    status_code=404,
+                    detail="Not Found: /stats requires HTTP_API_KEY to be configured",
+                )
+
             self._check_api_key(request, self._get_client_id(request))
 
             if not self.enable_rate_limit:

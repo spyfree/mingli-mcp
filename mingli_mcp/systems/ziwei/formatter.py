@@ -213,14 +213,14 @@ class ZiweiFormatter:
         Returns:
             Markdown格式的字符串
         """
-        palace_name = analysis["palace_name"]
+        palace_label = self._palace_label(analysis["palace_name"])
         markers = []
         if analysis["is_body_palace"]:
             markers.append("⭐身宫")
         if analysis["is_original_palace"]:
             markers.append("🏠来因宫")
 
-        title = f"# {palace_name}宫位分析"
+        title = f"# {palace_label}分析"
         if markers:
             title += f" {' '.join(markers)}"
 
@@ -377,6 +377,12 @@ class ZiweiFormatter:
 
         return result
 
+    @staticmethod
+    def _palace_label(palace_name: Any) -> str:
+        """宫位显示名。宫位名已自带"宫"字（如"命宫"），不能再补一个。"""
+        name = str(palace_name)
+        return name if name.endswith("宫") else f"{name}宫"
+
     def _format_palace_markdown(self, palace: Dict[str, Any]) -> str:
         """格式化单个宫位为Markdown"""
         markers = []
@@ -387,7 +393,8 @@ class ZiweiFormatter:
 
         marker_str = "".join(markers) + " " if markers else ""
 
-        md = f"### {marker_str}{palace['name']}宫 ({palace['heavenly_stem']}{palace['earthly_branch']})\n\n"
+        palace_label = self._palace_label(palace["name"])
+        md = f"### {marker_str}{palace_label} ({palace['heavenly_stem']}{palace['earthly_branch']})\n\n"
 
         if palace.get("major_stars"):
             stars = []
