@@ -1,0 +1,239 @@
+{
+  "$comment": [
+    "跨引擎排盘金标向量。网站（spyfree/mingli，lunisolar）与 MCP 服务端",
+    "（spyfree/mingli-mcp，lunar_python）必须对同一组输入给出同一张四柱盘——",
+    "同一批用户会同时用到这两条链路，盘不一致就是产品事故。",
+    "两边各自的测试都应读取本文件，任何一边改动排盘口径都要先改这里。"
+  ],
+  "version": 2,
+  "updatedAt": "2026-07-25",
+  "conventions": {
+    "hourFromTimeIndex": {
+      "$comment": "时辰索引 → 用于排盘的小时（取时辰中点；晚子时取 23）",
+      "0": 0,
+      "1": 2,
+      "2": 4,
+      "3": 6,
+      "4": 8,
+      "5": 10,
+      "6": 12,
+      "7": 14,
+      "8": 16,
+      "9": 18,
+      "10": 20,
+      "11": 22,
+      "12": 23
+    },
+    "termBoundary": {
+      "school": "交节时刻换柱",
+      "$comment": [
+        "年柱按立春、月柱按节令的**精确交节时刻**换，不是交节日零点。",
+        "两端一致，无分歧。网站侧靠 src/lib/solar-terms-data.ts 修正 lunisolar 的日粒度换柱。"
+      ]
+    },
+    "dayBoundary": {
+      "school": "子初换日",
+      "$comment": [
+        "23:00-23:59（晚子时）的日柱取次日干支，时柱为次日子时；00:00-00:59（早子时）取当日。",
+        "网站侧由 lunisolar 原生给出，与 iztro 自身输出的日干支一致；",
+        "MCP 侧由 lunar_python 的 EightChar.setSect(1) 固定（其默认 sect=2 是夜子时派）。",
+        "这是流派选择不是对错：改它等于改掉所有 23:00-23:59 出生用户的日主，先改这张表再改代码。"
+      ]
+    }
+  },
+  "vectors": [
+    {
+      "id": "lichun-before",
+      "input": {
+        "date": "2024-02-04",
+        "timeIndex": 4,
+        "gender": "男",
+        "calendar": "solar"
+      },
+      "expect": {
+        "year": "癸卯",
+        "month": "乙丑",
+        "day": "戊戌",
+        "hour": "丙辰"
+      },
+      "note": "立春当天、交节(16:27)之前 → 年柱月柱都还属前一年"
+    },
+    {
+      "id": "lichun-after",
+      "input": {
+        "date": "2024-02-04",
+        "timeIndex": 9,
+        "gender": "男",
+        "calendar": "solar"
+      },
+      "expect": {
+        "year": "甲辰",
+        "month": "丙寅",
+        "day": "戊戌",
+        "hour": "辛酉"
+      },
+      "note": "立春当天、交节之后"
+    },
+    {
+      "id": "lichun-spans-hour",
+      "input": {
+        "date": "2024-02-04",
+        "timeIndex": 8,
+        "gender": "男",
+        "calendar": "solar"
+      },
+      "expect": {
+        "year": "癸卯",
+        "month": "乙丑",
+        "day": "戊戌",
+        "hour": "庚申"
+      },
+      "note": "申时(15-17)横跨交节时刻：按时辰中点 16:00 判归前一年，同时应标记该时辰横跨交节"
+    },
+    {
+      "id": "jingzhe-before",
+      "input": {
+        "date": "2024-03-05",
+        "timeIndex": 5,
+        "gender": "女",
+        "calendar": "solar"
+      },
+      "expect": {
+        "year": "甲辰",
+        "month": "丙寅",
+        "day": "戊辰",
+        "hour": "丁巳"
+      },
+      "note": "惊蛰当天、交节(10:22)之前 → 月柱仍是寅月，年柱不受影响"
+    },
+    {
+      "id": "jingzhe-after",
+      "input": {
+        "date": "2024-03-05",
+        "timeIndex": 6,
+        "gender": "女",
+        "calendar": "solar"
+      },
+      "expect": {
+        "year": "甲辰",
+        "month": "丁卯",
+        "day": "戊辰",
+        "hour": "戊午"
+      },
+      "note": "惊蛰当天、交节之后"
+    },
+    {
+      "id": "lichun-late-term",
+      "input": {
+        "date": "2025-02-03",
+        "timeIndex": 6,
+        "gender": "男",
+        "calendar": "solar"
+      },
+      "expect": {
+        "year": "甲辰",
+        "month": "丁丑",
+        "day": "癸卯",
+        "hour": "戊午"
+      },
+      "note": "2025 立春在 22:10，当天绝大部分时辰都还属甲辰年——日粒度换柱在这一天错一整天"
+    },
+    {
+      "id": "hai-hour-before-midnight",
+      "input": {
+        "date": "2024-01-15",
+        "timeIndex": 11,
+        "gender": "男",
+        "calendar": "solar"
+      },
+      "expect": {
+        "year": "癸卯",
+        "month": "乙丑",
+        "day": "戊寅",
+        "hour": "癸亥"
+      },
+      "note": "亥时，未触及任何边界"
+    },
+    {
+      "id": "zi-early",
+      "input": {
+        "date": "2024-01-16",
+        "timeIndex": 0,
+        "gender": "男",
+        "calendar": "solar"
+      },
+      "expect": {
+        "year": "癸卯",
+        "month": "乙丑",
+        "day": "己卯",
+        "hour": "甲子"
+      },
+      "note": "早子时，两派一致"
+    },
+    {
+      "id": "plain-control",
+      "input": {
+        "date": "1990-05-18",
+        "timeIndex": 6,
+        "gender": "男",
+        "calendar": "solar"
+      },
+      "expect": {
+        "year": "庚午",
+        "month": "辛巳",
+        "day": "癸未",
+        "hour": "戊午"
+      },
+      "note": "普通对照组，任何口径下都应相同"
+    },
+    {
+      "id": "leap-month",
+      "input": {
+        "date": "2023-02-15",
+        "timeIndex": 6,
+        "gender": "女",
+        "calendar": "lunar",
+        "isLeapMonth": true
+      },
+      "expect": {
+        "year": "癸卯",
+        "month": "丙辰",
+        "day": "癸巳",
+        "hour": "戊午"
+      },
+      "note": "农历闰二月十五 → 公历 2023-04-05"
+    },
+    {
+      "id": "zi-late",
+      "input": {
+        "date": "2024-01-15",
+        "timeIndex": 12,
+        "gender": "男",
+        "calendar": "solar"
+      },
+      "expect": {
+        "year": "癸卯",
+        "month": "乙丑",
+        "day": "己卯",
+        "hour": "甲子"
+      },
+      "note": "晚子时：日柱进位次日。两端已统一为子初换日；夜子时派在这里会给出 戊寅（日主不同，十神格局全不同）"
+    },
+    {
+      "id": "zi-late-with-term",
+      "input": {
+        "date": "2025-02-03",
+        "timeIndex": 12,
+        "gender": "男",
+        "calendar": "solar"
+      },
+      "expect": {
+        "year": "乙巳",
+        "month": "戊寅",
+        "day": "甲辰",
+        "hour": "甲子"
+      },
+      "note": "同一张盘同时踩到交节与换日两条边界；夜子时派在这里会给出 癸卯"
+    }
+  ]
+}

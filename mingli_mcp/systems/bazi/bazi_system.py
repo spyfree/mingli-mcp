@@ -28,6 +28,35 @@ except ImportError:
         Solar = None  # type: ignore
 
 
+# 时辰序号 → 用于排盘的小时（取时辰中点，晚子时取 23）。
+# 与官网 spyfree/mingli 的 getHourFromTimeIndex 逐项一致，
+# 契约见 docs/cross-engine-vectors.json 的 conventions.hourFromTimeIndex。
+HOUR_BY_TIME_INDEX = {
+    0: 0,  # 早子时 00:00-00:59
+    1: 2,  # 丑时   01:00-02:59
+    2: 4,  # 寅时
+    3: 6,  # 卯时
+    4: 8,  # 辰时
+    5: 10,  # 巳时
+    6: 12,  # 午时
+    7: 14,  # 未时
+    8: 16,  # 申时
+    9: 18,  # 酉时
+    10: 20,  # 戌时
+    11: 22,  # 亥时
+    12: 23,  # 晚子时 23:00-23:59
+}
+
+# 晚子时的换日流派。lunar_python 的 EightChar 默认 sect=2（夜子时：日柱留在当日、
+# 时柱取次日子时）；sect=1 是子初换日——23:00 起日柱即进位次日。
+#
+# 本服务取 sect=1，与官网保持一致：官网的紫微引擎 (iztro) 自身输出的日干支就是
+# 子初换日，两个产品卖给的是同一批人，同一个生日必须排出同一个日主。
+# 这是流派选择不是对错——改它等于改掉所有 23:00-23:59 出生用户的日主，
+# 连带十神、格局、大运全变，所以要改先改 docs/cross-engine-vectors.json。
+DAY_BOUNDARY_SECT = 1
+
+
 class BaziSystem(BaseFortuneSystem):
     """八字系统实现"""
 
@@ -232,7 +261,7 @@ class BaziSystem(BaseFortuneSystem):
             # 因此在立春前后（每年约2%的出生日）以及24个节气交接当天
             # （约1.75%），这两个方法给出的干支与八字口径不一致。
             # EightChar 是lunar_python为八字提供的接口，按立春/节精确换柱。
-            eight_char = lunar.getEightChar()
+            eight_char = self._get_eight_char(lunar)
             year_pillar = eight_char.getYear()
             month_pillar = eight_char.getMonth()
             day_pillar = eight_char.getDay()
@@ -344,7 +373,7 @@ class BaziSystem(BaseFortuneSystem):
             nominal_age = age + 1  # 虚岁
 
             lunar = self._get_lunar_object(birth_info)
-            eight_char = lunar.getEightChar()
+            eight_char = self._get_eight_char(lunar)
             day_gan = eight_char.getDayGan()
 
             # 大运推演（阳男阴女顺排 / 阴男阳女逆排，起运由节气距离决定）
@@ -520,6 +549,13 @@ class BaziSystem(BaseFortuneSystem):
                 return entry
         return da_yun_list[-1] if da_yun_list else {}
 
+    @staticmethod
+    def _get_eight_char(lunar: Lunar):
+        """取八字接口，并钉住晚子时的换日流派（见 DAY_BOUNDARY_SECT）"""
+        eight_char = lunar.getEightChar()
+        eight_char.setSect(DAY_BOUNDARY_SECT)
+        return eight_char
+
     def _get_lunar_object(self, birth_info: Dict[str, Any]) -> Lunar:
         """获取lunar对象"""
         date_str = birth_info["date"]
@@ -532,12 +568,15 @@ class BaziSystem(BaseFortuneSystem):
             # 应用真太阳时修正（如果启用）
             time_index = self.apply_solar_time_correction(birth_info)
 
-            # 时辰对应关系：0=早子时(0点), 1=丑时(1点), ... 12=晚子时(23点)
-            # 简化处理：每个时辰2小时，从早子时23点开始
-            if time_index == 0:
-                hour = 0  # 早子时 23-1点，用0点代表
-            else:
-                hour = (time_index - 1) * 2 + 1  # 其他时辰
+            # 时辰只给到两小时精度，代表小时取【时辰中点】：
+            # 0=早子时(0点)、1=丑时(2点)、2=寅时(4点) … 11=亥时(22点)、12=晚子时(23点)。
+            #
+            # 取中点而不是起点，是为了与官网 (spyfree/mingli) 的
+            # src/lib/bazi.ts getHourFromTimeIndex 完全一致——见
+            # docs/cross-engine-vectors.json 的 conventions.hourFromTimeIndex。
+            # 这个差别只在交节当天现形：若某个节交在 11:30，午时(11-13)取起点 11:00
+            # 归上一个月建、取中点 12:00 归下一个月建，两端会排出不同的月柱。
+            hour = HOUR_BY_TIME_INDEX.get(time_index, 12)
         else:
             hour = 0  # 默认子时
 
