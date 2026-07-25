@@ -25,6 +25,7 @@ from fastapi.responses import JSONResponse, Response
 from starlette.concurrency import run_in_threadpool
 
 from mingli_mcp.config import config
+from mingli_mcp.utils.metrics import get_metrics
 from mingli_mcp.utils.rate_limiter import RateLimiter
 
 from .base_transport import BaseTransport
@@ -246,10 +247,13 @@ class HttpTransport(BaseTransport):
 
             self._check_api_key(request, self._get_client_id(request))
 
-            if not self.enable_rate_limit:
-                return {"rate_limiting": False, "message": "Rate limiting is disabled"}
+            stats: Dict[str, Any] = {"tool_calls": get_metrics().get_summary()}
+            if self.enable_rate_limit:
+                stats["rate_limiting"] = self.rate_limiter.get_stats()
+            else:
+                stats["rate_limiting"] = False
 
-            return self.rate_limiter.get_stats()
+            return stats
 
         @self.app.post("/mcp")
         @self.app.post("/mcp/", include_in_schema=False)

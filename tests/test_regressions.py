@@ -580,3 +580,103 @@ class TestHiddenStemDeities:
 
         assert "## 藏干十神" in markdown
         assert "戊(食神)" in markdown
+
+
+# ============================================================================
+# 工具调用指标（metrics.py 此前是从未接入的死代码）
+# ============================================================================
+
+
+class TestToolCallMetrics:
+    """utils/metrics.py 有198行实现但从未被服务器调用，/stats也不暴露。"""
+
+    @pytest.fixture(autouse=True)
+    def _reset_metrics(self):
+        from mingli_mcp.utils.metrics import get_metrics
+
+        get_metrics().reset()
+        yield
+        get_metrics().reset()
+
+    def _call(self, server, tool, args):
+        return server.handle_request(
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "tools/call",
+                "params": {"name": tool, "arguments": args},
+            }
+        )
+
+    def test_successful_tool_call_is_recorded(self, server):
+        from mingli_mcp.utils.metrics import get_metrics
+
+        self._call(
+            server, "get_bazi_chart", {"date": "2000-08-16", "time_index": 6, "gender": "女"}
+        )
+        summary = get_metrics().get_summary()
+
+        assert summary["total_requests"] == 1
+        assert summary["successful_requests"] == 1
+        assert summary["system_calls"]["bazi"] == 1
+        assert summary["method_calls"]["bazi.get_chart"] == 1
+
+    def test_failed_tool_call_records_error_type(self, server):
+        from mingli_mcp.utils.metrics import get_metrics
+
+        self._call(server, "get_bazi_chart", {"date": "2000-08-16", "time_index": 6, "gender": "X"})
+        summary = get_metrics().get_summary()
+
+        assert summary["failed_requests"] == 1
+        assert summary["error_counts"]["ValidationError"] == 1
+
+    def test_unknown_tool_is_recorded(self, server):
+        from mingli_mcp.utils.metrics import get_metrics
+
+        self._call(server, "no_such_tool", {})
+
+        assert get_metrics().get_summary()["error_counts"]["UnknownTool"] == 1
+
+    @pytest.mark.parametrize(
+        ("tool", "expected"),
+        [
+            ("get_ziwei_chart", ("ziwei", "get_chart")),
+            ("get_bazi_fortune", ("bazi", "get_fortune")),
+            ("analyze_ziwei_palace", ("ziwei", "analyze_palace")),
+            ("analyze_bazi_element", ("bazi", "analyze_element")),
+            ("list_fortune_systems", ("server", "list_fortune_systems")),
+            (None, ("server", "unknown")),
+        ],
+    )
+    def test_tool_name_splits_into_system_and_method(self, tool, expected):
+        assert MingliMCPServer._split_tool_name(tool) == expected
+
+    def test_stats_endpoint_exposes_tool_metrics(self, server):
+        from fastapi.testclient import TestClient
+
+        from mingli_mcp.transports.http_transport import HttpTransport
+
+        transport = HttpTransport(host="127.0.0.1", port=8080, api_key="k")
+        transport.set_message_handler(server.handle_request)
+        client = TestClient(transport.app)
+
+        auth = {"Authorization": "Bearer k"}
+        response = client.post(
+            "/mcp",
+            headers=auth,
+            json={
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "tools/call",
+                "params": {
+                    "name": "get_bazi_chart",
+                    "arguments": {"date": "2000-08-16", "time_index": 6, "gender": "女"},
+                },
+            },
+        )
+        assert response.status_code == 200
+        payload = client.get("/stats", headers=auth).json()
+
+        assert payload["tool_calls"]["total_requests"] == 1
+        assert payload["tool_calls"]["method_calls"]["bazi.get_chart"] == 1
+        assert payload["tool_calls"]["average_response_time"] >= 0

@@ -92,6 +92,13 @@ class ZiweiFormatter:
         for key, value in chart_data["basic_info"].items():
             md += f"- **{key}**: {value}\n"
 
+        # 四柱口径与八字不同，立春前后会不一致，这里说明清楚避免误读
+        if "四柱" in chart_data["basic_info"]:
+            md += (
+                "\n> 四柱按紫微惯例以农历年换年干支；八字工具以立春换年，"
+                "立春前后出生者两者的年柱/月柱可能不同。\n"
+            )
+
         # 十二宫详情
         md += "\n## 十二宫详情\n\n"
         for palace in chart_data["palaces"]:

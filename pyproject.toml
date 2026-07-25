@@ -119,6 +119,19 @@ warn_unused_configs = true
 ignore_missing_imports = true
 exclude = ["venv", ".venv", "build", "dist"]
 
+# 这些模块直接跨越无类型第三方边界（iztro-py 的 astro/t()、json.loads、
+# 以及以 Callable 传入的消息处理器），返回值天然是 Any。
+# 逐个 cast() 只会增加噪音而不提升正确性，因此只在这几个模块关掉
+# warn_return_any，让 mypy 能作为CI门禁真正生效。
+[[tool.mypy.overrides]]
+module = [
+    "mingli_mcp.systems.ziwei.formatter",
+    "mingli_mcp.systems.ziwei.ziwei_system",
+    "mingli_mcp.transports.base_transport",
+    "mingli_mcp.transports.stdio_transport",
+]
+warn_return_any = false
+
 [tool.coverage.run]
 source = ["mingli_mcp"]
 omit = [
@@ -128,11 +141,8 @@ omit = [
     "*/build/*",
     "*/dist/*",
     "*/__pycache__/*",
-    "api_compatibility_analysis.py",
-    "benchmark_iztro_comparison.py",
-    "test_security_fixes.py",
+    "scripts/*",
     "*/systems/bazi/lib/*",
-    "*/utils/metrics.py",
     "setup.py",
     "conftest.py",
 ]

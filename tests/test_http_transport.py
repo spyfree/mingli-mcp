@@ -108,8 +108,9 @@ class TestHttpTransport:
         )
         assert response.status_code == 200
         data = response.json()
-        assert "total_requests" in data
-        assert "total_clients" in data
+        assert "total_requests" in data["rate_limiting"]
+        assert "total_clients" in data["rate_limiting"]
+        assert "total_requests" in data["tool_calls"]
 
     def test_invalid_json(self, client):
         """测试无效JSON返回-32700 Parse error"""
@@ -272,7 +273,9 @@ class TestHttpTransport:
         assert client.get("/stats").status_code == 401
         response = client.get("/stats", headers={"Authorization": "Bearer test-api-key"})
         assert response.status_code == 200
-        assert "max_requests_per_window" in response.json()
+        payload = response.json()
+        assert "tool_calls" in payload
+        assert payload["rate_limiting"]["max_requests_per_window"] == 100
 
     def test_cors_headers(self, client):
         """测试CORS头"""

@@ -5,6 +5,7 @@ This module contains the main MingliMCPServer class that coordinates
 protocol handling, tool execution, and transport management.
 """
 
+import time
 from typing import Any, Dict, List, Optional
 
 from mingli_mcp.config import config
@@ -18,6 +19,7 @@ from mingli_mcp.mcp_server.protocol import SUPPORTED_PROTOCOL_VERSIONS, Protocol
 from mingli_mcp.mcp_server.tools import ToolRegistry
 from mingli_mcp.transports import BaseTransport, StdioTransport
 from mingli_mcp.utils.formatters import format_error_response, format_success_response
+from mingli_mcp.utils.metrics import record_request
 
 logger = config.get_logger(__name__)
 
@@ -157,6 +159,22 @@ class MingliMCPServer:
                 return None
             return format_error_response(-32603, f"Internal error: {str(e)}", request_id)
 
+    @staticmethod
+    def _split_tool_name(tool_name: Any) -> tuple:
+        """把工具名拆成 (系统, 方法) 供指标分组用
+
+        get_ziwei_chart -> (ziwei, get_chart)；无法识别归到 (server, <原名>)。
+        """
+        if not isinstance(tool_name, str):
+            return "server", "unknown"
+
+        for system in ("ziwei", "bazi"):
+            marker = f"_{system}_"
+            if marker in tool_name:
+                verb, _, subject = tool_name.partition(marker)
+                return system, f"{verb}_{subject}"
+        return "server", tool_name
+
     def _handle_tools_call(self, request: Dict[str, Any], request_id: Any) -> Dict[str, Any]:
         """处理工具调用请求"""
         params = request.get("params", {})
@@ -166,28 +184,41 @@ class MingliMCPServer:
         logger.info(f"Tool call: {tool_name}")
         logger.debug(f"Arguments: {arguments}")
 
+        system, method = self._split_tool_name(tool_name)
+        started = time.monotonic()
+
+        def record(success: bool, error_type: Optional[str] = None) -> None:
+            record_request(system, method, time.monotonic() - started, success, error_type)
+
         try:
             handler = self.tool_registry.get_handler(tool_name)
             if handler is None:
+                record(False, "UnknownTool")
                 return format_error_response(-32602, f"Unknown tool: {tool_name}", request_id)
 
             result = handler(arguments)
+            record(True)
             return format_success_response(
                 {"content": [{"type": "text", "text": result}]}, request_id
             )
 
         except ValidationError as e:
             logger.error(f"Parameter validation error: {e}")
+            record(False, type(e).__name__)
             return format_error_response(-32602, str(e), request_id)
         except SystemNotFoundError as e:
             logger.error(f"System not found: {e}")
+            record(False, type(e).__name__)
             return format_error_response(-32602, str(e), request_id)
         except SystemError as e:
             logger.error(f"System execution error: {e}")
+            record(False, type(e).__name__)
             return format_error_response(-32603, str(e), request_id)
         except ToolCallError as e:
             logger.error(f"Tool call error: {e}")
+            record(False, type(e).__name__)
             return format_error_response(-32603, str(e), request_id)
         except Exception as e:
             logger.exception("Unexpected error in tool call")
+            record(False, type(e).__name__)
             return format_error_response(-32603, f"Internal error: {str(e)}", request_id)

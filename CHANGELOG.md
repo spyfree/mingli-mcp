@@ -51,6 +51,28 @@
   仅在可信代理后开启
 - **`/stats` 未授权访问**: 未配置 `HTTP_API_KEY` 时该端点对所有人开放限流器内部状态，现返回 404
 
+### 可观测性
+
+- **工具调用指标接入**: `utils/metrics.py` 有198行实现却从未被服务器调用过。现在每次
+  `tools/call` 都会记录系统、方法、耗时、成败与错误类型，并通过 `/stats` 暴露
+  （需配置 `HTTP_API_KEY`）。`/stats` 返回结构改为 `{tool_calls, rate_limiting}`
+- 删除 `utils/performance.py` 中与之重复且同样未接入的 `PerformanceMetrics`/`global_metrics`
+  （仍在使用的 `PerformanceTimer` 与 `log_performance` 保留）
+
+### 工程整理
+
+- **mypy 成为真正的 CI 门禁**: 此前 CI 里是 `mypy . || true`，26 个错误从不会让 CI 变红。
+  现已清零并去掉 `|| true`；仅对 4 个直接跨越无类型第三方边界的模块局部关闭
+  `warn_return_any`（逐个 cast 只增噪音不提升正确性），并在 pyproject 中注明原因
+- **删除失效脚本 `test_security_fixes.py`**: 它读取 1.1.0 重构时已删除的 `mingli_mcp.py`，
+  实际运行结果是 0/4 通过；且位于 `testpaths` 之外，CI 从未执行
+- **根目录整理**: 17 个 markdown 精简到 5 个（README/CHANGELOG/CLAUDE/AGENTS/DEV_COMMANDS），
+  历史发布说明移入 `docs/release-notes/`，改进记录移入 `docs/development/`；
+  `api_compatibility_analysis.py`、`benchmark_iztro_comparison.py` 移入 `scripts/`
+- **紫微四柱口径说明**: 紫微以农历年换年干支、八字以立春换年，立春前后两者年柱/月柱会不同。
+  这是流派差异而非错误，已在 `get_ziwei_chart` 的工具描述和 Markdown 输出中明确标注
+  （紫微安星本身依赖农历年，未改动其计算）
+
 ### 其他
 
 - 新增 `[http]` extra：`pip install mingli-mcp[http]` 此前被服务端报错信息、README、

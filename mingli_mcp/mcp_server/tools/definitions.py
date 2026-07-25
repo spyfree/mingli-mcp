@@ -44,7 +44,12 @@ def get_ziwei_chart_definition() -> Dict[str, Any]:
     """Get definition for get_ziwei_chart tool"""
     return {
         "name": "get_ziwei_chart",
-        "description": "获取紫微斗数排盘信息，包含命盘十二宫、主星、辅星、四化等详细信息",
+        "description": (
+            "获取紫微斗数排盘信息，包含命盘十二宫、主星、辅星、四化等详细信息。"
+            "注意：返回的『四柱』按紫微惯例以农历年换年干支，"
+            "与 get_bazi_chart 按立春换年的八字口径不同，"
+            "立春前后出生者两者的年柱/月柱会不一致，属流派差异而非错误"
+        ),
         "annotations": {
             "readOnlyHint": True,
             "destructiveHint": False,
