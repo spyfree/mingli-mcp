@@ -363,3 +363,220 @@ def test_analyze_element_is_part_of_the_base_interface():
 
     with pytest.raises(NotImplementedError):
         get_system("ziwei").analyze_element({"date": "2000-08-16", "time_index": 6, "gender": "女"})
+
+
+# ============================================================================
+# 八字四柱换柱边界（立春 / 节）
+# ============================================================================
+
+
+class TestPillarBoundaries:
+    """四柱曾用 Lunar.get*InGanZhi()，其换柱边界不是八字口径。
+
+    年柱按农历新年换年（应按立春），月柱边界不是精确的节时刻。
+    实测约 2.1% 的命例年柱错误、1.75% 月柱错误。
+    """
+
+    @pytest.mark.parametrize(
+        ("date", "expected_year_pillar", "expected_zodiac"),
+        [
+            ("2003-02-01", "壬午", "马"),  # 2003立春在2/4，之前仍属壬午年
+            ("2025-02-01", "甲辰", "龙"),  # 2025立春在2/3
+            ("1923-02-15", "癸亥", "猪"),  # 立春后已换年
+            ("2000-08-16", "庚辰", "龙"),  # 远离边界，不受影响
+        ],
+    )
+    def test_year_pillar_switches_at_lichun(self, date, expected_year_pillar, expected_zodiac):
+        chart = get_system("bazi").get_chart({"date": date, "time_index": 3, "gender": "男"})
+
+        assert chart["pillars"]["year"]["pillar"] == expected_year_pillar
+        assert chart["zodiac"] == expected_zodiac
+
+    @pytest.mark.parametrize(
+        ("date", "time_index", "expected_month_pillar"),
+        [
+            ("1999-07-07", 3, "庚午"),  # 小暑当天但在交节时刻之前
+            ("2009-10-08", 5, "癸酉"),  # 寒露当天
+            ("2000-08-16", 6, "甲申"),  # 远离边界
+        ],
+    )
+    def test_month_pillar_switches_at_jie(self, date, time_index, expected_month_pillar):
+        chart = get_system("bazi").get_chart(
+            {"date": date, "time_index": time_index, "gender": "男"}
+        )
+
+        assert chart["pillars"]["month"]["pillar"] == expected_month_pillar
+
+    def test_zodiac_agrees_with_year_pillar(self):
+        """生肖曾用农历年口径，会和立春口径的年柱自相矛盾。"""
+        from mingli_mcp.systems.bazi.bazi_system import BaziSystem
+
+        chart = get_system("bazi").get_chart(
+            {"date": "2003-02-01", "time_index": 3, "gender": "男"}
+        )
+        zhi = chart["pillars"]["year"]["zhi"]
+        zodiacs = ["鼠", "牛", "虎", "兔", "龙", "蛇", "马", "羊", "猴", "鸡", "狗", "猪"]
+
+        assert chart["zodiac"] == zodiacs[BaziSystem.ZHI.index(zhi)]
+
+
+# ============================================================================
+# 八字大运（此前是 age // 10 的占位实现）
+# ============================================================================
+
+
+class TestBaziDaYun:
+    """大运此前只是按年龄除以10分段，没有干支、起运和顺逆排。"""
+
+    FEMALE = {"date": "2000-08-16", "time_index": 6, "gender": "女"}
+    MALE = {"date": "2000-08-16", "time_index": 6, "gender": "男"}
+
+    def _fortune(self, birth_info, year=2026):
+        return get_system("bazi").get_fortune(birth_info, datetime(year, 7, 25))
+
+    def test_direction_follows_year_stem_and_gender(self):
+        """阳年男顺排，阳年女逆排（2000年为庚辰，庚属阳）。"""
+        assert self._fortune(self.MALE)["da_yun_direction"] == "顺排"
+        assert self._fortune(self.FEMALE)["da_yun_direction"] == "逆排"
+
+    def test_qi_yun_is_derived_from_solar_term_distance(self):
+        fortune = self._fortune(self.FEMALE)
+        qi_yun = fortune["qi_yun"]
+
+        assert qi_yun["solar_date"] == "2003-08-05"
+        assert (qi_yun["years"], qi_yun["months"], qi_yun["days"]) == (2, 11, 20)
+        assert "起运" in qi_yun["description"]
+
+    def test_da_yun_stems_step_through_the_sixty_cycle(self):
+        """大运干支自月柱起逐位推移，不是十年一个空标签。"""
+        from mingli_mcp.systems.bazi.bazi_system import BaziSystem
+
+        jiazi = [BaziSystem.GAN[i % 10] + BaziSystem.ZHI[i % 12] for i in range(60)]
+        fortune = self._fortune(self.FEMALE)
+        month_pillar = fortune["basic_chart"]["pillars"]["month"]["pillar"]
+        base = jiazi.index(month_pillar)
+
+        real = [e for e in fortune["da_yun_list"] if not e["is_pre_start"]]
+        assert [e["gan_zhi"] for e in real[:4]] == [jiazi[(base - n) % 60] for n in range(1, 5)]
+
+    def test_pre_start_period_is_flagged_not_a_da_yun(self):
+        fortune = self._fortune(self.FEMALE)
+        first = fortune["da_yun_list"][0]
+
+        assert first["is_pre_start"] is True
+        assert first["gan_zhi"] == ""
+        assert "小运" in first["description"]
+
+    def test_each_da_yun_spans_ten_years_and_is_contiguous(self):
+        entries = self._fortune(self.FEMALE)["da_yun_list"]
+
+        for previous, following in zip(entries, entries[1:]):
+            assert following["start_age"] == previous["end_age"] + 1
+            assert following["start_year"] == previous["end_year"] + 1
+        for entry in entries:
+            if not entry["is_pre_start"]:
+                assert entry["end_age"] - entry["start_age"] == 9
+
+    def test_current_da_yun_matches_the_query_year(self):
+        for year in (2005, 2015, 2026, 2040):
+            current = self._fortune(self.FEMALE, year)["da_yun"]
+            assert current["start_year"] <= year <= current["end_year"]
+
+    def test_da_yun_carries_ten_deities(self):
+        current = self._fortune(self.FEMALE)["da_yun"]
+
+        assert current["gan_zhi"] == "辛巳"
+        assert current["deities"]["gan"] == "正财"
+        assert current["deities"]["zhi"] == ["比肩", "食神", "偏财"]
+
+    def test_liu_nian_carries_deities_and_nominal_age(self):
+        fortune = self._fortune(self.FEMALE)
+
+        assert fortune["liu_nian"]["gan_zhi"] == "丙午"
+        assert fortune["liu_nian"]["deities"]["gan"] == "比肩"
+        assert fortune["nominal_age"] == fortune["age"] + 1
+
+    def test_legacy_fortune_keys_are_preserved(self):
+        """旧字段仍需存在，避免破坏既有调用方。"""
+        fortune = self._fortune(self.FEMALE)
+
+        assert {"query_date", "age", "day_master", "da_yun", "liu_nian", "basic_chart"} <= set(
+            fortune
+        )
+        assert {"age_range", "description"} <= set(fortune["da_yun"])
+        assert {"year", "gan_zhi", "zodiac"} <= set(fortune["liu_nian"])
+
+    def test_markdown_renders_da_yun_table(self):
+        from mingli_mcp.systems.bazi.formatter import BaziFormatter
+
+        markdown = BaziFormatter().format_fortune_markdown(self._fortune(self.FEMALE))
+
+        assert "## 大运一览" in markdown
+        assert "辛巳" in markdown
+        assert "起运" in markdown
+        assert "逆排" in markdown
+
+    def test_markdown_still_renders_legacy_shape(self):
+        """旧结构（无大运列表/起运）也要能渲染，不能KeyError。"""
+        from mingli_mcp.systems.bazi.formatter import BaziFormatter
+
+        legacy = {
+            "query_date": "2024-01-15",
+            "age": 24,
+            "day_master": "丙",
+            "da_yun": {"description": "乙酉大运", "age_range": "22-31岁"},
+            "liu_nian": {"year": 2024, "gan_zhi": "甲辰", "zodiac": "龙"},
+            "basic_chart": {"eight_char": "庚辰 甲申 丙寅 庚寅"},
+        }
+
+        markdown = BaziFormatter().format_fortune_markdown(legacy)
+
+        assert "乙酉大运" in markdown
+        assert "甲辰" in markdown
+
+
+# ============================================================================
+# 藏干十神（此前代码注释为"简化处理"，未实现）
+# ============================================================================
+
+
+class TestHiddenStemDeities:
+    def test_chart_exposes_hidden_stem_deities(self):
+        chart = get_system("bazi").get_chart(
+            {"date": "2000-08-16", "time_index": 6, "gender": "女"}
+        )
+
+        assert chart["zhi_deities"]["year"] == ["食神", "正印", "正官"]
+        assert chart["zhi_deities"]["month"] == ["偏财", "七杀", "食神"]
+
+    def test_hidden_deities_align_with_hidden_stems(self):
+        chart = get_system("bazi").get_chart(
+            {"date": "1985-03-20", "time_index": 4, "gender": "男"}
+        )
+
+        for pillar in ("year", "month", "day", "hour"):
+            assert len(chart["zhi_deities"][pillar]) == len(chart["zhi_cang_gan"][pillar])
+
+    def test_hidden_deities_match_the_reference_library(self):
+        """与lunar_python的十神实现交叉验证。"""
+        from lunar_python import Solar
+
+        chart = get_system("bazi").get_chart(
+            {"date": "2000-08-16", "time_index": 6, "gender": "女"}
+        )
+        eight_char = Solar.fromYmdHms(2000, 8, 16, 11, 0, 0).getLunar().getEightChar()
+
+        assert chart["zhi_deities"]["year"] == eight_char.getYearShiShenZhi()
+        assert chart["zhi_deities"]["month"] == eight_char.getMonthShiShenZhi()
+        assert chart["zhi_deities"]["day"] == eight_char.getDayShiShenZhi()
+
+    def test_markdown_renders_hidden_stem_deities(self):
+        from mingli_mcp.systems.bazi.formatter import BaziFormatter
+
+        chart = get_system("bazi").get_chart(
+            {"date": "2000-08-16", "time_index": 6, "gender": "女"}
+        )
+        markdown = BaziFormatter().format_chart_markdown(chart)
+
+        assert "## 藏干十神" in markdown
+        assert "戊(食神)" in markdown

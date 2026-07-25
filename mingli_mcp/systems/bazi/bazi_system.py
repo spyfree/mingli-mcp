@@ -7,7 +7,7 @@
 
 import logging
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from mingli_mcp.core.base_system import BaseFortuneSystem
 from mingli_mcp.core.exceptions import DependencyError, SystemError, ValidationError
@@ -222,11 +222,18 @@ class BaziSystem(BaseFortuneSystem):
             # 获取lunar对象
             lunar = self._get_lunar_object(birth_info)
 
-            # 提取四柱
-            year_pillar = lunar.getYearInGanZhi()
-            month_pillar = lunar.getMonthInGanZhi()
-            day_pillar = lunar.getDayInGanZhi()
-            hour_pillar = lunar.getTimeInGanZhi()
+            # 提取四柱：必须走EightChar，不能用Lunar.get*InGanZhi()
+            #
+            # Lunar.getYearInGanZhi() 以农历新年换年柱，但八字以【立春】换年柱；
+            # Lunar.getMonthInGanZhi() 的月柱边界也不是精确的【节】时刻。
+            # 因此在立春前后（每年约2%的出生日）以及24个节气交接当天
+            # （约1.75%），这两个方法给出的干支与八字口径不一致。
+            # EightChar 是lunar_python为八字提供的接口，按立春/节精确换柱。
+            eight_char = lunar.getEightChar()
+            year_pillar = eight_char.getYear()
+            month_pillar = eight_char.getMonth()
+            day_pillar = eight_char.getDay()
+            hour_pillar = eight_char.getTime()
 
             # 分解天干地支
             year_gan, year_zhi = year_pillar[0], year_pillar[1]
@@ -245,6 +252,8 @@ class BaziSystem(BaseFortuneSystem):
                 [year_gan, month_gan, day_gan, hour_gan, year_zhi, month_zhi, day_zhi, hour_zhi]
             )
 
+            zhi_cang_gan = self._get_zhi_cang_gan(year_zhi, month_zhi, day_zhi, hour_zhi)
+
             # 构建结果
             # solar_date必须是真正的阳历日期：农历输入时birth_info["date"]是农历，
             # 需要从lunar对象反查阳历，否则会把农历日期标成阳历。
@@ -262,10 +271,12 @@ class BaziSystem(BaseFortuneSystem):
                     "hour": {"gan": hour_gan, "zhi": hour_zhi, "pillar": hour_pillar},
                 },
                 "eight_char": f"{year_pillar} {month_pillar} {day_pillar} {hour_pillar}",
-                "zodiac": lunar.getYearShengXiao(),
+                # 生肖跟随年柱口径（立春换年），否则会和上面的年柱自相矛盾
+                "zodiac": lunar.getYearShengXiaoByLiChun(),
                 "deities": deities,
                 "wu_xing": wu_xing,
-                "zhi_cang_gan": self._get_zhi_cang_gan(year_zhi, month_zhi, day_zhi, hour_zhi),
+                "zhi_cang_gan": zhi_cang_gan,
+                "zhi_deities": self._calculate_zhi_deities(day_gan, zhi_cang_gan),
                 "day_master": day_gan,  # 日主（日干）
             }
 
@@ -296,6 +307,11 @@ class BaziSystem(BaseFortuneSystem):
 
         Returns:
             运势信息
+
+        Note:
+            大运按传统规则推演：阳年男/阴年女顺排，阴年男/阳年女逆排；
+            起运时间由出生到月令节气的距离换算（三天折一年）。
+            这部分由lunar_python计算，不再是按年龄除以10的近似。
         """
         self.validate_birth_info(birth_info)
         # Note: lunar_python doesn't support i18n yet, language parameter is ignored for now
@@ -307,8 +323,8 @@ class BaziSystem(BaseFortuneSystem):
             # 获取基本八字
             chart = self.get_chart(birth_info, language)
 
-            # 计算年龄（虚岁口径：按年份差，与传统命理习惯一致）
-            birth_year = int(birth_info["date"].split("-")[0])
+            # 年份差（保留原字段口径）与虚岁（大运/流年年龄使用虚岁）
+            birth_year = int(chart["solar_date"].split("-")[0])
             current_year = query_date.year
             age = current_year - birth_year
 
@@ -319,27 +335,37 @@ class BaziSystem(BaseFortuneSystem):
                     f"查询日期不能早于出生日期: 查询年份 {current_year} 早于出生年份 {birth_year}"
                 )
 
-            # 计算大运（简化版，每10年一个大运）
-            da_yun_index = age // 10
+            nominal_age = age + 1  # 虚岁
 
-            # 获取流年天干地支
+            lunar = self._get_lunar_object(birth_info)
+            eight_char = lunar.getEightChar()
+            day_gan = eight_char.getDayGan()
+
+            # 大运推演（阳男阴女顺排 / 阴男阳女逆排，起运由节气距离决定）
+            yun = eight_char.getYun(1 if birth_info["gender"] == "男" else 0)
+            da_yun_list = self._build_da_yun_list(yun, day_gan)
+            current_da_yun = self._find_current_da_yun(da_yun_list, current_year)
+
+            # 获取流年天干地支（同样以立春换年，与年柱口径保持一致）
             query_solar = Solar.fromDate(query_date)
             query_lunar = query_solar.getLunar()
-            liu_nian_gan_zhi = query_lunar.getYearInGanZhi()
+            liu_nian_gan_zhi = query_lunar.getYearInGanZhiByLiChun()
 
             result = {
                 "query_date": query_date.strftime("%Y-%m-%d"),
                 "age": age,
-                "day_master": chart["day_master"],
-                "da_yun": {
-                    "index": da_yun_index,
-                    "age_range": f"{da_yun_index * 10}-{(da_yun_index + 1) * 10 - 1}岁",
-                    "description": f"第{da_yun_index + 1}个大运",
-                },
+                "nominal_age": nominal_age,
+                "day_master": day_gan,
+                "qi_yun": self._format_qi_yun(yun),
+                "da_yun_direction": "顺排" if yun.isForward() else "逆排",
+                "da_yun": current_da_yun,
+                "da_yun_list": da_yun_list,
                 "liu_nian": {
                     "year": current_year,
                     "gan_zhi": liu_nian_gan_zhi,
-                    "zodiac": query_lunar.getYearShengXiao(),
+                    "zodiac": query_lunar.getYearShengXiaoByLiChun(),
+                    "age": nominal_age,
+                    "deities": self._gan_zhi_deities(liu_nian_gan_zhi, day_gan),
                 },
                 "basic_chart": chart,
             }
@@ -404,6 +430,90 @@ class BaziSystem(BaseFortuneSystem):
             logger.exception("Unexpected error analyzing wu xing")
             raise SystemError(f"五行分析失败: {str(e)}")
 
+    @staticmethod
+    def _format_qi_yun(yun) -> Dict[str, Any]:
+        """格式化起运信息
+
+        起运时间是出生到月令节气的距离换算得来（三天折一年、一天折四个月），
+        决定第一个大运从哪一年开始，之前的年份只走小运。
+        """
+        start_solar = yun.getStartSolar()
+        years, months, days = yun.getStartYear(), yun.getStartMonth(), yun.getStartDay()
+
+        parts = []
+        if years:
+            parts.append(f"{years}年")
+        if months:
+            parts.append(f"{months}个月")
+        if days or not parts:
+            parts.append(f"{days}天")
+        offset = "".join(parts)
+
+        return {
+            "years": years,
+            "months": months,
+            "days": days,
+            "solar_date": start_solar.toYmd(),
+            "description": f"出生后{offset}起运（{start_solar.toYmd()}）",
+        }
+
+    def _gan_zhi_deities(self, gan_zhi: str, day_gan: str) -> Dict[str, Any]:
+        """计算一个干支相对日主的十神（天干十神 + 地支藏干十神）"""
+        if not gan_zhi or len(gan_zhi) < 2:
+            return {}
+
+        gan, zhi = gan_zhi[0], gan_zhi[1]
+        deity_map = self.TEN_DEITIES.get(day_gan, {})
+        hide_gan = self.ZHI_CANG_GAN.get(zhi, [])
+
+        return {
+            "gan": deity_map.get(gan, "未知"),
+            "zhi_hide_gan": hide_gan,
+            "zhi": [deity_map.get(hidden, "未知") for hidden in hide_gan],
+        }
+
+    def _build_da_yun_list(self, yun, day_gan: str) -> List[Dict[str, Any]]:
+        """构建完整大运列表
+
+        lunar_python 的第一项是起运前的小运期，其干支为空，这里显式标记出来，
+        避免调用方把它当成一个真正的大运。
+        """
+        da_yun_list: List[Dict[str, Any]] = []
+        for da_yun in yun.getDaYun():
+            gan_zhi = da_yun.getGanZhi() or ""
+            is_pre_start = not gan_zhi
+
+            entry: Dict[str, Any] = {
+                "index": da_yun.getIndex(),
+                "gan_zhi": gan_zhi,
+                "start_age": da_yun.getStartAge(),
+                "end_age": da_yun.getEndAge(),
+                "start_year": da_yun.getStartYear(),
+                "end_year": da_yun.getEndYear(),
+                "age_range": f"{da_yun.getStartAge()}-{da_yun.getEndAge()}岁",
+                "year_range": f"{da_yun.getStartYear()}-{da_yun.getEndYear()}",
+                "is_pre_start": is_pre_start,
+            }
+
+            if is_pre_start:
+                entry["description"] = f"起运前小运期（{entry['age_range']}）"
+            else:
+                entry["description"] = f"第{da_yun.getIndex()}步大运 {gan_zhi}"
+                entry["deities"] = self._gan_zhi_deities(gan_zhi, day_gan)
+                entry["xun_kong"] = da_yun.getXunKong()
+
+            da_yun_list.append(entry)
+
+        return da_yun_list
+
+    @staticmethod
+    def _find_current_da_yun(da_yun_list: List[Dict[str, Any]], year: int) -> Dict[str, Any]:
+        """按年份定位当前所处的大运；超出推演范围时返回最后一步"""
+        for entry in da_yun_list:
+            if entry["start_year"] <= year <= entry["end_year"]:
+                return entry
+        return da_yun_list[-1] if da_yun_list else {}
+
     def _get_lunar_object(self, birth_info: Dict[str, Any]) -> Lunar:
         """获取lunar对象"""
         date_str = birth_info["date"]
@@ -458,7 +568,23 @@ class BaziSystem(BaseFortuneSystem):
             "month_gan": deity_map.get(chars[1], "未知"),
             "day_gan": deity_map.get(chars[2], "未知"),
             "hour_gan": deity_map.get(chars[3], "未知"),
-            # 地支中的藏干也需要计算，这里简化处理
+        }
+
+    def _calculate_zhi_deities(
+        self, day_gan: str, zhi_cang_gan: Dict[str, list]
+    ) -> Dict[str, list]:
+        """计算地支藏干的十神
+
+        地支不直接对应十神，要先取藏干再逐个映射，
+        同一个地支可能藏有多个天干（如寅藏甲丙戊）。
+        """
+        deity_map = self.TEN_DEITIES.get(day_gan, {})
+        if not deity_map:
+            return {pillar: [] for pillar in zhi_cang_gan}
+
+        return {
+            pillar: [deity_map.get(hidden, "未知") for hidden in hidden_gans]
+            for pillar, hidden_gans in zhi_cang_gan.items()
         }
 
     def _calculate_wu_xing(self, chars: list) -> Dict:

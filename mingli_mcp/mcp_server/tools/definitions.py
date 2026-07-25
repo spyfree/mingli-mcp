@@ -254,7 +254,10 @@ def get_bazi_chart_definition() -> Dict[str, Any]:
     """Get definition for get_bazi_chart tool"""
     return {
         "name": "get_bazi_chart",
-        "description": "获取八字（四柱）排盘信息，包含年月日时四柱、十神、五行、地支藏干等详细信息",
+        "description": (
+            "获取八字（四柱）排盘信息，包含年月日时四柱、天干十神、"
+            "地支藏干及藏干十神、五行分布等详细信息"
+        ),
         "annotations": {
             "readOnlyHint": True,
             "destructiveHint": False,
@@ -307,7 +310,10 @@ def get_bazi_fortune_definition() -> Dict[str, Any]:
     """Get definition for get_bazi_fortune tool"""
     return {
         "name": "get_bazi_fortune",
-        "description": "获取八字运势信息，包含简化十年年龄段标记、流年干支等详情（非完整大运干支推演）",
+        "description": (
+            "获取八字运势信息，包含起运时间、顺逆排、十步大运干支及其十神、"
+            "当前所处大运、流年干支与十神等完整推演结果"
+        ),
         "annotations": {
             "readOnlyHint": True,
             "destructiveHint": False,

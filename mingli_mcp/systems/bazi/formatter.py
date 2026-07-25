@@ -119,26 +119,104 @@ class BaziFormatter:
 - **日支** {data['pillars']['day']['zhi']}: {', '.join(data['zhi_cang_gan']['day'])}
 - **时支** {data['pillars']['hour']['zhi']}: {', '.join(data['zhi_cang_gan']['hour'])}
 """
+
+        # 藏干十神（可选：旧结构的数据没有这个字段）
+        zhi_deities = data.get("zhi_deities")
+        if zhi_deities:
+            md += "\n## 藏干十神\n"
+            for key, label in (
+                ("year", "年支"),
+                ("month", "月支"),
+                ("day", "日支"),
+                ("hour", "时支"),
+            ):
+                hidden = data["zhi_cang_gan"].get(key, [])
+                names = zhi_deities.get(key, [])
+                pairs = "、".join(f"{g}({d})" for g, d in zip(hidden, names))
+                md += f"- **{label}** {data['pillars'][key]['zhi']}: {pairs}\n"
+
         return md
+
+    @staticmethod
+    def _format_deities(deities: Dict[str, Any]) -> str:
+        """把十神信息压成一行：天干十神（藏干十神）"""
+        if not deities:
+            return ""
+
+        gan = deities.get("gan", "")
+        zhi = deities.get("zhi") or []
+        if gan and zhi:
+            return f"{gan}（藏干: {'、'.join(zhi)}）"
+        return gan or "、".join(zhi)
 
     def _format_fortune_markdown(self, data: Dict[str, Any]) -> str:
         """格式化运势为Markdown"""
+        da_yun = data.get("da_yun", {})
+        liu_nian = data.get("liu_nian", {})
+
         md = f"""# 八字运势
 
 ## 查询信息
 - **查询日期**: {data['query_date']}
-- **当前年龄**: {data['age']}岁
-- **日主**: {data['day_master']}
+- **当前年龄**: {data['age']}岁"""
 
-## 简化大运年龄段（非完整干支推演）
-- **当前年龄段**: {data['da_yun']['description']}
-- **年龄范围**: {data['da_yun']['age_range']}
+        if data.get("nominal_age"):
+            md += f"（虚岁 {data['nominal_age']}）"
 
+        md += f"\n- **日主**: {data['day_master']}\n"
+
+        # 起运信息（真实推演才有）
+        qi_yun = data.get("qi_yun")
+        if qi_yun:
+            md += f"- **起运**: {qi_yun['description']}\n"
+        if data.get("da_yun_direction"):
+            md += f"- **排运方向**: {data['da_yun_direction']}\n"
+
+        md += "\n## 当前大运\n"
+        if da_yun.get("is_pre_start"):
+            md += f"- **状态**: 尚未起运，当前处于小运期（{da_yun.get('age_range', '')}）\n"
+        else:
+            if da_yun.get("gan_zhi"):
+                md += f"- **干支**: {da_yun['gan_zhi']}\n"
+            md += f"- **{'年龄段' if not da_yun.get('gan_zhi') else '年龄范围'}**: "
+            md += f"{da_yun.get('age_range', '')}\n"
+            if da_yun.get("year_range"):
+                md += f"- **公历年份**: {da_yun['year_range']}\n"
+            deity_text = self._format_deities(da_yun.get("deities", {}))
+            if deity_text:
+                md += f"- **十神**: {deity_text}\n"
+            if da_yun.get("xun_kong"):
+                md += f"- **旬空**: {da_yun['xun_kong']}\n"
+        if da_yun.get("description"):
+            md += f"- **说明**: {da_yun['description']}\n"
+
+        md += f"""
 ## 流年
-- **流年**: {data['liu_nian']['year']}年
-- **干支**: {data['liu_nian']['gan_zhi']}
-- **生肖**: {data['liu_nian']['zodiac']}
+- **流年**: {liu_nian.get('year', '')}年
+- **干支**: {liu_nian.get('gan_zhi', '')}
+- **生肖**: {liu_nian.get('zodiac', '')}
+"""
+        liu_nian_deities = self._format_deities(liu_nian.get("deities", {}))
+        if liu_nian_deities:
+            md += f"- **十神**: {liu_nian_deities}\n"
 
+        # 大运一览表
+        da_yun_list = data.get("da_yun_list") or []
+        if da_yun_list:
+            md += "\n## 大运一览\n\n"
+            md += "| 步 | 干支 | 年龄 | 公历年份 | 十神 |\n"
+            md += "|---|------|------|----------|------|\n"
+            for entry in da_yun_list:
+                current = "▶ " if entry is da_yun else ""
+                gan_zhi = entry.get("gan_zhi") or "—"
+                label = "小运" if entry.get("is_pre_start") else str(entry.get("index", ""))
+                deity_text = self._format_deities(entry.get("deities", {})) or "—"
+                md += (
+                    f"| {current}{label} | {gan_zhi} | {entry.get('age_range', '')} "
+                    f"| {entry.get('year_range', '')} | {deity_text} |\n"
+                )
+
+        md += f"""
 ---
 
 ## 本命八字
