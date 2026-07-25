@@ -61,6 +61,12 @@
 
 ### 工程整理
 
+- **修复 `npm ci` 在镜像源之外无法安装**: `package-lock.json` 里 90 个 `resolved`
+  URL 全部硬编码为 `registry.npmmirror.com`。`npm ci` 会照这些 URL 取包，因此在无法
+  访问该镜像的环境（海外网络、CI runner、沙箱）会直接 403 失败，Cloudflare 部署前的
+  `npm ci` 因此走不通。已按 `registry.npmjs.org` 重新生成 lockfile（版本仍在
+  package.json 声明范围内：wrangler 4.114.0、@cloudflare/containers 0.1.1）
+
 - **mypy 成为真正的 CI 门禁**: 此前 CI 里是 `mypy . || true`，26 个错误从不会让 CI 变红。
   现已清零并去掉 `|| true`；仅对 4 个直接跨越无类型第三方边界的模块局部关闭
   `warn_return_any`（逐个 cast 只增噪音不提升正确性），并在 pyproject 中注明原因
