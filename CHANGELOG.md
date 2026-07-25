@@ -79,7 +79,7 @@
   docs 引用但并不存在
 - `analyze_element` 纳入 `BaseFortuneSystem` 接口；`BaziFormatter` 补充返回 str 的
   Markdown 方法；mypy 错误从 26 降至 8（剩余均为无类型第三方库边界）
-- `server.json` 版本号与包版本对齐（此前停留在 1.0.7）
+- 四处版本号对齐到本次发布：`server.json`（停留在 1.0.7）、`package.json`（停留在 1.0.10）、`.actor/actor.json`（停留在 1.1，Apify 用 MAJOR.MINOR），此前均与包版本不一致
 - 新增 75 个回归测试，覆盖率 82% → 85%
 
 ## [1.1.0] - 2026-07-19
