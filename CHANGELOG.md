@@ -18,6 +18,7 @@
 - **向后兼容**: 保留 `Authorization: Bearer ML-...` 和内部主密钥；`initialize`、`tools/list` 等发现方法继续免费开放，`tools/call` 对 OAuth 与旧 Key 统一执行每日额度
 - **客户端可理解性**: 工具补齐标题、只读/幂等/封闭世界提示和严格输入 schema；初始化说明改为面向 AI 助手的采集与展示规则，明确区分本命生肖和流年生肖
 - **自动化验证**: 新增 Worker 级黑盒测试，覆盖 OAuth discovery、CSRF、PKCE、旧 Key、额度与容器转发
+- **过期数据自动清理**: 每日 cron 触发 `purgeExpiredData`，清理过期的 OAuth 授权码、令牌与授权记录
 
 ### 新功能
 

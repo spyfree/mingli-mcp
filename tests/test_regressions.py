@@ -192,6 +192,18 @@ class TestBirthInfoValidation:
 
         assert system.get_chart({**self.BASE, "time_index": "6"})
 
+    @pytest.mark.parametrize("bad_index", [6.5, 0.5, True])
+    def test_fractional_or_bool_time_index_is_rejected(self, bad_index):
+        """6.5 used to be silently truncated to 6 by int(); True counted as 1."""
+        system = get_system("bazi")
+
+        with pytest.raises(ValidationError):
+            system.get_chart({**self.BASE, "time_index": bad_index})
+
+    def test_integral_float_time_index_is_accepted(self):
+        """JSON clients may legitimately send 6.0 for the integer 6."""
+        assert get_system("bazi").get_chart({**self.BASE, "time_index": 6.0})
+
     @pytest.mark.parametrize("bad_calendar", ["LUNAR", "Solar", "gregorian", "", None, 1])
     def test_invalid_calendar_is_rejected(self, bad_calendar):
         system = get_system("ziwei")
@@ -223,14 +235,24 @@ class TestBirthInfoValidation:
             system.get_chart({**self.BASE, "use_solar_time": True})
 
 
-def test_bazi_fortune_rejects_query_date_before_birth():
-    """Used to report age=-10 and '第0个大运' / '-10--1岁'."""
+@pytest.mark.parametrize(
+    "query", [datetime(1990, 1, 1), datetime(2000, 1, 1)]  # 早于出生年 / 同年但早于出生日
+)
+def test_bazi_fortune_rejects_query_date_before_birth(query):
+    """Used to report age=-10 and '第0个大运' / '-10--1岁'; same-year
+    before-birth queries slipped through the year-only check."""
     bazi = get_system("bazi")
 
     with pytest.raises(ValidationError):
-        bazi.get_fortune(
-            {"date": "2000-08-16", "time_index": 6, "gender": "男"}, datetime(1990, 1, 1)
-        )
+        bazi.get_fortune({"date": "2000-08-16", "time_index": 6, "gender": "男"}, query)
+
+
+def test_bazi_fortune_accepts_query_on_birth_date():
+    bazi = get_system("bazi")
+
+    assert bazi.get_fortune(
+        {"date": "2000-08-16", "time_index": 6, "gender": "男"}, datetime(2000, 8, 16)
+    )
 
 
 # ============================================================================
@@ -407,17 +429,30 @@ class TestPillarBoundaries:
 
         assert chart["pillars"]["month"]["pillar"] == expected_month_pillar
 
-    def test_zodiac_agrees_with_year_pillar(self):
-        """生肖曾用农历年口径，会和立春口径的年柱自相矛盾。"""
+    @pytest.mark.parametrize(
+        ("date", "time_index", "expected_year_pillar", "expected_zodiac"),
+        [
+            ("2003-02-01", 3, "壬午", "马"),  # 立春前，按天粒度即可区分
+            # 2024-02-04 立春 16:26 当天：生肖曾按天换（getYearShengXiaoByLiChun），
+            # 而年柱按精确时刻换，立春时刻之前的时辰两者会自相矛盾
+            ("2024-02-04", 5, "癸卯", "兔"),  # 巳时(10:00) 在立春时刻之前
+            ("2024-02-04", 9, "甲辰", "龙"),  # 酉时(18:00) 在立春时刻之后
+        ],
+    )
+    def test_zodiac_agrees_with_year_pillar(
+        self, date, time_index, expected_year_pillar, expected_zodiac
+    ):
+        """生肖必须与年柱同源，包括立春当天的精确时刻边界。"""
         from mingli_mcp.systems.bazi.bazi_system import BaziSystem
 
         chart = get_system("bazi").get_chart(
-            {"date": "2003-02-01", "time_index": 3, "gender": "男"}
+            {"date": date, "time_index": time_index, "gender": "男"}
         )
         zhi = chart["pillars"]["year"]["zhi"]
-        zodiacs = ["鼠", "牛", "虎", "兔", "龙", "蛇", "马", "羊", "猴", "鸡", "狗", "猪"]
 
-        assert chart["zodiac"] == zodiacs[BaziSystem.ZHI.index(zhi)]
+        assert chart["pillars"]["year"]["pillar"] == expected_year_pillar
+        assert chart["zodiac"] == expected_zodiac
+        assert chart["zodiac"] == BaziSystem.SHENG_XIAO[BaziSystem.ZHI.index(zhi)]
 
 
 # ============================================================================

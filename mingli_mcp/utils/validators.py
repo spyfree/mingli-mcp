@@ -72,6 +72,12 @@ def validate_time_index(time_index: Any) -> bool:
     Returns:
         是否有效
     """
+    # bool 是 int 子类，True/False 不是合法时辰；6.5 这类小数
+    # 不能被 int() 静默截断成 6，必须整体拒绝
+    if isinstance(time_index, bool):
+        return False
+    if isinstance(time_index, float) and not time_index.is_integer():
+        return False
     try:
         index = int(time_index)
         return 0 <= index <= 12

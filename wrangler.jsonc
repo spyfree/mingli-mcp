@@ -9,6 +9,10 @@
       "custom_domain": true
     }
   ],
+  // 每日触发 scheduled()，清理过期的 OAuth grant/token 记录（purgeExpiredData）
+  "triggers": {
+    "crons": ["17 19 * * *"]
+  },
   "containers": [
     {
       "class_name": "MingliContainer",

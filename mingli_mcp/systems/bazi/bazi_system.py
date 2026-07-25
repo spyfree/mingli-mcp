@@ -37,6 +37,9 @@ class BaziSystem(BaseFortuneSystem):
     # 十二地支
     ZHI = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
 
+    # 十二生肖（与 ZHI 同序：子鼠、丑牛……亥猪）
+    SHENG_XIAO = ["鼠", "牛", "虎", "兔", "龙", "蛇", "马", "羊", "猴", "鸡", "狗", "猪"]
+
     # 五行属性
     WU_XING = {
         "金": "庚辛申酉",
@@ -271,8 +274,9 @@ class BaziSystem(BaseFortuneSystem):
                     "hour": {"gan": hour_gan, "zhi": hour_zhi, "pillar": hour_pillar},
                 },
                 "eight_char": f"{year_pillar} {month_pillar} {day_pillar} {hour_pillar}",
-                # 生肖跟随年柱口径（立春换年），否则会和上面的年柱自相矛盾
-                "zodiac": lunar.getYearShengXiaoByLiChun(),
+                # 生肖直接取年柱地支对应的生肖：年柱按立春精确时刻换柱，
+                # getYearShengXiaoByLiChun() 只按天换，立春当天两者会自相矛盾
+                "zodiac": self._zodiac_from_zhi(year_zhi),
                 "deities": deities,
                 "wu_xing": wu_xing,
                 "zhi_cang_gan": zhi_cang_gan,
@@ -328,11 +332,13 @@ class BaziSystem(BaseFortuneSystem):
             current_year = query_date.year
             age = current_year - birth_year
 
-            # 查询日期早于出生年份时年龄为负，大运序号也会变成负数，
-            # 会输出"第0个大运""-10--1岁"这类无意义结果，直接拒绝
-            if age < 0:
+            # 查询日期早于出生日期时，大运序号/年龄都是无意义结果，直接拒绝。
+            # 按天比较：同年出生日之前的查询同样无效
+            birth_solar_date = datetime.strptime(chart["solar_date"], "%Y-%m-%d").date()
+            if query_date.date() < birth_solar_date:
                 raise ValidationError(
-                    f"查询日期不能早于出生日期: 查询年份 {current_year} 早于出生年份 {birth_year}"
+                    f"查询日期不能早于出生日期: {query_date.strftime('%Y-%m-%d')} "
+                    f"早于 {chart['solar_date']}"
                 )
 
             nominal_age = age + 1  # 虚岁
@@ -363,7 +369,7 @@ class BaziSystem(BaseFortuneSystem):
                 "liu_nian": {
                     "year": current_year,
                     "gan_zhi": liu_nian_gan_zhi,
-                    "zodiac": query_lunar.getYearShengXiaoByLiChun(),
+                    "zodiac": self._zodiac_from_zhi(liu_nian_gan_zhi[1]),
                     "age": nominal_age,
                     "deities": self._gan_zhi_deities(liu_nian_gan_zhi, day_gan),
                 },
@@ -605,6 +611,10 @@ class BaziSystem(BaseFortuneSystem):
             if gan in chars_str:
                 return element
         return "未知"
+
+    def _zodiac_from_zhi(self, zhi: str) -> str:
+        """由地支得生肖，保证生肖与产生该地支的干支口径完全一致"""
+        return self.SHENG_XIAO[self.ZHI.index(zhi)]
 
     def _format_wu_xing_desc(self, scores: Dict) -> str:
         """格式化五行描述"""
