@@ -4,4 +4,4 @@
 Package entry: run with `python -m mingli_mcp` or the `mingli-mcp` console script.
 """
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
