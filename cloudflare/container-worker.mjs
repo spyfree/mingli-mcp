@@ -41,8 +41,10 @@ const PURCHASE_URL = 'https://lee.locker/mcp';
 const CSRF_COOKIE = 'mingli_oauth_csrf';
 
 // 握手、能力发现和静态资源不产生排盘算力成本。真正执行工具时才授权和计数。
+// server/discover 是2026-07-28无状态协议的能力发现方法（相当于initialize的替代）
 const FREE_METHODS = new Set([
   'initialize',
+  'server/discover',
   'ping',
   'tools/list',
   'prompts/list',

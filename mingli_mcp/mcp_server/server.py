@@ -15,7 +15,13 @@ from mingli_mcp.core.exceptions import (
     ToolCallError,
     ValidationError,
 )
-from mingli_mcp.mcp_server.protocol import SUPPORTED_PROTOCOL_VERSIONS, ProtocolHandler
+from mingli_mcp.mcp_server.protocol import (
+    MODERN_PROTOCOL_VERSIONS,
+    SUPPORTED_PROTOCOL_VERSIONS,
+    UNSUPPORTED_PROTOCOL_VERSION_ERROR,
+    ProtocolHandler,
+    get_request_protocol_version,
+)
 from mingli_mcp.mcp_server.tools import ToolRegistry
 from mingli_mcp.transports import BaseTransport, StdioTransport
 from mingli_mcp.utils.formatters import format_error_response, format_success_response
@@ -114,50 +120,81 @@ class MingliMCPServer:
                 -32600, "Invalid Request: 'method' must be a string", request_id
             )
 
-        try:
-            # Protocol methods
-            if method == "initialize":
-                return self.protocol_handler.handle_initialize(request, request_id)
-            elif method == "ping":
-                return format_success_response({}, request_id)
-            elif method == "notifications/initialized":
-                logger.info("Received initialized notification")
+        # 2026-07-28 无状态协议：请求可在 params._meta 中声明协议版本；
+        # 声明了不支持的版本时必须返回 UnsupportedProtocolVersionError
+        meta_version = get_request_protocol_version(request)
+        if meta_version is not None and meta_version not in SUPPORTED_PROTOCOL_VERSIONS:
+            logger.warning(f"Unsupported protocol version in request _meta: {meta_version}")
+            if is_notification:
                 return None
-            elif is_notification:
-                # 其他notification（如notifications/cancelled）：接受但不响应
-                logger.debug(f"Ignoring notification: {method}")
-                return None
-            elif method == "tools/list":
-                return self.protocol_handler.handle_tools_list(
-                    request_id, self.tool_registry.get_definitions()
-                )
-            elif method == "tools/call":
-                return self._handle_tools_call(request, request_id)
-            elif method == "prompts/list":
-                return self.protocol_handler.handle_prompts_list(request_id)
-            elif method == "prompts/get":
-                return self.protocol_handler.handle_prompts_get(request, request_id)
-            elif method == "resources/list":
-                return self.protocol_handler.handle_resources_list(request_id)
-            elif method in ("resources/read", "resources/get"):
-                # resources/read 是MCP标准方法名；resources/get 为历史兼容
-                return self.protocol_handler.handle_resources_read(request, request_id)
-            elif method == "resources/templates/list":
-                return format_success_response({"resourceTemplates": []}, request_id)
-            else:
-                logger.warning(f"Unknown method: {method}")
-                return format_error_response(-32601, f"Method not found: {method}", request_id)
+            return format_error_response(
+                UNSUPPORTED_PROTOCOL_VERSION_ERROR,
+                f"Unsupported protocol version: {meta_version}",
+                request_id,
+                data={
+                    "supported": SUPPORTED_PROTOCOL_VERSIONS,
+                    "requested": meta_version,
+                },
+            )
 
+        try:
+            response = self._route_request(request, method, request_id, is_notification)
         except (ValidationError, SystemNotFoundError) as e:
             logger.error(f"Request validation error for {method}: {e}")
             if is_notification:
                 return None
-            return format_error_response(-32602, str(e), request_id)
+            response = format_error_response(-32602, str(e), request_id)
         except Exception as e:
             logger.exception(f"Unexpected error handling request: {method}")
             if is_notification:
                 return None
-            return format_error_response(-32603, f"Internal error: {str(e)}", request_id)
+            response = format_error_response(-32603, f"Internal error: {str(e)}", request_id)
+
+        # 现代请求的成功结果补齐 resultType / serverInfo / 缓存提示；
+        # 旧时代请求的响应保持原样
+        if response is not None and meta_version in MODERN_PROTOCOL_VERSIONS:
+            self.protocol_handler.decorate_modern_result(response, method)
+        return response
+
+    def _route_request(
+        self, request: Dict[str, Any], method: str, request_id: Any, is_notification: bool
+    ) -> Optional[Dict[str, Any]]:
+        """按method路由到对应的处理器"""
+        # Protocol methods
+        if method == "initialize":
+            return self.protocol_handler.handle_initialize(request, request_id)
+        elif method == "ping":
+            return format_success_response({}, request_id)
+        elif method == "server/discover":
+            # 2026-07-28 无状态发现（双时代客户端也用作stdio时代探测）
+            return self.protocol_handler.handle_server_discover(request, request_id)
+        elif method == "notifications/initialized":
+            logger.info("Received initialized notification")
+            return None
+        elif is_notification:
+            # 其他notification（如notifications/cancelled）：接受但不响应
+            logger.debug(f"Ignoring notification: {method}")
+            return None
+        elif method == "tools/list":
+            return self.protocol_handler.handle_tools_list(
+                request_id, self.tool_registry.get_definitions()
+            )
+        elif method == "tools/call":
+            return self._handle_tools_call(request, request_id)
+        elif method == "prompts/list":
+            return self.protocol_handler.handle_prompts_list(request_id)
+        elif method == "prompts/get":
+            return self.protocol_handler.handle_prompts_get(request, request_id)
+        elif method == "resources/list":
+            return self.protocol_handler.handle_resources_list(request_id)
+        elif method in ("resources/read", "resources/get"):
+            # resources/read 是MCP标准方法名；resources/get 为历史兼容
+            return self.protocol_handler.handle_resources_read(request, request_id)
+        elif method == "resources/templates/list":
+            return format_success_response({"resourceTemplates": []}, request_id)
+        else:
+            logger.warning(f"Unknown method: {method}")
+            return format_error_response(-32601, f"Method not found: {method}", request_id)
 
     @staticmethod
     def _split_tool_name(tool_name: Any) -> tuple:

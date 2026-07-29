@@ -298,11 +298,25 @@ Defined in `mingli_mcp/mcp_server/tools/definitions.py`:
 
 ## Development Notes
 
-**MCP Protocol Versions**: negotiated per client, latest supported is 2025-11-25
-(see `SUPPORTED_PROTOCOL_VERSIONS` in mingli_mcp/mcp_server/protocol.py). The HTTP
-transport is stateless Streamable HTTP in pure-JSON response mode: notifications
-get 202 Accepted, Origin headers are validated (403 on mismatch), and the
-MCP-Protocol-Version header is validated (400 on unsupported versions).
+**MCP Protocol Versions**: the server is dual-era, latest supported is 2026-07-28
+(see `SUPPORTED_PROTOCOL_VERSIONS` in mingli_mcp/mcp_server/protocol.py):
+
+- *Modern era (2026-07-28, stateless)*: no `initialize` handshake — each request
+  declares its version in `params._meta` (`io.modelcontextprotocol/protocolVersion`);
+  `server/discover` answers capability probes; results carry `resultType`,
+  `_meta` serverInfo, and `ttlMs`/`cacheScope` cache hints on list/read results.
+  Unsupported versions get `UnsupportedProtocolVersionError` (-32022).
+- *Legacy era (2025-11-25 and earlier)*: `initialize` negotiates a legacy version
+  (modern versions are never negotiated via initialize); responses stay
+  byte-identical to previous releases — no new fields are added.
+
+The HTTP transport is stateless Streamable HTTP in pure-JSON response mode:
+notifications get 202 Accepted, Origin headers are validated (403 on mismatch),
+and the MCP-Protocol-Version header is validated (400 + -32022 on unsupported
+versions). For requests declaring 2026-07-28, the `Mcp-Method`/`Mcp-Name` headers
+are required and validated against the body (400 + HeaderMismatch -32020 on
+mismatch, with `=?base64?...?=` sentinel decoding for non-ASCII names), and
+unknown methods return HTTP 404 with JSON-RPC -32601.
 
 **Input Validation**:
 - Uses `validate_birth_info()` in BaseFortuneSystem

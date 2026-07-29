@@ -130,6 +130,14 @@ describe('MCP OAuth gateway', () => {
     expect((await response.json()).authorization).toBe(`Bearer ${MASTER_KEY}`);
   });
 
+  it('keeps server/discover free (2026-07-28 stateless capability discovery)', async () => {
+    const response = await fetchWorker(mcpRequest('server/discover'), env);
+
+    expect(response.status).toBe(200);
+    expect(forwarded).toHaveLength(1);
+    expect((await response.json()).authorization).toBe(`Bearer ${MASTER_KEY}`);
+  });
+
   it('does not inject the internal key into non-MCP container routes', async () => {
     const response = await fetchWorker(new Request(`${ORIGIN}/stats`), env);
 

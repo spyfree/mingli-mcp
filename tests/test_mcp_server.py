@@ -115,6 +115,87 @@ class TestMingliMCPServerRequestRouting:
         response = server.handle_request(request)
         assert response is None
 
+
+class TestModernStatelessProtocol:
+    """Tests for the 2026-07-28 stateless protocol (per-request _meta)."""
+
+    MODERN_META = {"io.modelcontextprotocol/protocolVersion": "2026-07-28"}
+
+    @pytest.fixture
+    def server(self):
+        """Create a server instance with mocked transport."""
+        with patch.object(MingliMCPServer, "_initialize_transport"):
+            return MingliMCPServer()
+
+    def test_routes_server_discover(self, server):
+        """server/discover must be answered (spec: servers MUST implement it)."""
+        request = {"method": "server/discover", "id": 1, "params": {"_meta": self.MODERN_META}}
+
+        response = server.handle_request(request)
+        assert response["result"]["supportedVersions"] == ["2026-07-28"]
+        assert response["result"]["resultType"] == "complete"
+
+    def test_modern_request_gets_decorated_result(self, server):
+        """A request declaring 2026-07-28 in _meta gets resultType, serverInfo,
+        and cache hints on list results."""
+        request = {"method": "tools/list", "id": 2, "params": {"_meta": self.MODERN_META}}
+
+        response = server.handle_request(request)
+        result = response["result"]
+        assert result["resultType"] == "complete"
+        assert "io.modelcontextprotocol/serverInfo" in result["_meta"]
+        assert result["ttlMs"] > 0
+        assert result["cacheScope"] == "public"
+
+    def test_modern_tool_call_has_result_type_but_no_cache_hints(self, server):
+        """tools/call results carry resultType but are not cacheable."""
+        request = {
+            "method": "tools/call",
+            "id": 3,
+            "params": {
+                "name": "list_fortune_systems",
+                "arguments": {},
+                "_meta": self.MODERN_META,
+            },
+        }
+
+        response = server.handle_request(request)
+        assert response["result"]["resultType"] == "complete"
+        assert "ttlMs" not in response["result"]
+
+    def test_legacy_request_response_is_unchanged(self, server):
+        """Requests without _meta protocolVersion (legacy clients) must get
+        byte-identical responses to previous releases: no new fields."""
+        request = {"method": "tools/list", "id": 4}
+
+        response = server.handle_request(request)
+        assert "resultType" not in response["result"]
+        assert "_meta" not in response["result"]
+        assert "ttlMs" not in response["result"]
+
+    def test_unsupported_meta_version_rejected_with_32022(self, server):
+        """Declaring an unsupported version must return
+        UnsupportedProtocolVersionError (-32022) with the supported list."""
+        request = {
+            "method": "tools/list",
+            "id": 5,
+            "params": {"_meta": {"io.modelcontextprotocol/protocolVersion": "1900-01-01"}},
+        }
+
+        response = server.handle_request(request)
+        assert response["error"]["code"] == -32022
+        assert "2026-07-28" in response["error"]["data"]["supported"]
+        assert response["error"]["data"]["requested"] == "1900-01-01"
+
+    def test_unsupported_meta_version_notification_gets_no_response(self, server):
+        """Notifications are never answered, even when their version is bad."""
+        request = {
+            "method": "notifications/cancelled",
+            "params": {"_meta": {"io.modelcontextprotocol/protocolVersion": "1900-01-01"}},
+        }
+
+        assert server.handle_request(request) is None
+
     def test_responds_to_ping(self, server):
         """Server should answer ping with an empty result."""
         request = {"method": "ping", "id": 7}

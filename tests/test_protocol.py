@@ -19,14 +19,16 @@ class TestProtocolHandlerInitialize:
         """Create a ProtocolHandler instance."""
         return ProtocolHandler()
 
-    def test_initialize_returns_latest_version_by_default(self, handler):
-        """Initialize should return the latest supported protocol version
-        when the client does not request a specific one."""
+    def test_initialize_returns_latest_legacy_version_by_default(self, handler):
+        """Initialize is the legacy-era handshake: without a requested version
+        it should return the latest legacy (pre-2026-07-28) protocol version."""
         request = {"params": {"clientInfo": {"name": "test-client"}}}
         response = handler.handle_initialize(request, request_id=1)
 
         assert "result" in response
-        assert response["result"]["protocolVersion"] == ProtocolHandler.LATEST_PROTOCOL_VERSION
+        assert (
+            response["result"]["protocolVersion"] == ProtocolHandler.LATEST_LEGACY_PROTOCOL_VERSION
+        )
 
     def test_initialize_echoes_supported_client_version(self, handler):
         """Initialize should echo the client's requested version if supported."""
@@ -36,12 +38,24 @@ class TestProtocolHandlerInitialize:
         assert response["result"]["protocolVersion"] == "2024-11-05"
 
     def test_initialize_falls_back_for_unsupported_version(self, handler):
-        """Initialize should fall back to the latest supported version
+        """Initialize should fall back to the latest legacy version
         when the client requests an unsupported one."""
         request = {"params": {"protocolVersion": "1999-01-01"}}
         response = handler.handle_initialize(request, request_id=1)
 
-        assert response["result"]["protocolVersion"] == ProtocolHandler.LATEST_PROTOCOL_VERSION
+        assert (
+            response["result"]["protocolVersion"] == ProtocolHandler.LATEST_LEGACY_PROTOCOL_VERSION
+        )
+
+    def test_initialize_does_not_negotiate_modern_versions(self, handler):
+        """Modern (2026-07-28+) versions have no initialize handshake, so a client
+        asking for one via initialize gets the latest legacy version instead."""
+        request = {"params": {"protocolVersion": "2026-07-28"}}
+        response = handler.handle_initialize(request, request_id=1)
+
+        assert (
+            response["result"]["protocolVersion"] == ProtocolHandler.LATEST_LEGACY_PROTOCOL_VERSION
+        )
 
     def test_initialize_returns_server_info(self, handler):
         """Initialize should return server info."""
@@ -286,3 +300,111 @@ class TestProtocolHandlerResourcesRead:
 
         for resource in response["result"]["resources"]:
             assert resource["mimeType"] == "text/markdown"
+
+
+class TestProtocolHandlerServerDiscover:
+    """Tests for the 2026-07-28 server/discover method (MUST be implemented)."""
+
+    @pytest.fixture
+    def handler(self):
+        """Create a ProtocolHandler instance."""
+        return ProtocolHandler()
+
+    def test_discover_lists_only_modern_versions(self, handler):
+        """supportedVersions advertises stateless (modern) versions only;
+        legacy versions are negotiated through initialize instead."""
+        response = handler.handle_server_discover({"params": {}}, request_id=1)
+
+        assert response["result"]["supportedVersions"] == ["2026-07-28"]
+
+    def test_discover_returns_capabilities_and_instructions(self, handler):
+        """Discovery should expose the same capabilities and instructions
+        as the legacy initialize handshake."""
+        discover = handler.handle_server_discover({"params": {}}, request_id=1)
+        initialize = handler.handle_initialize({"params": {}}, request_id=2)
+
+        assert discover["result"]["capabilities"] == initialize["result"]["capabilities"]
+        assert discover["result"]["instructions"] == initialize["result"]["instructions"]
+
+    def test_discover_reports_server_info_in_meta(self, handler):
+        """serverInfo travels in _meta per the final 2026-07-28 schema."""
+        response = handler.handle_server_discover({"params": {}}, request_id=1)
+
+        server_info = response["result"]["_meta"]["io.modelcontextprotocol/serverInfo"]
+        assert server_info["name"]
+        assert server_info["version"]
+
+    def test_discover_result_is_cacheable_and_complete(self, handler):
+        """DiscoverResult is a CacheableResult and carries resultType."""
+        response = handler.handle_server_discover({"params": {}}, request_id=1)
+
+        result = response["result"]
+        assert result["resultType"] == "complete"
+        assert isinstance(result["ttlMs"], int) and result["ttlMs"] > 0
+        assert result["cacheScope"] in ("public", "private")
+
+    def test_discover_works_without_meta(self, handler):
+        """A bare probe without params/_meta must still get an answer
+        (dual-era clients use it to detect the server's era on stdio)."""
+        response = handler.handle_server_discover({}, request_id="probe-1")
+
+        assert "result" in response
+        assert response["id"] == "probe-1"
+
+
+class TestModernResultDecoration:
+    """Tests for decorate_modern_result (2026-07-28 per-request metadata)."""
+
+    @pytest.fixture
+    def handler(self):
+        """Create a ProtocolHandler instance."""
+        return ProtocolHandler()
+
+    def test_adds_result_type_and_server_info(self, handler):
+        """Every modern result must carry resultType; serverInfo rides in _meta."""
+        response = handler.handle_tools_list(request_id=1, tool_definitions=[])
+        handler.decorate_modern_result(response, "tools/list")
+
+        result = response["result"]
+        assert result["resultType"] == "complete"
+        assert "io.modelcontextprotocol/serverInfo" in result["_meta"]
+
+    def test_adds_cache_hints_to_list_results(self, handler):
+        """tools/list, prompts/list, resources/list and resources/read
+        results must carry ttlMs and cacheScope for modern clients."""
+        for method, response in [
+            ("tools/list", handler.handle_tools_list(request_id=1, tool_definitions=[])),
+            ("prompts/list", handler.handle_prompts_list(request_id=1)),
+            ("resources/list", handler.handle_resources_list(request_id=1)),
+            (
+                "resources/read",
+                handler.handle_resources_read(
+                    {"params": {"uri": "mingli://configuration"}}, request_id=1
+                ),
+            ),
+        ]:
+            handler.decorate_modern_result(response, method)
+            assert response["result"]["ttlMs"] > 0, method
+            assert response["result"]["cacheScope"] == "public", method
+
+    def test_does_not_add_cache_hints_to_tool_calls(self, handler):
+        """tools/call results are not CacheableResults."""
+        from mingli_mcp.utils.formatters import format_success_response
+
+        response = format_success_response({"content": []}, request_id=1)
+        handler.decorate_modern_result(response, "tools/call")
+
+        assert response["result"]["resultType"] == "complete"
+        assert "ttlMs" not in response["result"]
+        assert "cacheScope" not in response["result"]
+
+    def test_leaves_error_responses_untouched(self, handler):
+        """Error responses have no result object and must not be modified."""
+        from mingli_mcp.utils.formatters import format_error_response
+
+        response = format_error_response(-32601, "Method not found", request_id=1)
+        original = dict(response["error"])
+        handler.decorate_modern_result(response, "tools/list")
+
+        assert response["error"] == original
+        assert "result" not in response

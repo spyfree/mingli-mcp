@@ -4,14 +4,20 @@ HTTP传输层实现
 基于FastAPI实现Streamable HTTP方式的MCP服务（无状态、纯JSON响应模式）
 适用于远程调用、云端部署等场景
 
-MCP Streamable HTTP规范要点（2025-11-25）：
+MCP Streamable HTTP规范要点（2026-07-28）：
 - 单一MCP端点（/mcp）接受POST
-- 对notification/response返回202 Accepted且无body
+- 对notification返回202 Accepted且无body
 - 必须校验Origin头，非法时返回403（防DNS rebinding）
-- MCP-Protocol-Version头非法/不支持时返回400
+- MCP-Protocol-Version头不支持时返回400 + UnsupportedProtocolVersionError(-32022)
+- 2026-07-28 请求必须携带Mcp-Method/Mcp-Name头且与body一致，
+  否则返回400 + HeaderMismatch(-32020)
+- 2026-07-28 请求调用未实现的方法时返回404 + Method not found(-32601)
+- 协议级会话已移除；本实现从未使用Mcp-Session-Id，天然满足无状态要求
 - 不支持SSE的服务器对GET返回405（FastAPI自动处理）
 """
 
+import base64
+import binascii
 import inspect
 import logging
 import secrets
@@ -31,6 +37,28 @@ from mingli_mcp.utils.rate_limiter import RateLimiter
 from .base_transport import BaseTransport
 
 logger = logging.getLogger(__name__)
+
+# MCP规范保留错误码（2026-07-28 错误码分配策略）
+# 注意：不从 mingli_mcp.mcp_server.protocol 导入，避免 transports <-> mcp_server
+# 的循环导入（会被 transports/__init__ 的 try/except ImportError 静默吞掉）
+HEADER_MISMATCH_ERROR = -32020
+UNSUPPORTED_PROTOCOL_VERSION_ERROR = -32022
+
+# 2026-07-28 起为"现代"无状态协议：请求头与body需满足一致性校验
+MODERN_PROTOCOL_ERA_START = "2026-07-28"
+# 现代请求在 params._meta 中声明协议版本所用的键
+META_PROTOCOL_VERSION_KEY = "io.modelcontextprotocol/protocolVersion"
+
+# 需要携带Mcp-Name头的方法 -> 对应的body来源字段（params.name / params.uri）
+MCP_NAME_SOURCE_FIELDS = {
+    "tools/call": "name",
+    "prompts/get": "name",
+    "resources/read": "uri",
+}
+
+# Mcp-Name / Mcp-Param-* 值的Base64哨兵编码标记（非ASCII安全值的编码格式）
+_B64_SENTINEL_PREFIX = "=?base64?"
+_B64_SENTINEL_SUFFIX = "?="
 
 MessageResponse = Optional[Dict[str, Any]]
 SyncMessageHandler = Callable[[Dict[str, Any]], MessageResponse]
@@ -74,6 +102,11 @@ class HttpTransport(BaseTransport):
         self.api_key = api_key
         self.enable_rate_limit = enable_rate_limit
         self.supported_protocol_versions = supported_protocol_versions
+        # 现代（2026-07-28起）版本子集：这些版本的请求启用头/体一致性校验。
+        # ISO日期字符串可按字典序比较
+        self.modern_protocol_versions = [
+            v for v in (supported_protocol_versions or []) if v >= MODERN_PROTOCOL_ERA_START
+        ]
         self.trust_proxy_headers = (
             config.TRUST_PROXY_HEADERS if trust_proxy_headers is None else trust_proxy_headers
         )
@@ -117,7 +150,13 @@ class HttpTransport(BaseTransport):
             allow_origins=cors_origins,
             allow_credentials=cors_allow_credentials or config.CORS_ALLOW_CREDENTIALS,
             allow_methods=["GET", "POST", "OPTIONS"],  # 只允许必要的方法
-            allow_headers=["Content-Type", "Authorization", "MCP-Protocol-Version"],
+            allow_headers=[
+                "Content-Type",
+                "Authorization",
+                "MCP-Protocol-Version",
+                "Mcp-Method",
+                "Mcp-Name",
+            ],
         )
 
         logger.info(f"CORS enabled for origins: {cors_origins}")
@@ -175,8 +214,9 @@ class HttpTransport(BaseTransport):
     def _check_protocol_version(self, request: Request) -> Optional[JSONResponse]:
         """校验MCP-Protocol-Version头
 
-        规范：头缺失时假定为旧版本客户端，放行；
-        头存在但版本不受支持时必须返回400。
+        规范：头缺失时假定为2025-06-18之前的旧版本客户端，放行；
+        头存在但版本不受支持时必须返回400 + UnsupportedProtocolVersionError，
+        并在data中列出受支持的版本供客户端重试选择。
         """
         version = request.headers.get("MCP-Protocol-Version")
         if not version or not self.supported_protocol_versions:
@@ -191,12 +231,102 @@ class HttpTransport(BaseTransport):
             content={
                 "jsonrpc": "2.0",
                 "error": {
-                    "code": -32600,
+                    "code": UNSUPPORTED_PROTOCOL_VERSION_ERROR,
                     "message": f"Unsupported protocol version: {version}",
-                    "data": {"supported": self.supported_protocol_versions},
+                    "data": {
+                        "supported": self.supported_protocol_versions,
+                        "requested": version,
+                    },
                 },
+                "id": None,
             },
         )
+
+    @staticmethod
+    def _decode_header_value(value: str) -> Optional[str]:
+        """解码Mcp-Name等头的Base64哨兵格式（=?base64?...?=）
+
+        非哨兵格式的值原样返回；哨兵格式解码失败返回None（视为校验失败）。
+        """
+        if value.startswith(_B64_SENTINEL_PREFIX) and value.endswith(_B64_SENTINEL_SUFFIX):
+            encoded = value[len(_B64_SENTINEL_PREFIX) : -len(_B64_SENTINEL_SUFFIX)]
+            try:
+                return base64.b64decode(encoded, validate=True).decode("utf-8")
+            except (binascii.Error, UnicodeDecodeError, ValueError):
+                return None
+        return value
+
+    def _check_modern_headers(
+        self, request: Request, body: Dict[str, Any]
+    ) -> Optional[JSONResponse]:
+        """2026-07-28 请求头与请求体的一致性校验（Server Validation）
+
+        仅对MCP-Protocol-Version头声明为现代版本的JSON-RPC请求启用：
+        - Mcp-Method头必须存在且等于body.method（所有请求）
+        - Mcp-Name头必须存在且等于params.name / params.uri
+          （tools/call、prompts/get、resources/read）
+        - 头中的协议版本必须与body params._meta中声明的一致
+        任一不满足返回400 + HeaderMismatch(-32020)。
+        notification 的头要求规范未定义，跳过校验。
+        """
+        header_version = request.headers.get("MCP-Protocol-Version")
+        if header_version not in self.modern_protocol_versions:
+            return None
+        # notification（无id）不做头校验
+        if not isinstance(body, dict) or "id" not in body:
+            return None
+
+        def mismatch(message: str) -> JSONResponse:
+            logger.warning(f"Header mismatch: {message}")
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": HEADER_MISMATCH_ERROR,
+                        "message": f"Header mismatch: {message}",
+                    },
+                    "id": body.get("id"),
+                },
+            )
+
+        method = body.get("method")
+        header_method = request.headers.get("Mcp-Method")
+        if header_method is None:
+            return mismatch("required Mcp-Method header is missing")
+        if header_method != method:
+            return mismatch(
+                f"Mcp-Method header value '{header_method}' "
+                f"does not match body method '{method}'"
+            )
+
+        params = body.get("params")
+        params = params if isinstance(params, dict) else {}
+
+        name_field = MCP_NAME_SOURCE_FIELDS.get(method) if isinstance(method, str) else None
+        # body中缺少name/uri本身是参数错误，交给核心处理器报-32602，
+        # 这里只在body确实携带了值时要求并校验Mcp-Name头
+        if name_field is not None and isinstance(params.get(name_field), str):
+            body_name = params[name_field]
+            header_name = request.headers.get("Mcp-Name")
+            if header_name is None:
+                return mismatch("required Mcp-Name header is missing")
+            decoded_name = self._decode_header_value(header_name)
+            if decoded_name is None or decoded_name != body_name:
+                return mismatch(
+                    f"Mcp-Name header value does not match body {name_field} '{body_name}'"
+                )
+
+        meta = params.get("_meta")
+        meta = meta if isinstance(meta, dict) else {}
+        body_version = meta.get(META_PROTOCOL_VERSION_KEY)
+        if body_version != header_version:
+            return mismatch(
+                f"MCP-Protocol-Version header '{header_version}' does not match "
+                f"the protocol version declared in the request body '_meta' ({body_version!r})"
+            )
+
+        return None
 
     def _check_api_key(self, request: Request, client_id: str) -> None:
         """API密钥验证（如果配置了），失败抛出401"""
@@ -307,6 +437,12 @@ class HttpTransport(BaseTransport):
                     },
                 )
 
+            # 2026-07-28 请求：Mcp-Method/Mcp-Name/协议版本头与body一致性校验
+            if isinstance(data, dict):
+                header_error = self._check_modern_headers(request, data)
+                if header_error is not None:
+                    return header_error
+
             logger.debug(
                 f"Received MCP request: {data.get('method') if isinstance(data, dict) else data}"
             )
@@ -327,6 +463,15 @@ class HttpTransport(BaseTransport):
                 # notification/response消息：规范要求返回202 Accepted且无body
                 if response is None:
                     return Response(status_code=status.HTTP_202_ACCEPTED)
+
+                # 2026-07-28：未实现的方法必须返回404 + JSON-RPC -32601，
+                # 以便与不承载MCP端点的旧HTTP+SSE服务器的404区分开
+                if (
+                    request.headers.get("MCP-Protocol-Version") in self.modern_protocol_versions
+                    and isinstance(response.get("error"), dict)
+                    and response["error"].get("code") == -32601
+                ):
+                    return JSONResponse(content=response, status_code=status.HTTP_404_NOT_FOUND)
 
                 return JSONResponse(content=response)
 

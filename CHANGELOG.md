@@ -2,6 +2,33 @@
 
 ## [未发布]
 
+### MCP 协议升级：支持 2026-07-28（无状态时代）
+
+MCP 官方于 2026-07-28 发布了新版规范（SEP-2575/2567/2243/2549/2322），协议从
+有状态双向协议转为无状态请求/响应协议。本服务器现为**双时代（dual-era）**实现，
+对旧客户端完全向后兼容——不带 `_meta` 版本声明的请求，其响应与历史版本逐字节一致：
+
+- **`server/discover`**（新规范强制要求）：无状态能力发现，返回
+  `supportedVersions`、`capabilities`、`instructions`、`_meta` 中的 serverInfo
+  及 `ttlMs`/`cacheScope` 缓存提示；双时代客户端也用它做 stdio 时代探测。
+  `supportedVersions` 只列现代版本——旧版本仍走 `initialize` 协商，
+  且 `initialize` 不再把 2026-07-28 作为协商结果（现代时代没有握手）。
+- **按请求声明版本**：请求可在 `params._meta`
+  （`io.modelcontextprotocol/protocolVersion`）中自带协议版本；声明了不支持的
+  版本返回 `UnsupportedProtocolVersionError`（-32022，附 `supported` 列表）。
+- **现代结果元数据**：声明 2026-07-28 的请求，其结果自动补齐
+  `resultType: "complete"`、`_meta` serverInfo，列表/读取类结果
+  （tools/list、prompts/list、resources/list、resources/read、
+  resources/templates/list）附带 `ttlMs`/`cacheScope`（静态目录，公共缓存1小时）。
+- **HTTP 传输校验**（Streamable HTTP，2026-07-28 请求）：`Mcp-Method`/`Mcp-Name`
+  头为必填并与 body 校验一致（含 `=?base64?...?=` 哨兵解码），不一致返回
+  400 + `HeaderMismatch`（-32020）；`MCP-Protocol-Version` 头必须与 body `_meta`
+  一致；未知方法返回 404 + -32601（与旧 HTTP+SSE 服务器的 404 区分）；
+  版本不支持的错误码从 -32600 改为规范保留的 -32022。CORS 放行新增请求头。
+- **无需改动即已合规的部分**：本实现从未使用 `Mcp-Session-Id`（协议级会话已被
+  移除）、从未在 SSE 流上发起服务器请求（MRTR 不适用）、不实现已弃用的
+  Roots/Sampling/Logging，resources/read 未找到资源时本就返回 -32602。
+
 ### 重大变更 ⚠️ — 与官网排盘口径对齐
 
 同一批用户既在官网 (spyfree/mingli) 排盘，也用插件连这个服务。两端排出不同的盘

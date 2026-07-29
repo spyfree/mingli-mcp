@@ -6,7 +6,10 @@ from typing import Any, Dict, Optional
 
 
 def format_error_response(
-    error_code: int, error_message: str, request_id: Optional[Any] = None
+    error_code: int,
+    error_message: str,
+    request_id: Optional[Any] = None,
+    data: Optional[Any] = None,
 ) -> Dict[str, Any]:
     """
     格式化错误响应
@@ -15,6 +18,7 @@ def format_error_response(
         error_code: 错误代码
         error_message: 错误消息
         request_id: 请求ID；无法确定时（如Parse error/Invalid Request）传None
+        data: 附加错误数据（如UnsupportedProtocolVersionError的supported列表）
 
     Returns:
         JSON-RPC错误响应
@@ -23,9 +27,12 @@ def format_error_response(
         JSON-RPC 2.0规范要求响应对象必须包含id成员；
         无法从请求中确定id时必须为null，而不是省略该字段。
     """
+    error: Dict[str, Any] = {"code": error_code, "message": error_message}
+    if data is not None:
+        error["data"] = data
     return {
         "jsonrpc": "2.0",
-        "error": {"code": error_code, "message": error_message},
+        "error": error,
         "id": request_id,
     }
 

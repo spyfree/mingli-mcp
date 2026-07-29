@@ -6,7 +6,7 @@ MCP protocol methods like initialize, tools/list, prompts/list, etc.
 """
 
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from mingli_mcp.config import config
 from mingli_mcp.utils.formatters import format_error_response, format_success_response
@@ -14,16 +14,92 @@ from mingli_mcp.utils.formatters import format_error_response, format_success_re
 logger = config.get_logger(__name__)
 
 # 服务器支持的MCP协议版本（从新到旧）
-# 版本协商规则见 https://modelcontextprotocol.io/specification/2025-11-25/basic/lifecycle
-LATEST_PROTOCOL_VERSION = "2025-11-25"
+# 版本规则见 https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning
+LATEST_PROTOCOL_VERSION = "2026-07-28"
 SUPPORTED_PROTOCOL_VERSIONS = [
+    "2026-07-28",
     "2025-11-25",
     "2025-06-18",
     "2025-03-26",
     "2024-11-05",
 ]
 
+# 2026-07-28 起协议进入无状态"现代"时代（SEP-2575）：不再有 initialize 握手，
+# 每个请求在 params._meta 中自带协议版本、客户端身份与能力
+MODERN_PROTOCOL_VERSIONS = ["2026-07-28"]
+# initialize 握手只存在于旧时代协议，因此握手协商范围限定在旧版本内
+LEGACY_PROTOCOL_VERSIONS = [
+    v for v in SUPPORTED_PROTOCOL_VERSIONS if v not in MODERN_PROTOCOL_VERSIONS
+]
+LATEST_LEGACY_PROTOCOL_VERSION = LEGACY_PROTOCOL_VERSIONS[0]
+
+# 请求/结果 _meta 中的标准键（2026-07-28）
+META_PROTOCOL_VERSION_KEY = "io.modelcontextprotocol/protocolVersion"
+META_CLIENT_INFO_KEY = "io.modelcontextprotocol/clientInfo"
+META_SERVER_INFO_KEY = "io.modelcontextprotocol/serverInfo"
+
+# MCP规范保留错误码（2026-07-28 错误码分配策略：-32020 ~ -32099 归规范）
+HEADER_MISMATCH_ERROR = -32020
+UNSUPPORTED_PROTOCOL_VERSION_ERROR = -32022
+
+# CacheableResult 缓存提示：工具/提示词/资源目录随包发布、进程内不变、
+# 与用户身份无关，因此允许共享缓存1小时
+CACHE_TTL_MS = 3_600_000
+CACHE_SCOPE = "public"
+# 2026-07-28 起这些方法的结果必须携带 ttlMs/cacheScope
+CACHEABLE_RESULT_METHODS = frozenset(
+    {
+        "server/discover",
+        "tools/list",
+        "prompts/list",
+        "resources/list",
+        "resources/read",
+        "resources/templates/list",
+    }
+)
+
 RESOURCE_MIME_TYPE = "text/markdown"
+
+SERVER_INSTRUCTIONS = (
+    "这是专业的紫微斗数与八字排盘工具。调用排盘前，先向用户确认出生日期、"
+    "出生时辰、性别，以及日期是阳历还是农历；信息不完整时应先追问，不要猜测。"
+    "涉及年份时，必须清楚区分并标注“本命生肖”（出生年）与“流年生肖”"
+    "（所查询年份），不得混为一谈。优先使用 markdown 输出并用通俗语言解释，"
+    "同时把命理结果表述为传统文化参考，不作为医疗、法律或投资决策依据。"
+    "Before calling a chart tool, confirm birth date, birth time, gender, and calendar type. "
+    "Clearly distinguish birth-zodiac facts from query-year zodiac facts."
+)
+
+
+def get_request_protocol_version(request: Dict[str, Any]) -> Optional[str]:
+    """读取请求在 params._meta 中自带的协议版本（2026-07-28 无状态协议）
+
+    旧时代客户端不携带该字段，返回None。
+    """
+    params = request.get("params")
+    if not isinstance(params, dict):
+        return None
+    meta = params.get("_meta")
+    if not isinstance(meta, dict):
+        return None
+    version = meta.get(META_PROTOCOL_VERSION_KEY)
+    return version if isinstance(version, str) else None
+
+
+def _server_info() -> Dict[str, str]:
+    return {
+        "name": config.MCP_SERVER_NAME,
+        "title": "命理 MCP Server",
+        "version": config.MCP_SERVER_VERSION,
+    }
+
+
+def _server_capabilities() -> Dict[str, Any]:
+    return {
+        "tools": {},
+        "prompts": {},
+        "resources": {},
+    }
 
 
 class ProtocolHandler:
@@ -31,44 +107,79 @@ class ProtocolHandler:
 
     LATEST_PROTOCOL_VERSION = LATEST_PROTOCOL_VERSION
     SUPPORTED_PROTOCOL_VERSIONS = SUPPORTED_PROTOCOL_VERSIONS
+    MODERN_PROTOCOL_VERSIONS = MODERN_PROTOCOL_VERSIONS
+    LATEST_LEGACY_PROTOCOL_VERSION = LATEST_LEGACY_PROTOCOL_VERSION
 
     def handle_initialize(self, request: Dict[str, Any], request_id: Any) -> Dict[str, Any]:
-        """处理初始化请求（含协议版本协商）"""
+        """处理初始化请求（旧时代握手，含协议版本协商）
+
+        initialize 只协商旧版本：2026-07-28 起的现代协议没有握手，
+        版本由每个请求的 _meta 声明、能力经 server/discover 获取。
+        """
         params = request.get("params", {})
         logger.info(f"Client info: {params.get('clientInfo', params)}")
 
-        # 版本协商：客户端请求的版本受支持则回显；否则回复服务器支持的最新版本
+        # 版本协商：客户端请求的旧版本受支持则回显；否则回复服务器支持的最新旧版本
         client_version = params.get("protocolVersion")
-        if client_version in SUPPORTED_PROTOCOL_VERSIONS:
+        if client_version in LEGACY_PROTOCOL_VERSIONS:
             negotiated_version = client_version
         else:
-            negotiated_version = LATEST_PROTOCOL_VERSION
+            negotiated_version = LATEST_LEGACY_PROTOCOL_VERSION
 
         return format_success_response(
             {
                 "protocolVersion": negotiated_version,
-                "serverInfo": {
-                    "name": config.MCP_SERVER_NAME,
-                    "title": "命理 MCP Server",
-                    "version": config.MCP_SERVER_VERSION,
-                },
-                "capabilities": {
-                    "tools": {},
-                    "prompts": {},
-                    "resources": {},
-                },
-                "instructions": (
-                    "这是专业的紫微斗数与八字排盘工具。调用排盘前，先向用户确认出生日期、"
-                    "出生时辰、性别，以及日期是阳历还是农历；信息不完整时应先追问，不要猜测。"
-                    "涉及年份时，必须清楚区分并标注“本命生肖”（出生年）与“流年生肖”"
-                    "（所查询年份），不得混为一谈。优先使用 markdown 输出并用通俗语言解释，"
-                    "同时把命理结果表述为传统文化参考，不作为医疗、法律或投资决策依据。"
-                    "Before calling a chart tool, confirm birth date, birth time, gender, and calendar type. "
-                    "Clearly distinguish birth-zodiac facts from query-year zodiac facts."
-                ),
+                "serverInfo": _server_info(),
+                "capabilities": _server_capabilities(),
+                "instructions": SERVER_INSTRUCTIONS,
             },
             request_id,
         )
+
+    def handle_server_discover(self, request: Dict[str, Any], request_id: Any) -> Dict[str, Any]:
+        """处理 server/discover 请求（2026-07-28 起服务器必须实现）
+
+        无状态发现：客户端可在任何请求之前调用，获知服务器支持的现代协议
+        版本、能力与身份；双时代客户端也用它作为stdio上的时代探测。
+        supportedVersions 只列现代（无状态）版本——旧版本仍走 initialize 协商。
+        """
+        params = request.get("params")
+        if isinstance(params, dict):
+            meta = params.get("_meta")
+            if isinstance(meta, dict) and meta.get(META_CLIENT_INFO_KEY):
+                logger.info(f"Client info: {meta.get(META_CLIENT_INFO_KEY)}")
+
+        return format_success_response(
+            {
+                "resultType": "complete",
+                "supportedVersions": list(MODERN_PROTOCOL_VERSIONS),
+                "capabilities": _server_capabilities(),
+                "instructions": SERVER_INSTRUCTIONS,
+                "ttlMs": CACHE_TTL_MS,
+                "cacheScope": CACHE_SCOPE,
+                "_meta": {META_SERVER_INFO_KEY: _server_info()},
+            },
+            request_id,
+        )
+
+    def decorate_modern_result(self, response: Dict[str, Any], method: str) -> None:
+        """为现代（2026-07-28）请求的成功结果就地补齐必备元数据
+
+        - resultType: 所有结果必填；本服务器不发起MRTR，恒为 "complete"
+        - _meta serverInfo: 服务器应在每个结果中自报身份
+        - ttlMs/cacheScope: 列表/读取类方法结果必填的缓存提示
+        旧协议请求的响应不经过此方法，保持与历史版本一致。
+        """
+        result = response.get("result")
+        if not isinstance(result, dict):
+            return
+        result.setdefault("resultType", "complete")
+        meta = result.setdefault("_meta", {})
+        if isinstance(meta, dict):
+            meta.setdefault(META_SERVER_INFO_KEY, _server_info())
+        if method in CACHEABLE_RESULT_METHODS:
+            result.setdefault("ttlMs", CACHE_TTL_MS)
+            result.setdefault("cacheScope", CACHE_SCOPE)
 
     def handle_tools_list(
         self, request_id: Any, tool_definitions: List[Dict[str, Any]]
