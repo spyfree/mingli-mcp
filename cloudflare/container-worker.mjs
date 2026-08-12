@@ -3,7 +3,7 @@ import { OAuthProvider } from '@cloudflare/workers-oauth-provider';
 
 export class MingliContainer extends Container {
   defaultPort = 8080;
-  sleepAfter = '10m';
+  sleepAfter = '2m';
   enableInternet = true;
 
   constructor(ctx, env) {
@@ -431,15 +431,53 @@ async function finishAuthorization(request, env) {
   });
 }
 
+function landingResponse() {
+  return Response.json({
+    name: 'Mingli MCP Server',
+    version: '1.3.0',
+    protocol: 'MCP',
+    transport: 'HTTP',
+    endpoints: { mcp: '/mcp', health: '/health', docs: '/docs' },
+  });
+}
+
+function healthResponse(env) {
+  return Response.json({
+    status: 'healthy',
+    transport: 'http',
+    systems: ['ziwei', 'bazi'],
+    rate_limiting: String(env.ENABLE_RATE_LIMIT ?? 'true').toLowerCase() === 'true',
+  });
+}
+
+const CONTAINER_ROUTES = new Set([
+  '/mcp/',
+  '/stats',
+  '/docs',
+  '/docs/',
+  '/docs/oauth2-redirect',
+  '/redoc',
+  '/openapi.json',
+]);
+
 const defaultHandler = {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === '/' && request.method === 'GET') {
+      return landingResponse();
+    }
+    if (url.pathname === '/health' && request.method === 'GET') {
+      return healthResponse(env);
+    }
     if (url.pathname === '/authorize') {
       if (request.method === 'GET') return beginAuthorization(request, env);
       if (request.method === 'POST') return finishAuthorization(request, env);
       return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, POST' } });
     }
-    return forwardToContainer(request, env);
+    if (CONTAINER_ROUTES.has(url.pathname)) {
+      return forwardToContainer(request, env);
+    }
+    return new Response('Not Found', { status: 404 });
   },
 };
 

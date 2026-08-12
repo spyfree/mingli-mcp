@@ -11,12 +11,15 @@
 - Wrangler 配置：`wrangler.jsonc`
 - 容器镜像：复用仓库根目录 `Dockerfile`
 
-当前采用最保守的单实例方案：
+当前采用低成本的单实例按需方案：
 
-- `instance_type = "basic"`
+- `instance_type = "lite"`
 - `max_instances = 1`
+- `sleepAfter = "2m"`，空闲两分钟后自动停止
 - 通过 `getByName("mingli-http")` 固定路由到同一个容器实例
+- `/` 和 `/health` 直接在 Worker 边缘响应，未知路径在边缘返回 404，避免无效请求唤醒容器
 
+新请求会自动重新启动已休眠的容器，因此休眠后的首次 MCP 请求可能有冷启动延迟。
 后续如果确认无状态化需求更强，可以改成多实例负载均衡。
 
 ## 前置条件
