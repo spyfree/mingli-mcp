@@ -116,9 +116,6 @@ ziwei_mcp/
 │   ├── utils/                     # Validators, formatters, rate limiter, etc.
 │   └── prompts/                   # Prompt templates (shipped with the package)
 │
-├── cloudflare/                    # Cloudflare Containers worker
-│   └── container-worker.mjs
-├── wrangler.jsonc                 # Cloudflare deployment config (mcp.lee.locker)
 └── tests/                         # Unit tests
 ```
 
@@ -266,13 +263,6 @@ docker-compose up -d
 ```bash
 pip install -e ".[dev]"
 python -m mingli_mcp
-```
-
-**Cloudflare Containers** (wrangler.jsonc + cloudflare/container-worker.mjs):
-```bash
-npx wrangler deploy
-# Deployed at https://mcp.lee.locker/mcp
-# Optional auth: npx wrangler secret put HTTP_API_KEY
 ```
 
 ## Available MCP Tools

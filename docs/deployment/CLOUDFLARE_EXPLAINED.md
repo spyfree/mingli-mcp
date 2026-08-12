@@ -32,7 +32,7 @@
 
 ### 工作流程
 
-1. **用户请求** → https://mcp.lee.locker/health
+1. **用户请求** → https://your-mcp.example/health
 2. **Cloudflare接收** → 全球CDN节点
 3. **隧道转发** → 通过加密隧道到你本地的cloudflared
 4. **本地处理** → cloudflared转发到localhost:8080
@@ -281,7 +281,7 @@ python mingli_mcp.py
 cloudflared tunnel run mingli-mcp
 
 # 终端3 - 测试
-curl https://mcp.lee.locker/health
+curl https://your-mcp.example/health
 \`\`\`
 
 ### 或部署到Railway（10分钟）

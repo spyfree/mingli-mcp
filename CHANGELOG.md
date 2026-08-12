@@ -68,14 +68,9 @@ MCP 官方于 2026-07-28 发布了新版规范（SEP-2575/2567/2243/2549/2322）
   生肖同步改为立春口径，避免与年柱自相矛盾。**受影响命盘的排盘结果会与旧版本不同，
   新结果才是正确的。**
 
-### OAuth 与客户端体验
+### 客户端体验
 
-- **标准 OAuth 2.1 接入**: Cloudflare MCP 网关新增授权服务器元数据、受保护资源元数据、动态客户端注册、S256 PKCE 授权码交换和刷新令牌，主流客户端可自动发现并发起连接
-- **License 授权页**: 新增移动端友好的授权确认页；用户只需在授权时输入已购买的 MCP License Key，Key 不进入 URL，也不以明文写入 OAuth 可读元数据
-- **向后兼容**: 保留 `Authorization: Bearer ML-...` 和内部主密钥；`initialize`、`tools/list` 等发现方法继续免费开放，`tools/call` 对 OAuth 与旧 Key 统一执行每日额度
 - **客户端可理解性**: 工具补齐标题、只读/幂等/封闭世界提示和严格输入 schema；初始化说明改为面向 AI 助手的采集与展示规则，明确区分本命生肖和流年生肖
-- **自动化验证**: 新增 Worker 级黑盒测试，覆盖 OAuth discovery、CSRF、PKCE、旧 Key、额度与容器转发
-- **过期数据自动清理**: 每日 cron 触发 `purgeExpiredData`，清理过期的 OAuth 授权码、令牌与授权记录
 
 ### 新功能
 
@@ -127,12 +122,6 @@ MCP 官方于 2026-07-28 发布了新版规范（SEP-2575/2567/2243/2549/2322）
 
 ### 工程整理
 
-- **修复 `npm ci` 在镜像源之外无法安装**: `package-lock.json` 里 90 个 `resolved`
-  URL 全部硬编码为 `registry.npmmirror.com`。`npm ci` 会照这些 URL 取包，因此在无法
-  访问该镜像的环境（海外网络、CI runner、沙箱）会直接 403 失败，Cloudflare 部署前的
-  `npm ci` 因此走不通。已按 `registry.npmjs.org` 重新生成 lockfile（版本仍在
-  package.json 声明范围内：wrangler 4.114.0、@cloudflare/containers 0.1.1）
-
 - **mypy 成为真正的 CI 门禁**: 此前 CI 里是 `mypy . || true`，26 个错误从不会让 CI 变红。
   现已清零并去掉 `|| true`；仅对 4 个直接跨越无类型第三方边界的模块局部关闭
   `warn_return_any`（逐个 cast 只增噪音不提升正确性），并在 pyproject 中注明原因
@@ -151,7 +140,7 @@ MCP 官方于 2026-07-28 发布了新版规范（SEP-2575/2567/2243/2549/2322）
   docs 引用但并不存在
 - `analyze_element` 纳入 `BaseFortuneSystem` 接口；`BaziFormatter` 补充返回 str 的
   Markdown 方法；mypy 错误从 26 降至 8（剩余均为无类型第三方库边界）
-- 四处版本号对齐到本次发布：`server.json`（停留在 1.0.7）、`package.json`（停留在 1.0.10）、`.actor/actor.json`（停留在 1.1，Apify 用 MAJOR.MINOR），此前均与包版本不一致
+- 发布清单版本号对齐到本次发布：`server.json`（停留在 1.0.7）、`package.json`（停留在 1.0.10），此前均与包版本不一致
 - 新增 75 个回归测试，覆盖率 82% → 85%
 
 ## [1.1.0] - 2026-07-19
@@ -174,7 +163,7 @@ MCP 官方于 2026-07-28 发布了新版规范（SEP-2575/2567/2243/2549/2322）
 
 - **真太阳时参数生效**: `longitude`/`latitude`/`use_solar_time`/`birth_hour`/`birth_minute` 此前在 MCP handler 中被静默丢弃，修正后真正传入排盘系统；并补充到 `get_ziwei_fortune`、`analyze_ziwei_palace` 的参数 schema
 - **stdio 健壮性**: 一行坏 JSON 不再导致服务器退出，改为返回 -32700 Parse error 并继续处理
-- **限流真实生效**: Cloudflare 部署下按 `CF-Connecting-IP`/`X-Forwarded-For` 分桶（此前所有外部用户共享代理 IP 的一个桶）；`ENABLE_RATE_LIMIT`/`RATE_LIMIT_*` 环境变量真正被读取；`RateLimiter` 线程安全
+- **限流真实生效**: 可信反向代理部署下可按 `CF-Connecting-IP`/`X-Forwarded-For` 分桶（此前所有外部用户共享代理 IP 的一个桶）；`ENABLE_RATE_LIMIT`/`RATE_LIMIT_*` 环境变量真正被读取；`RateLimiter` 线程安全
 - **事件循环不再被阻塞**: 排盘计算移入线程池执行，长计算期间 `/health` 保持可用
 - **prompts 随包发布**: prompts 目录移入包内，pip/uvx 安装后 `prompts/list` 不再为空
 - **query_date 校验**: 非法日期返回 -32602 参数错误而非 -32603 内部错误

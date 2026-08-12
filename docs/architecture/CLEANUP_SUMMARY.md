@@ -83,7 +83,6 @@ CLOUDFLARE_EXPLAINED.md      # Cloudflare详解
 COZE_CONFIG_GUIDE.md         # Coze配置
 COZE_GUIDE.md                # Coze指南
 CURSOR_SETUP.md              # Cursor设置
-DEPLOYMENT_STATUS.md         # 部署状态
 DEPLOYMENT_SUMMARY.md        # 部署总结
 DEPLOYMENT.md                # 部署指南
 DOCUMENTATION_GUIDE.md       # 文档指南（新）

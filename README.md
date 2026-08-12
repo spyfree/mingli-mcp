@@ -8,31 +8,6 @@ Pillars, Ten Gods, five elements, fortune periods, and date-based analysis.
 **中文简介：** 一个面向 AI 工具的开源命理 MCP 服务，支持紫微斗数排盘、八字排盘、
 宫位与五行分析，以及大限、流年、流月、流日和流时查询。
 
-## Apify hosted endpoint
-
-The hosted Actor runs as a 256 MB Standby MCP server. It can be connected to Claude,
-Cursor, VS Code, custom agents, or any client that supports remote Streamable HTTP MCP.
-Until the Actor is published in Apify Store, the endpoint is available only to users
-who have been granted access.
-
-- MCP endpoint: `https://spyfree--mingli-mcp.apify.actor/mcp`
-- Authentication: `Authorization: Bearer YOUR_APIFY_TOKEN`
-- Billing: tool discovery is free; each successful `tools/call` is one `tool-call` event
-- Detailed setup and copy-ready examples: [Apify MCP guide](docs/APIFY_MCP_GUIDE.md)
-
-```json
-{
-  "mcpServers": {
-    "mingli": {
-      "url": "https://spyfree--mingli-mcp.apify.actor/mcp",
-      "headers": {
-        "Authorization": "Bearer YOUR_APIFY_TOKEN"
-      }
-    }
-  }
-}
-```
-
 Example questions for an AI client:
 
 - “Generate my Zi Wei Dou Shu birth chart for 1990-01-01, 午时, male.”
@@ -123,12 +98,7 @@ used in chat, an automated workflow, or a custom Chinese astrology application.
    - 紫微斗数、八字示例
    - 高级模式（批量处理、错误处理）
 
-5. **[Apify MCP 使用指南](docs/APIFY_MCP_GUIDE.md)** - 托管版接入与示例
-   - Claude、Cursor 与通用 MCP 客户端配置
-   - `curl` / JSON-RPC 调用示例
-   - 计费、隐私与常见问题
-
-6. **[故障排查指南](docs/TROUBLESHOOTING.md)** - 16个常见问题解决方案
+5. **[故障排查指南](docs/TROUBLESHOOTING.md)** - 16个常见问题解决方案
    - 安装问题
    - 配置问题
    - 运行时错误
@@ -263,7 +233,6 @@ used in chat, an automated workflow, or a custom Chinese astrology application.
 ## 🚀 快速开始
 
 ### 在线体验
-- **Apify 托管 MCP**: `https://spyfree--mingli-mcp.apify.actor/mcp`（需要 Apify token）
 - **Smithery 部署**: [https://server.smithery.ai/@spyfree/mingli-mcp/mcp](https://server.smithery.ai/@spyfree/mingli-mcp/mcp)
 - 添加到 Cursor: [![Install MCP Server](https://img.shields.io/badge/Cursor-Add+MCP+Server-blue?logo=cursor)](https://cursor.com/install-mcp?name=mingli&config=eyJjb21tYW5kIjoidXZ4IiwiYXJncyI6WyJtaW5nbGktbWNwIl19)
 - 添加到 Claude Code: `claude mcp add mingli -- uvx mingli-mcp`
@@ -429,8 +398,6 @@ ziwei_mcp/
 │   ├── utils/                # 工具函数（校验、格式化、限流等）
 │   └── prompts/              # 提示词模板（随包发布）
 │
-├── cloudflare/                # Cloudflare Containers worker
-├── wrangler.jsonc             # Cloudflare部署配置
 ├── docs/                      # 文档
 ├── examples/                  # 示例配置
 ├── scripts/                   # 脚本工具
@@ -661,20 +628,6 @@ export LOG_LEVEL=DEBUG
 export DEFAULT_LANGUAGE=zh-CN
 python -m mingli_mcp
 ```
-
-### Apify 托管与计费
-
-Apify Actor 以 Standby 模式对外提供 `POST /mcp`。在 Console 中使用
-Pay-per-event 定价时，事件名必须配置为 `tool-call`。
-
-- 只有成功的 MCP `tools/call` 请求会产生一次计费事件。
-- `tools/list` 等发现请求以及执行失败的工具请求不计费。
-- 平台未能确认计费时，服务不会返回工具结果：额度已用尽或无法计费返回
-  MCP 错误 `-32001`，计费 API 异常返回 `-32603`。
-- Apify 入口未安装 SDK 时会直接启动失败，避免意外绕过计费。本地开发请使用项目原有入口。
-
-Cloudflare 和 Apify 的部署配置可以同时保留在公开仓库中。不要提交 `.env`、
-API token 或其他密钥；Apify 账户配置和支付信息应仅保存在平台 Console 中。
 
 ## 📝 依赖说明
 

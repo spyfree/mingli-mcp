@@ -133,7 +133,7 @@ Coze支持两种方式配置MCP服务器：
 {
   "mcpServers": {
     "mingli": {
-      "url": "https://mcp.lee.locker/mcp",
+      "url": "https://your-mcp.example/mcp",
       "method": "POST",
       "headers": {
         "Content-Type": "application/json"
@@ -151,7 +151,7 @@ Coze支持两种方式配置MCP服务器：
 服务名称: 命理MCP服务
 协议类型: MCP
 连接方式: HTTP
-端点地址: https://mcp.lee.locker/mcp
+端点地址: https://your-mcp.example/mcp
 请求方法: POST
 请求头:
   Content-Type: application/json
@@ -233,7 +233,7 @@ Coze支持两种方式配置MCP服务器：
 {
   "mcpServers": {
     "mingli": {
-      "url": "https://mcp.lee.locker/mcp",
+      "url": "https://your-mcp.example/mcp",
       "transport": "http",
       "headers": {
         "Content-Type": "application/json"
@@ -496,7 +496,7 @@ chmod +x $(which mingli-mcp)
 {
   "mcpServers": {
     "mingli": {
-      "url": "https://mcp.lee.locker/mcp"
+      "url": "https://your-mcp.example/mcp"
     }
   }
 }

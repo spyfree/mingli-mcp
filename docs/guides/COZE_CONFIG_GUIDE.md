@@ -49,7 +49,7 @@ cloudflared tunnel run mingli-mcp
 ### 步骤2：验证服务
 
 \`\`\`bash
-curl https://mcp.lee.locker/health
+curl https://your-mcp.example/health
 # 应该返回：{"status":"healthy","transport":"http","systems":["ziwei","bazi"]}
 \`\`\`
 
@@ -61,7 +61,7 @@ curl https://mcp.lee.locker/health
 {
   "mcpServers": {
     "mingli": {
-      "url": "https://mcp.lee.locker/mcp",
+      "url": "https://your-mcp.example/mcp",
       "method": "POST",
       "headers": {
         "Content-Type": "application/json"
@@ -79,7 +79,7 @@ curl https://mcp.lee.locker/health
 |------|-----|
 | 服务名称 | 命理MCP服务 |
 | 协议类型 | MCP / HTTP |
-| 端点URL | https://mcp.lee.locker/mcp |
+| 端点URL | https://your-mcp.example/mcp |
 | 请求方法 | POST |
 | Content-Type | application/json |
 
@@ -179,7 +179,7 @@ curl https://mcp.lee.locker/health
       "name": "命理MCP服务",
       "description": "提供紫微斗数和八字分析",
       "transport": "http",
-      "url": "https://mcp.lee.locker/mcp",
+      "url": "https://your-mcp.example/mcp",
       "method": "POST",
       "headers": {
         "Content-Type": "application/json"
@@ -200,7 +200,7 @@ mcpServers:
     name: 命理MCP服务
     description: 提供紫微斗数和八字分析
     transport: http
-    url: https://mcp.lee.locker/mcp
+    url: https://your-mcp.example/mcp
     method: POST
     headers:
       Content-Type: application/json
@@ -218,7 +218,7 @@ mcpServers:
 
 **连接配置**：
 - 协议：\`MCP over HTTP\`
-- 端点地址：\`https://mcp.lee.locker/mcp\`
+- 端点地址：\`https://your-mcp.example/mcp\`
 - 请求方法：\`POST\`
 - 超时时间：\`30秒\`
 
@@ -233,7 +233,7 @@ mcpServers:
 
 直接访问健康检查端点：
 \`\`\`bash
-curl https://mcp.lee.locker/health
+curl https://your-mcp.example/health
 \`\`\`
 
 **预期响应**：
@@ -248,7 +248,7 @@ curl https://mcp.lee.locker/health
 ### 测试2：MCP初始化
 
 \`\`\`bash
-curl -X POST https://mcp.lee.locker/mcp \\
+curl -X POST https://your-mcp.example/mcp \\
   -H "Content-Type: application/json" \\
   -d '{
     "jsonrpc": "2.0",
@@ -267,7 +267,7 @@ curl -X POST https://mcp.lee.locker/mcp \\
 ### 测试3：列出工具
 
 \`\`\`bash
-curl -X POST https://mcp.lee.locker/mcp \\
+curl -X POST https://your-mcp.example/mcp \\
   -H "Content-Type: application/json" \\
   -d '{
     "jsonrpc": "2.0",
@@ -280,7 +280,7 @@ curl -X POST https://mcp.lee.locker/mcp \\
 ### 测试4：调用功能
 
 \`\`\`bash
-curl -X POST https://mcp.lee.locker/mcp \\
+curl -X POST https://your-mcp.example/mcp \\
   -H "Content-Type: application/json" \\
   -d '{
     "jsonrpc": "2.0",
@@ -336,7 +336,7 @@ curl -X POST https://mcp.lee.locker/mcp \\
 
 3. ✅ 域名是否正常解析？
    \`\`\`bash
-   curl https://mcp.lee.locker/health
+   curl https://your-mcp.example/health
    \`\`\`
 
 ### 问题2：Coze提示工具不可用
@@ -381,7 +381,7 @@ curl -X POST https://mcp.lee.locker/mcp \\
 {
   "mcpServers": {
     "mingli": {
-      "url": "https://mcp.lee.locker/mcp"
+      "url": "https://your-mcp.example/mcp"
     }
   }
 }

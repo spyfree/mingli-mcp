@@ -34,9 +34,10 @@ env/
 *~
 .DS_Store
 
-# Node / Wrangler
+# Node metadata tooling and local deployment artifacts
 node_modules/
 .wrangler/
+docs/deployment/CLOUDFLARE_WORKERS_TEST_RESULTS.md
 
 # Environment
 .env
@@ -71,12 +72,6 @@ docs/development/
 
 # Configuration examples (local only)
 codex_config_correct.toml
-
-# Cloudflare experimental files (local testing only)
-cloudflare_workers/
-CLOUDFLARE_WORKERS_TEST_RESULTS.md
-CLOUDFLARE_DEPLOY.md
-CLOUDFLARE_EXPLAINED.md
 
 # Hypothesis property-testing cache
 .hypothesis/

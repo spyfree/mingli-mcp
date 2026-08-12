@@ -15,21 +15,6 @@
   "bugs": {
     "url": "https://github.com/spyfree/mingli-mcp/issues"
   },
-  "engines": {
-    "node": ">=22"
-  },
-  "scripts": {
-    "cf:whoami": "wrangler whoami",
-    "cf:deploy": "wrangler deploy",
-    "cf:containers:list": "wrangler containers list",
-    "test:worker": "vitest run"
-  },
-  "devDependencies": {
-    "@cloudflare/containers": "^0.1.1",
-    "@cloudflare/vitest-pool-workers": "^0.18.7",
-    "vitest": "^4.1.0",
-    "wrangler": "^4.50.0"
-  },
   "keywords": [
     "mcp",
     "ziwei",
@@ -49,8 +34,5 @@
       "prompts": true,
       "resources": true
     }
-  },
-  "dependencies": {
-    "@cloudflare/workers-oauth-provider": "^0.5.0"
   }
 }
