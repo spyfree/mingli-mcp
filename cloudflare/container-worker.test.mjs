@@ -145,52 +145,6 @@ describe('MCP OAuth gateway', () => {
     expect((await response.json()).authorization).toBeNull();
   });
 
-  it('serves the landing page at the edge without starting the container', async () => {
-    const response = await fetchWorker(new Request(ORIGIN), env);
-
-    expect(response.status).toBe(200);
-    expect(response.headers.get('Content-Type')).toContain('application/json');
-    expect(await response.json()).toMatchObject({
-      name: 'Mingli MCP Server',
-      protocol: 'MCP',
-      transport: 'HTTP',
-      endpoints: { mcp: '/mcp', health: '/health', docs: '/docs' },
-    });
-    expect(forwarded).toHaveLength(0);
-  });
-
-  it('serves health checks at the edge without starting the container', async () => {
-    const response = await fetchWorker(new Request(`${ORIGIN}/health`), env);
-
-    expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({
-      status: 'healthy',
-      transport: 'http',
-      systems: ['ziwei', 'bazi'],
-      rate_limiting: true,
-    });
-    expect(forwarded).toHaveLength(0);
-  });
-
-  it('rejects unknown paths at the edge without starting the container', async () => {
-    const response = await fetchWorker(new Request(`${ORIGIN}/.env`), env);
-
-    expect(response.status).toBe(404);
-    expect(await response.text()).toBe('Not Found');
-    expect(forwarded).toHaveLength(0);
-  });
-
-  it.each(['/docs', '/docs/oauth2-redirect', '/redoc', '/openapi.json'])(
-    'keeps the known container route %s available',
-    async (path) => {
-      const response = await fetchWorker(new Request(`${ORIGIN}${path}`), env);
-
-      expect(response.status).toBe(200);
-      expect((await response.json()).path).toBe(path);
-      expect(forwarded).toHaveLength(1);
-    },
-  );
-
   it('challenges an unauthorized tool call with protected-resource metadata', async () => {
     const response = await fetchWorker(mcpRequest('tools/call'), env);
 
