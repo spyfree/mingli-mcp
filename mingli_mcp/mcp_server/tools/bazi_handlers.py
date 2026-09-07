@@ -8,8 +8,10 @@ import json
 from datetime import datetime
 from typing import Any, Dict, List
 
+from mingli_mcp.core.exceptions import ValidationError
 from mingli_mcp.systems import get_system
 from mingli_mcp.systems.bazi.formatter import BaziFormatter
+from mingli_mcp.utils.fortune_time import annual_markdown, calendar_year_fortune
 from mingli_mcp.utils.performance import PerformanceTimer, log_performance
 from mingli_mcp.utils.validators import (
     validate_date_range,
@@ -122,6 +124,18 @@ def handle_get_bazi_fortune(args: Dict[str, Any]) -> str:
     with PerformanceTimer("八字运势查询"):
         birth_info = _build_birth_info(args, date_key="birth_date")
 
+        if "query_year" in args:
+            if "query_date" in args:
+                raise ValidationError("query_year 与 query_date 不能同时提供")
+            system = get_system("bazi")
+            result = calendar_year_fortune(
+                args["query_year"],
+                "bazi",
+                lambda date: system.get_fortune(birth_info, date, args.get("language", "zh-CN")),
+            )
+            return _to_json(result) if args.get("format") == "json" else annual_markdown(result)
+        if "query_date" in args and not args["query_date"]:
+            raise ValidationError("query_date 不能为空；查询全年请使用 query_year")
         query_date_str = args.get("query_date")
         if query_date_str:
             validate_date_range(query_date_str)

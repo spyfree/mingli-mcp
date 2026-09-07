@@ -1,5 +1,12 @@
 # 更新日志
 
+## Unreleased — annual query semantics
+
+- Add `query_year` to both fortune tools, returning calendar-year periods split at each system's year boundary. Reject conflicting date/year arguments.
+- Add JSON `time_basis` to date results; preserve BaZi's existing day-level Li Chun boundary.
+- Rename Ziwei JSON `basic_info.四柱` to `basic_info.农历干支` and add an inline calendar-basis explanation. Consumers using the old key must migrate.
+- Regenerate the Cloudflare tool catalog together with the Python API change. See `docs/annual-query-fix-2026-09-07.md` for release order and limits.
+
 ## [1.3.0] - 2026-07-29
 
 ### MCP 协议升级：支持 2026-07-28（无状态时代）

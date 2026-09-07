@@ -56,9 +56,9 @@ def get_ziwei_chart_definition() -> Dict[str, Any]:
         "name": "get_ziwei_chart",
         "description": (
             "获取紫微斗数排盘信息，包含命盘十二宫、主星、辅星、四化等详细信息。"
-            "注意：返回的『四柱』按紫微惯例以农历年换年干支，"
-            "与 get_bazi_chart 按立春换年的八字口径不同，"
-            "立春前后出生者两者的年柱/月柱会不一致，属流派差异而非错误"
+            "注意：返回的『农历干支』按农历年月，"
+            "与 get_bazi_chart 按立春/节令换年月的八字四柱口径不同，"
+            "年或月边界附近的差异不等于排盘错误"
         ),
         "annotations": {
             "readOnlyHint": True,
@@ -148,9 +148,15 @@ def get_ziwei_fortune_definition() -> Dict[str, Any]:
                     "type": "boolean",
                     "default": False,
                 },
+                "query_year": {
+                    "type": "integer",
+                    "minimum": 1900,
+                    "maximum": 2100,
+                    "description": "公历全年分析使用此字段，按换年边界返回分段流年；与 query_date 互斥。",
+                },
                 "query_date": {
                     "type": "string",
-                    "description": "查询运势的日期，格式：YYYY-MM-DD",
+                    "description": "具体日期 YYYY-MM-DD，与 query_year 互斥。日期结果不得当作全年结论。",
                 },
                 "format": {
                     "type": "string",
@@ -360,9 +366,15 @@ def get_bazi_fortune_definition() -> Dict[str, Any]:
                     "type": "boolean",
                     "default": False,
                 },
+                "query_year": {
+                    "type": "integer",
+                    "minimum": 1900,
+                    "maximum": 2100,
+                    "description": "公历全年分析使用此字段，按换年边界返回分段流年；与 query_date 互斥。",
+                },
                 "query_date": {
                     "type": "string",
-                    "description": "查询运势的日期，格式：YYYY-MM-DD",
+                    "description": "具体日期 YYYY-MM-DD，与 query_year 互斥。日期结果不得当作全年结论。",
                 },
                 "format": {
                     "type": "string",

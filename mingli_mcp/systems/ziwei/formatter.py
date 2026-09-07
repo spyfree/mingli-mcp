@@ -9,6 +9,8 @@ from typing import Any, Dict, List
 
 from iztro_py.i18n import t
 
+from mingli_mcp.utils.fortune_time import fortune_time_basis
+
 
 class ZiweiFormatter:
     """紫微斗数格式化器（使用 iztro-py 0.3.0+ 的国际化功能）"""
@@ -57,7 +59,8 @@ class ZiweiFormatter:
             "basic_info": {
                 "阳历日期": astrolabe.solar_date,
                 "农历日期": astrolabe.lunar_date,
-                "四柱": astrolabe.chinese_date,
+                "农历干支": astrolabe.chinese_date,
+                "干支口径": "紫微按农历年月；八字按立春/节令换年月。差异不等于排盘错误，不可将此字段当作八字四柱。",
                 "时辰": astrolabe.time,
                 "时间段": astrolabe.time_range,
                 "星座": astrolabe.sign,
@@ -92,13 +95,6 @@ class ZiweiFormatter:
         for key, value in chart_data["basic_info"].items():
             md += f"- **{key}**: {value}\n"
 
-        # 四柱口径与八字不同，立春前后会不一致，这里说明清楚避免误读
-        if "四柱" in chart_data["basic_info"]:
-            md += (
-                "\n> 四柱按紫微惯例以农历年换年干支；八字工具以立春换年，"
-                "立春前后出生者两者的年柱/月柱可能不同。\n"
-            )
-
         # 十二宫详情
         md += "\n## 十二宫详情\n\n"
         for palace in chart_data["palaces"]:
@@ -121,6 +117,7 @@ class ZiweiFormatter:
         """
         result = {
             "query_date": query_date.strftime("%Y-%m-%d"),
+            "time_basis": fortune_time_basis(query_date, "ziwei"),
             "solar_date": horoscope.solar_date,
             "lunar_date": horoscope.lunar_date,
         }

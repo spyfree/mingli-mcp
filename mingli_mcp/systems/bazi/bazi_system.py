@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from mingli_mcp.core.base_system import BaseFortuneSystem
 from mingli_mcp.core.exceptions import DependencyError, SystemError, ValidationError
+from mingli_mcp.utils.fortune_time import fortune_time_basis
 
 from .formatter import BaziFormatter
 
@@ -388,6 +389,7 @@ class BaziSystem(BaseFortuneSystem):
 
             result = {
                 "query_date": query_date.strftime("%Y-%m-%d"),
+                "time_basis": fortune_time_basis(query_date, "bazi"),
                 "age": age,
                 "nominal_age": nominal_age,
                 "day_master": day_gan,
