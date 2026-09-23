@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 from mingli_mcp.core.exceptions import ValidationError
+from mingli_mcp.mcp_server.tools.arguments import normalize_birth_date
 from mingli_mcp.systems import get_system
 from mingli_mcp.systems.ziwei.formatter import ZiweiFormatter
 from mingli_mcp.utils.fortune_time import annual_markdown, calendar_year_fortune
@@ -26,7 +27,7 @@ _ziwei_formatter = ZiweiFormatter()
 
 # Parameter descriptions for error messages
 ZIWEI_CHART_PARAM_DESCRIPTIONS = {
-    "date": "出生日期 (格式: YYYY-MM-DD)",
+    "birth_date": "出生日期 (格式: YYYY-MM-DD)",
     "time_index": "出生时辰序号 (0-12)",
     "gender": "性别 (男/女)",
 }
@@ -49,7 +50,7 @@ def _validate_common_params(
     args: Dict[str, Any],
     required_params: List[str],
     param_descriptions: Dict[str, str],
-    date_key: str = "date",
+    date_key: str = "birth_date",
 ) -> None:
     """验证通用参数"""
     # Check required params first
@@ -66,7 +67,7 @@ def _validate_common_params(
         validate_language(language)
 
 
-def _build_birth_info(args: Dict[str, Any], date_key: str = "date") -> Dict[str, Any]:
+def _build_birth_info(args: Dict[str, Any], date_key: str = "birth_date") -> Dict[str, Any]:
     """构建生辰信息字典"""
     birth_info = {
         "date": args[date_key],
@@ -92,9 +93,10 @@ def _to_json(data: Any) -> str:
 @log_performance
 def handle_get_ziwei_chart(args: Dict[str, Any]) -> str:
     """工具：获取紫微斗数排盘"""
+    args = normalize_birth_date(args)
     # Validate parameters
     _validate_common_params(
-        args, ["date", "time_index", "gender"], ZIWEI_CHART_PARAM_DESCRIPTIONS, date_key="date"
+        args, ["birth_date", "time_index", "gender"], ZIWEI_CHART_PARAM_DESCRIPTIONS
     )
 
     with PerformanceTimer("紫微排盘"):
@@ -114,16 +116,16 @@ def handle_get_ziwei_chart(args: Dict[str, Any]) -> str:
 @log_performance
 def handle_get_ziwei_fortune(args: Dict[str, Any]) -> str:
     """工具：获取紫微斗数运势"""
+    args = normalize_birth_date(args)
     # Validate parameters
     _validate_common_params(
         args,
         ["birth_date", "time_index", "gender"],
         ZIWEI_FORTUNE_PARAM_DESCRIPTIONS,
-        date_key="birth_date",
     )
 
     with PerformanceTimer("紫微运势查询"):
-        birth_info = _build_birth_info(args, date_key="birth_date")
+        birth_info = _build_birth_info(args)
 
         if "query_year" in args:
             if "query_date" in args:
@@ -158,16 +160,16 @@ def handle_get_ziwei_fortune(args: Dict[str, Any]) -> str:
 @log_performance
 def handle_analyze_ziwei_palace(args: Dict[str, Any]) -> str:
     """工具：分析紫微斗数宫位"""
+    args = normalize_birth_date(args)
     # Validate parameters
     _validate_common_params(
         args,
         ["birth_date", "time_index", "gender", "palace_name"],
         ZIWEI_PALACE_PARAM_DESCRIPTIONS,
-        date_key="birth_date",
     )
 
     with PerformanceTimer("紫微宫位分析"):
-        birth_info = _build_birth_info(args, date_key="birth_date")
+        birth_info = _build_birth_info(args)
         palace_name = args["palace_name"]
         language = args.get("language", "zh-CN")
 

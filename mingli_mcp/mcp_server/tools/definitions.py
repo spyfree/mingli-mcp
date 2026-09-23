@@ -39,6 +39,19 @@ _SOLAR_TIME_PROPERTIES: Dict[str, Any] = {
     },
 }
 
+# 出生日期：birth_date 为规范名；date 是 get_ziwei_chart / get_bazi_chart 的旧参数名，
+# 所有工具都接受它作别名（见 tools/arguments.py），不能删除
+_BIRTH_DATE_PROPERTIES: Dict[str, Any] = {
+    "birth_date": {
+        "type": "string",
+        "description": "出生日期，格式：YYYY-MM-DD，例如：2000-08-16",
+    },
+    "date": {
+        "type": "string",
+        "description": "已弃用，仍接受：birth_date 的旧名。请改用 birth_date；两者都给且取值不同会报错",
+    },
+}
+
 _TOOL_TITLES = {
     "get_ziwei_chart": "紫微斗数本命排盘",
     "get_ziwei_fortune": "紫微斗数运势",
@@ -68,10 +81,7 @@ def get_ziwei_chart_definition() -> Dict[str, Any]:
         "inputSchema": {
             "type": "object",
             "properties": {
-                "date": {
-                    "type": "string",
-                    "description": "出生日期，格式：YYYY-MM-DD，例如：2000-08-16",
-                },
+                **_BIRTH_DATE_PROPERTIES,
                 "time_index": {
                     "type": "integer",
                     "description": "出生时辰序号（0-12）",
@@ -106,7 +116,7 @@ def get_ziwei_chart_definition() -> Dict[str, Any]:
                 },
                 **_SOLAR_TIME_PROPERTIES,
             },
-            "required": ["date", "time_index", "gender"],
+            "required": ["birth_date", "time_index", "gender"],
         },
     }
 
@@ -124,10 +134,7 @@ def get_ziwei_fortune_definition() -> Dict[str, Any]:
         "inputSchema": {
             "type": "object",
             "properties": {
-                "birth_date": {
-                    "type": "string",
-                    "description": "出生日期，格式：YYYY-MM-DD",
-                },
+                **_BIRTH_DATE_PROPERTIES,
                 "time_index": {
                     "type": "integer",
                     "description": "出生时辰序号（0-12）",
@@ -188,10 +195,7 @@ def get_analyze_ziwei_palace_definition() -> Dict[str, Any]:
         "inputSchema": {
             "type": "object",
             "properties": {
-                "birth_date": {
-                    "type": "string",
-                    "description": "出生日期，格式：YYYY-MM-DD",
-                },
+                **_BIRTH_DATE_PROPERTIES,
                 "time_index": {
                     "type": "integer",
                     "description": "出生时辰序号（0-12）",
@@ -218,7 +222,11 @@ def get_analyze_ziwei_palace_definition() -> Dict[str, Any]:
                         "福德宫",
                         "父母宫",
                     ],
-                    "description": "要分析的宫位名称。服务端也兼容旧写法，如'财帛'、'官禄'、'仆役/奴仆'",
+                    "description": (
+                        "要分析的宫位名称。服务端也兼容旧写法（如'财帛'、'官禄'、'仆役/奴仆'）、"
+                        "命盘里显示的本地化宫名（如'官祿'、'Quan Lộc'）和常见俗称"
+                        "（事业→官禄宫、朋友→交友宫、健康→疾厄宫、财运→财帛宫、婚姻/配偶→夫妻宫）"
+                    ),
                 },
                 "calendar": {
                     "type": "string",
@@ -287,10 +295,7 @@ def get_bazi_chart_definition() -> Dict[str, Any]:
         "inputSchema": {
             "type": "object",
             "properties": {
-                "date": {
-                    "type": "string",
-                    "description": "出生日期，格式：YYYY-MM-DD",
-                },
+                **_BIRTH_DATE_PROPERTIES,
                 "time_index": {
                     "type": "integer",
                     "description": "出生时辰序号（0-12）",
@@ -322,7 +327,7 @@ def get_bazi_chart_definition() -> Dict[str, Any]:
                 },
                 **_SOLAR_TIME_PROPERTIES,
             },
-            "required": ["date", "time_index", "gender"],
+            "required": ["birth_date", "time_index", "gender"],
         },
     }
 
@@ -343,10 +348,7 @@ def get_bazi_fortune_definition() -> Dict[str, Any]:
         "inputSchema": {
             "type": "object",
             "properties": {
-                "birth_date": {
-                    "type": "string",
-                    "description": "出生日期，格式：YYYY-MM-DD",
-                },
+                **_BIRTH_DATE_PROPERTIES,
                 "time_index": {
                     "type": "integer",
                     "description": "出生时辰序号（0-12）",
@@ -406,10 +408,7 @@ def get_analyze_bazi_element_definition() -> Dict[str, Any]:
         "inputSchema": {
             "type": "object",
             "properties": {
-                "birth_date": {
-                    "type": "string",
-                    "description": "出生日期，格式：YYYY-MM-DD",
-                },
+                **_BIRTH_DATE_PROPERTIES,
                 "time_index": {
                     "type": "integer",
                     "description": "出生时辰序号（0-12）",

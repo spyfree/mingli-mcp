@@ -232,6 +232,11 @@ class MingliMCPServer:
             if handler is None:
                 record(False, "UnknownTool")
                 return format_error_response(-32602, f"Unknown tool: {tool_name}", request_id)
+            if not isinstance(arguments, dict):
+                record(False, "InvalidArguments")
+                return format_error_response(
+                    -32602, "Invalid params: 'arguments' must be an object", request_id
+                )
 
             result = handler(arguments)
             record(True)
@@ -239,23 +244,24 @@ class MingliMCPServer:
                 {"content": [{"type": "text", "text": result}]}, request_id
             )
 
-        except ValidationError as e:
+        # 工具执行层面的错误按 MCP 规范放进 result 并标记 isError，模型能看到提示并自行纠正；
+        # 只有协议问题（未知工具、arguments 不是对象、方法不存在）才用 JSON-RPC error
+        except (ValidationError, SystemNotFoundError) as e:
             logger.error(f"Parameter validation error: {e}")
             record(False, type(e).__name__)
-            return format_error_response(-32602, str(e), request_id)
-        except SystemNotFoundError as e:
-            logger.error(f"System not found: {e}")
+            return self._tool_error_response(str(e), request_id)
+        except (SystemError, ToolCallError) as e:
+            logger.error(f"Tool execution error: {e}")
             record(False, type(e).__name__)
-            return format_error_response(-32602, str(e), request_id)
-        except SystemError as e:
-            logger.error(f"System execution error: {e}")
-            record(False, type(e).__name__)
-            return format_error_response(-32603, str(e), request_id)
-        except ToolCallError as e:
-            logger.error(f"Tool call error: {e}")
-            record(False, type(e).__name__)
-            return format_error_response(-32603, str(e), request_id)
+            return self._tool_error_response(str(e), request_id)
         except Exception as e:
             logger.exception("Unexpected error in tool call")
             record(False, type(e).__name__)
-            return format_error_response(-32603, f"Internal error: {str(e)}", request_id)
+            return self._tool_error_response(f"Internal error: {str(e)}", request_id)
+
+    @staticmethod
+    def _tool_error_response(message: str, request_id: Any) -> Dict[str, Any]:
+        """工具执行失败：result.isError=true，content 写可直接照做的纠正提示"""
+        return format_success_response(
+            {"content": [{"type": "text", "text": message}], "isError": True}, request_id
+        )

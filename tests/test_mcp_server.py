@@ -282,8 +282,8 @@ class TestMingliMCPServerToolsCall:
         assert "error" in response
         assert "Unknown tool" in response["error"]["message"]
 
-    def test_returns_error_for_validation_failure(self, server):
-        """Server should return error when tool validation fails."""
+    def test_returns_tool_error_result_for_validation_failure(self, server):
+        """Tool-level validation failures are isError results the model can read, not JSON-RPC errors."""
         request = {
             "method": "tools/call",
             "id": 3,
@@ -291,5 +291,16 @@ class TestMingliMCPServerToolsCall:
         }
 
         response = server.handle_request(request)
-        assert "error" in response
+        assert "error" not in response
+        assert response["result"]["isError"] is True
+        assert "birth_date" in response["result"]["content"][0]["text"]
+
+    def test_non_object_arguments_remain_protocol_error(self, server):
+        request = {
+            "method": "tools/call",
+            "id": 4,
+            "params": {"name": "get_ziwei_chart", "arguments": ["2000-08-16"]},
+        }
+
+        response = server.handle_request(request)
         assert response["error"]["code"] == -32602

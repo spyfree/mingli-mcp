@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional
 
 from mingli_mcp.core.base_system import BaseFortuneSystem
 from mingli_mcp.core.exceptions import DependencyError, SystemError, ValidationError
+from mingli_mcp.utils.validators import SUPPORTED_LANGUAGES
 
 from .formatter import ZiweiFormatter
 
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from iztro_py import astro
+    from iztro_py.i18n import t
     from iztro_py.utils.helpers import hour_to_time_index
 
     IZTRO_AVAILABLE = True
@@ -25,6 +27,7 @@ except ImportError:
     IZTRO_AVAILABLE = False
     astro = None  # type: ignore
     hour_to_time_index = None  # type: ignore
+    t = None  # type: ignore
 
 
 class ZiweiSystem(BaseFortuneSystem):
@@ -44,6 +47,22 @@ class ZiweiSystem(BaseFortuneSystem):
         "田宅宫",
         "福德宫",
         "父母宫",
+    ]
+
+    # 与 PALACES 同序的 iztro 宫位 key（与语言无关）
+    PALACE_KEYS = [
+        "soulPalace",
+        "siblingsPalace",
+        "spousePalace",
+        "childrenPalace",
+        "wealthPalace",
+        "healthPalace",
+        "surfacePalace",
+        "friendsPalace",
+        "careerPalace",
+        "propertyPalace",
+        "spiritPalace",
+        "parentsPalace",
     ]
 
     PALACE_ALIASES = {
@@ -75,6 +94,15 @@ class ZiweiSystem(BaseFortuneSystem):
         "福德宫": "福德宫",
         "父母": "父母宫",
         "父母宫": "父母宫",
+        # 常见俗称：模型和用户习惯按事项称呼宫位
+        "事业": "官禄宫",
+        "事业宫": "官禄宫",
+        "朋友": "交友宫",
+        "朋友宫": "交友宫",
+        "健康": "疾厄宫",
+        "财运": "财帛宫",
+        "婚姻": "夫妻宫",
+        "配偶": "夫妻宫",
         "soulPalace": "命宫",
         "siblingsPalace": "兄弟宫",
         "spousePalace": "夫妻宫",
@@ -88,6 +116,8 @@ class ZiweiSystem(BaseFortuneSystem):
         "spiritPalace": "福德宫",
         "parentsPalace": "父母宫",
     }
+
+    _LOCALIZED_ALIASES: Optional[Dict[str, str]] = None
 
     def __init__(self):
         if not IZTRO_AVAILABLE:
@@ -127,14 +157,38 @@ class ZiweiSystem(BaseFortuneSystem):
 
         return date_str, hour_index
 
+    @classmethod
+    def _localized_palace_aliases(cls) -> Dict[str, str]:
+        """iztro 各语言的宫位显示名（遷移、Thiên Di、career…）→ 规范名。
+
+        模型读的是本地化命盘，常把看到的宫名原样传回来，这里全部认。
+        英文、越南文不区分大小写。
+        """
+        if cls._LOCALIZED_ALIASES is None:
+            aliases: Dict[str, str] = {}
+            for language in SUPPORTED_LANGUAGES:
+                for key, canonical in zip(cls.PALACE_KEYS, cls.PALACES):
+                    aliases[t(f"palaces.{key}", language).casefold()] = canonical
+            cls._LOCALIZED_ALIASES = aliases
+        return cls._LOCALIZED_ALIASES
+
     def _normalize_palace_name(self, palace_name: str) -> str:
-        """兼容旧版宫位名称和内部英文宫位 ID。"""
+        """兼容旧版宫位名称、常见俗称、各语言显示名和内部英文宫位 ID。"""
         normalized = palace_name.strip()
         if normalized in self.PALACE_ALIASES:
             return self.PALACE_ALIASES[normalized]
         if not normalized.endswith("宫") and f"{normalized}宫" in self.PALACES:
             return f"{normalized}宫"
-        return normalized
+        return self._localized_palace_aliases().get(normalized.casefold(), normalized)
+
+    def _invalid_palace_message(self, palace_name: str) -> str:
+        """找不到宫位时给出可直接照做的纠正提示"""
+        return (
+            f"palace_name 无效：『{palace_name}』。可用值：{'、'.join(self.PALACES)}"
+            "（也接受去掉『宫』字的写法，以及命盘里显示的本地化宫名）；"
+            "常见俗称请换成规范名：事业→官禄宫，朋友→交友宫，健康→疾厄宫，"
+            "财运→财帛宫，婚姻/配偶→夫妻宫，仆役/奴仆→交友宫"
+        )
 
     def get_chart(self, birth_info: Dict[str, Any], language: str = "zh-CN") -> Dict[str, Any]:
         """
@@ -257,33 +311,23 @@ class ZiweiSystem(BaseFortuneSystem):
         Returns:
             宫位详细分析
         """
+        requested_name = palace_name
         palace_name = self._normalize_palace_name(palace_name)
         if palace_name not in self.PALACES:
-            raise ValidationError(
-                f"无效的宫位名称: {palace_name}. 有效宫位: {', '.join(self.PALACES)}"
-            )
+            raise ValidationError(self._invalid_palace_message(requested_name))
 
         self.validate_birth_info(birth_info)
 
         try:
-            # 宫位名随 language 本地化（zh-TW「遷移」、vi-VN「Thiên Di」），
-            # 只有 zh-CN 输出与 PALACES 的规范名一致。先在 zh-CN 盘上按规范名定位，
-            # 再按同一下标取目标语言的宫位——同一张盘，宫位顺序与语言无关。
-            # 此前直接用规范名匹配本地化盘，非 zh-CN 请求全部报「未找到宫位」。
-            canonical_chart = self.get_chart(birth_info, "zh-CN")
-            index = next(
-                (
-                    i
-                    for i, palace in enumerate(canonical_chart["palaces"])
-                    if palace["name"] == palace_name
-                ),
-                None,
+            # 宫位名随 language 本地化（zh-TW「遷移」、vi-VN「Thiên Di」），不能按名字
+            # 在本地化盘上匹配；按与语言无关的宫位 key 定位。
+            palace_key = self.PALACE_KEYS[self.PALACES.index(palace_name)]
+            chart = self.get_chart(birth_info, language)
+            target_palace = next(
+                (palace for palace in chart["palaces"] if palace["key"] == palace_key), None
             )
-            if index is None:
+            if target_palace is None:
                 raise SystemError(f"未找到宫位: {palace_name}")
-
-            chart = canonical_chart if language == "zh-CN" else self.get_chart(birth_info, language)
-            target_palace = chart["palaces"][index]
 
             # 格式化宫位分析
             return self.formatter.format_palace_analysis(target_palace, chart["basic_info"])

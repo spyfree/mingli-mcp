@@ -7,6 +7,7 @@
 from datetime import datetime
 from typing import Any, Dict, List
 
+from iztro_py.data.heavenly_stems import get_mutagen
 from iztro_py.i18n import t
 
 from mingli_mcp.utils.fortune_time import fortune_time_basis
@@ -44,6 +45,11 @@ class ZiweiFormatter:
         "haiEarthly": "亥",
     }
 
+    # 四化与语言无关的键（顺序同 iztro 天干四化表：禄、权、科、忌）
+    MUTAGEN_KEYS = ["lu", "quan", "ke", "ji"]
+    MUTAGEN_ZH = {"lu": "禄", "quan": "权", "ke": "科", "ji": "忌"}
+    MUTAGEN_KEY_BY_ZH = {zh: key for key, zh in MUTAGEN_ZH.items()}
+
     def format_chart(self, astrolabe) -> Dict[str, Any]:
         """
         格式化星盘数据
@@ -72,6 +78,7 @@ class ZiweiFormatter:
                 "五行局": astrolabe.five_elements_class,
             },
             "palaces": self._format_palaces(astrolabe.palaces),
+            "flying_sihua": self._format_flying_sihua(astrolabe.palaces, astrolabe.language),
             "metadata": {
                 "generated_at": datetime.now().isoformat(),
                 "version": "1.0.0",
@@ -194,6 +201,10 @@ class ZiweiFormatter:
         """
         return {
             "palace_name": palace["name"],
+            "palace_key": palace.get("key"),
+            "palace_name_zh": palace.get("name_zh"),
+            "heavenly_stem_zh": palace.get("heavenly_stem_zh"),
+            "earthly_branch_zh": palace.get("earthly_branch_zh"),
             "is_body_palace": palace.get("is_body_palace", False),
             "is_original_palace": palace.get("is_original_palace", False),
             "heavenly_stem": palace["heavenly_stem"],
@@ -283,10 +294,19 @@ class ZiweiFormatter:
             result.append(
                 {
                     "name": chinese_name,
+                    # 规范键：与 language 无关，供调用方按键定位（本地化的 name 不能用来匹配）
+                    "key": palace.name,
+                    "name_zh": t(f"palaces.{palace.name}", "zh-CN"),
                     "is_body_palace": palace.is_body_palace,
                     "is_original_palace": palace.is_original_palace,
                     "heavenly_stem": heavenly_stem,
+                    "heavenly_stem_zh": self.HEAVENLY_STEMS.get(
+                        palace.heavenly_stem, palace.heavenly_stem
+                    ),
                     "earthly_branch": earthly_branch,
+                    "earthly_branch_zh": self.EARTHLY_BRANCHES.get(
+                        palace.earthly_branch, palace.earthly_branch
+                    ),
                     "major_stars": [self._format_star(s) for s in palace.major_stars],
                     "minor_stars": [self._format_star(s) for s in palace.minor_stars],
                     "adjective_stars": [self._format_star(s) for s in palace.adjective_stars],
@@ -314,12 +334,72 @@ class ZiweiFormatter:
         else:
             brightness = getattr(star, "brightness", "")
 
-        return {
+        result = {
             "name": star_name,
+            "key": star.name,
+            "name_zh": self._star_name_zh(star.name),
             "type": star.type,
             "brightness": brightness,
+            # iztro 内部的亮度/四化取值本身就是简体中文，与 language 无关
+            "brightness_zh": getattr(star, "brightness", "") or "",
             "scope": getattr(star, "scope", "origin"),
         }
+        mutagen = getattr(star, "mutagen", None)
+        if mutagen:
+            result["mutagen_key"] = self.MUTAGEN_KEY_BY_ZH.get(mutagen, mutagen)
+            result["mutagen_zh"] = mutagen
+        return result
+
+    @staticmethod
+    def _star_name_zh(star_key: str) -> str:
+        """星曜 key → 简体名（主星 xxxMaj、辅星 xxxMin，杂耀直接是顶层 key）"""
+        if star_key.endswith("Maj"):
+            return t(f"stars.major.{star_key}", "zh-CN")
+        if star_key.endswith("Min"):
+            return t(f"stars.minor.{star_key}", "zh-CN")
+        return t(star_key, "zh-CN")
+
+    def _format_flying_sihua(self, palaces, language: str) -> List[Dict[str, Any]]:
+        """飞星四化：每个宫以宫干起四化，标出四化星落在哪个宫
+
+        完全由宫干和星曜位置决定（四化表取 iztro 默认口径），与 language 无关的键
+        （palace_key / star_key / mutagen）用于机器校验，*_name 只作显示。
+        """
+        star_palace = {
+            star.name: palace
+            for palace in palaces
+            for star in (*palace.major_stars, *palace.minor_stars)
+        }
+
+        result = []
+        for palace in palaces:
+            transforms = []
+            for mutagen, star_key in zip(self.MUTAGEN_KEYS, get_mutagen(palace.heavenly_stem)):
+                target = star_palace.get(star_key)
+                transforms.append(
+                    {
+                        "mutagen": mutagen,
+                        "mutagen_zh": self.MUTAGEN_ZH[mutagen],
+                        "star_key": star_key,
+                        "star_name": self._translate_star_name(star_key, language),
+                        "star_name_zh": self._star_name_zh(star_key),
+                        "to_palace_key": target.name if target else None,
+                        "to_palace_name": (
+                            t(f"palaces.{target.name}", language) if target else None
+                        ),
+                        "self": target is palace,
+                    }
+                )
+            result.append(
+                {
+                    "palace_key": palace.name,
+                    "palace_name": palace.translate_name(),
+                    "stem": self.HEAVENLY_STEMS.get(palace.heavenly_stem, palace.heavenly_stem),
+                    "stem_key": palace.heavenly_stem,
+                    "transforms": transforms,
+                }
+            )
+        return result
 
     def _format_stage(self, stage) -> Dict[str, Any]:
         """格式化大限数据（使用 iztro-py 0.3.0 的翻译方法）"""
@@ -333,6 +413,9 @@ class ZiweiFormatter:
             return {
                 "range": list(stage.range),
                 "heavenly_stem": heavenly_stem,
+                "heavenly_stem_zh": self.HEAVENLY_STEMS.get(
+                    stage.heavenly_stem, stage.heavenly_stem
+                ),
             }
         return {}
 
@@ -369,10 +452,17 @@ class ZiweiFormatter:
             ],
         }
 
+        # 规范键：运限的天干地支本来就是简体；宫名、四化星随 language 本地化
+        result["heavenly_stem_zh"] = heavenly_stem
+        result["earthly_branch_zh"] = earthly_branch
+        result["palace_keys"] = list(limit.palace_names)
+
         if hasattr(limit, "mutagen"):
             result["mutagen"] = [
                 self._translate_star_name(star_name, language) for star_name in limit.mutagen
             ]
+            result["mutagen_keys"] = list(limit.mutagen)
+            result["mutagen_zh"] = [self._star_name_zh(star_name) for star_name in limit.mutagen]
 
         if hasattr(limit, "age"):
             age = limit.age

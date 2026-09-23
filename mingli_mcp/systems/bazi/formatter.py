@@ -4,7 +4,7 @@
 用于将八字数据格式化为JSON和Markdown格式
 """
 
-from typing import Any, Dict, Union
+from typing import Any, Dict, List, Union
 
 
 class BaziFormatter:
@@ -135,6 +135,35 @@ class BaziFormatter:
                 pairs = "、".join(f"{g}({d})" for g, d in zip(hidden, names))
                 md += f"- **{label}** {data['pillars'][key]['zhi']}: {pairs}\n"
 
+        relations = data.get("relations")
+        if relations:
+            md += "\n## 四柱干支关系\n"
+            md += self._format_relations(relations)
+
+        return md
+
+    # 关系成员的柱名 → 显示名
+    _PILLAR_LABELS = {
+        "year": "年",
+        "month": "月",
+        "day": "日",
+        "hour": "时",
+        "da_yun": "大运",
+        "liu_nian": "流年",
+    }
+
+    @classmethod
+    def _format_relations(cls, relations: List[Dict[str, Any]]) -> str:
+        """干支关系列表：只陈述构成的组合，不判断合化成败"""
+        md = ""
+        for relation in relations:
+            members = "、".join(
+                f"{cls._PILLAR_LABELS.get(m['pillar'], m['pillar'])}{m['char']}"
+                for m in relation["members"]
+            )
+            element = f"（{relation['element']}）" if relation.get("element") else ""
+            note = f" — {relation['note']}" if relation.get("note") else ""
+            md += f"- **{relation['name_zh']}**{element}: {members}{note}\n"
         return md
 
     @staticmethod
@@ -199,6 +228,11 @@ class BaziFormatter:
         liu_nian_deities = self._format_deities(liu_nian.get("deities", {}))
         if liu_nian_deities:
             md += f"- **十神**: {liu_nian_deities}\n"
+
+        relations = data.get("relations_with_natal")
+        if relations:
+            md += "\n## 岁运与本命的干支关系\n"
+            md += self._format_relations(relations)
 
         # 大运一览表
         da_yun_list = data.get("da_yun_list") or []

@@ -47,7 +47,11 @@ def calendar_year_fortune(
         result = get_fortune(start)
         # A yearly query intentionally provides no day/month evidence. Avoid
         # duplicating natal charts and making a representative day look annual.
-        keys = ("liu_nian", "da_yun") if system == "bazi" else ("yearly", "decadal")
+        keys = (
+            ("liu_nian", "da_yun", "relations_with_natal")
+            if system == "bazi"
+            else ("yearly", "decadal")
+        )
         periods.append(
             {
                 "valid_from": start.strftime("%Y-%m-%d"),

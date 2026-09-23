@@ -14,6 +14,7 @@ from mingli_mcp.core.exceptions import DependencyError, SystemError, ValidationE
 from mingli_mcp.utils.fortune_time import fortune_time_basis
 
 from .formatter import BaziFormatter
+from .relations import find_relations, find_relations_with_natal
 
 logger = logging.getLogger(__name__)
 
@@ -312,6 +313,10 @@ class BaziSystem(BaseFortuneSystem):
                 "zhi_cang_gan": zhi_cang_gan,
                 "zhi_deities": self._calculate_zhi_deities(day_gan, zhi_cang_gan),
                 "day_master": day_gan,  # 日主（日干）
+                # 四柱之间实际构成的干支关系（只陈述组合，不判断合化成败）
+                "relations": find_relations(
+                    self._natal_pillars(year_pillar, month_pillar, day_pillar, hour_pillar)
+                ),
             }
 
             return result
@@ -404,6 +409,9 @@ class BaziSystem(BaseFortuneSystem):
                     "age": nominal_age,
                     "deities": self._gan_zhi_deities(liu_nian_gan_zhi, day_gan),
                 },
+                "relations_with_natal": self._relations_with_natal(
+                    chart, current_da_yun.get("gan_zhi", ""), liu_nian_gan_zhi
+                ),
                 "basic_chart": chart,
             }
 
@@ -466,6 +474,27 @@ class BaziSystem(BaseFortuneSystem):
         except Exception as e:
             logger.exception("Unexpected error analyzing wu xing")
             raise SystemError(f"五行分析失败: {str(e)}")
+
+    @staticmethod
+    def _natal_pillars(*pillars: str) -> List[tuple]:
+        return [
+            (name, pillar[0], pillar[1])
+            for name, pillar in zip(("year", "month", "day", "hour"), pillars)
+        ]
+
+    def _relations_with_natal(
+        self, chart: Dict[str, Any], da_yun_gan_zhi: str, liu_nian_gan_zhi: str
+    ) -> List[Dict[str, Any]]:
+        """大运、流年干支与本命四柱之间成立的关系（起运前小运期没有大运干支）"""
+        natal = self._natal_pillars(
+            *(chart["pillars"][name]["pillar"] for name in ("year", "month", "day", "hour"))
+        )
+        extra = [
+            (name, gan_zhi[0], gan_zhi[1])
+            for name, gan_zhi in (("da_yun", da_yun_gan_zhi), ("liu_nian", liu_nian_gan_zhi))
+            if gan_zhi and len(gan_zhi) >= 2
+        ]
+        return find_relations_with_natal(natal, extra)
 
     @staticmethod
     def _format_qi_yun(yun) -> Dict[str, Any]:
