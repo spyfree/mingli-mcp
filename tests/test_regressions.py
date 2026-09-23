@@ -318,6 +318,24 @@ class TestPalaceLabelFormatting:
         assert "宫宫" not in markdown
         assert markdown.startswith("# 命宫分析")
 
+    @pytest.mark.parametrize("language", ["zh-CN", "zh-TW", "en-US", "ja-JP", "ko-KR", "vi-VN"])
+    @pytest.mark.parametrize("palace_name", ["命宫", "官禄宫", "交友宫", "仆役"])
+    def test_palace_analysis_works_in_every_language(self, language, palace_name):
+        """宫位名随 language 本地化；此前非 zh-CN 一律「未找到宫位」（2026-09-23）。"""
+        ziwei = get_system("ziwei")
+        birth = {"date": "1992-03-04", "time_index": 7, "gender": "男"}
+        canonical = ziwei.get_chart(birth, "zh-CN")
+        localized = ziwei.get_chart(birth, language)
+        expected_name = ziwei._normalize_palace_name(palace_name)
+        index = [p["name"] for p in canonical["palaces"]].index(expected_name)
+
+        analysis = ziwei.analyze_palace(birth, palace_name, language)
+
+        # 同一宫位：同一下标、同一干支位置，名称是目标语言的写法
+        assert analysis == ziwei.formatter.format_palace_analysis(
+            localized["palaces"][index], localized["basic_info"]
+        )
+
 
 def test_longitude_formats_west_as_w():
     """Western longitudes used to be printed as e.g. -74.0°E."""

@@ -266,18 +266,24 @@ class ZiweiSystem(BaseFortuneSystem):
         self.validate_birth_info(birth_info)
 
         try:
-            # 获取完整星盘（formatter 已经将宫位名转换为中文）
-            chart = self.get_chart(birth_info, language)
-
-            # 找到指定宫位（直接匹配中文名）
-            target_palace = None
-            for palace in chart["palaces"]:
-                if palace["name"] == palace_name:
-                    target_palace = palace
-                    break
-
-            if target_palace is None:
+            # 宫位名随 language 本地化（zh-TW「遷移」、vi-VN「Thiên Di」），
+            # 只有 zh-CN 输出与 PALACES 的规范名一致。先在 zh-CN 盘上按规范名定位，
+            # 再按同一下标取目标语言的宫位——同一张盘，宫位顺序与语言无关。
+            # 此前直接用规范名匹配本地化盘，非 zh-CN 请求全部报「未找到宫位」。
+            canonical_chart = self.get_chart(birth_info, "zh-CN")
+            index = next(
+                (
+                    i
+                    for i, palace in enumerate(canonical_chart["palaces"])
+                    if palace["name"] == palace_name
+                ),
+                None,
+            )
+            if index is None:
                 raise SystemError(f"未找到宫位: {palace_name}")
+
+            chart = canonical_chart if language == "zh-CN" else self.get_chart(birth_info, language)
+            target_palace = chart["palaces"][index]
 
             # 格式化宫位分析
             return self.formatter.format_palace_analysis(target_palace, chart["basic_info"])
